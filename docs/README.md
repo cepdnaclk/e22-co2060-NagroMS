@@ -25,7 +25,7 @@ A HTML template integrated with the given GitHub repository templates, based on 
 
 ## Team
 -  E/22/330, R.Shathursima, [email](e22330@eng.pdn.ac.lk)
--  E/22/381, S.Monishs, [email](e22381@eng.pdn.ac.lk)
+-  E/22/381, S.Monisha, [email](e22381@eng.pdn.ac.lk)
 -  E/22/261, N.Sathurjika, [email](e22261@eng.pdn.ac.lk) 
 -  E/22/260, K.Nithilaa, [email](e22260@eng.pdn.ac.lk)
 
