@@ -24,9 +24,10 @@ A HTML template integrated with the given GitHub repository templates, based on 
 ---
 
 ## Team
--  eNumber, Name, [email](mailto:name@email.com)
--  eNumber, Name, [email](mailto:name@email.com)
--  eNumber, Name, [email](mailto:name@email.com)
+-  E/22/330, R.Shathursima, [email](e22330@eng.pdn.ac.lk)
+-  E/22/381, S.Monishs, [email](e22381@eng.pdn.ac.lk)
+-  E/22/261, N.Sathurjika, [email](e22261@eng.pdn.ac.lk) 
+-  E/22/260, K.Nithilaa, [email](e22260@eng.pdn.ac.lk)
 
 <!-- Image (photo/drawing of the final hardware) should be here -->
 
@@ -44,17 +45,24 @@ A HTML template integrated with the given GitHub repository templates, based on 
 
 ## Introduction
 
-Description of the real world problem and solution, impact
+Problem Domain
+Farmers often rely on middle vendors to sell their products, which reduces their profit and limits direct interaction with customers. In Sri Lanka, farmers also face challenges such as limited access to agricultural equipment, lack of awareness about suitable loan options, insufficient expert guidance, unpredictable weather conditions, and limited knowledge of sustainable farming practices. There is no single platform that connects farmers with consumers, transport providers, agricultural experts, financial information, and local farming resources in real time, leading to inefficiencies and increased crop losses, particularly for locally cultivated Sri Lankan crops.
+
+Proposed Solution
+The proposed system, NagroMS (Networked Agro Management System), is a real-time, vendor-free digital platform primarily focused on supporting Sri Lankan farmers and Sri Lankan agricultural practices. The system connects farmers, customers, service providers, and agricultural experts while incorporating equipment rental, financial advisory support, weather-based insights, and intelligent farming guidance. The platform aims to improve transparency, encourage collaboration, reduce risks, and promote sustainable agricultural practices.
+
 
 
 ## Solution Architecture
 
-High level diagram + description
+The system supports multiple user roles including admin, farmer, customer, service provider, and expert. Farmers can add and manage product listings with real-time availability updates, focusing on locally grown Sri Lankan crops. Customers can browse products, communicate directly with farmers, and place order requests. Farmers can also list agricultural equipment for rent, enabling other farmers to rent equipment based on availability, location, and pricing. Service providers can offer transport and equipment maintenance services, while agricultural experts provide advisory support through real-time chat.
 
 ## Software Designs
 
-Detailed designs with many sub-sections
-
+The system features a weather-based alert module that provides timely updates and warnings for conditions such as heavy rainfall, drought, and extreme heat. Based on seasonal patterns and forecasted conditions, it suggests suitable crops and farming practices, helping farmers plan cultivation activities effectively and reduce crop losses.  Farm management tools allow farmers to track inventory of seeds, fertilizers, and pesticides.  An AI-powered chatbot is integrated to provide instant assistance, answer farming-related queries, and guide users through equipment rental, weather, and advisory services.
+Technologies Used
+The application will be developed as a web-based system using React for the frontend and Node.js with Express for the backend. Firebase Firestore will be used for real-time data storage, and Firebase Authentication will manage secure user access. Intelligent services such as weather-based insights, pest alerts, farm management, and the chatbot will be integrated into the system.
+Expected Deliverables
 ## Testing
 
 Testing done on software : detailed + summarized results
