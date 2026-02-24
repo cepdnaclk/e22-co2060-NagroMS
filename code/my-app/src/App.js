@@ -1,14 +1,8 @@
-import Welcome from "./components/Welcome";
-import CustomerDashboard from "./components/CustomerDashboard";
-
+import React from 'react';
+import LandingPage from './components/LandingPage';
 
 function App() {
-  return (
-    <div>
-      <Welcome />
-      <CustomerDashboard />
-    </div>
-  );
+  return <LandingPage />;
 }
 
 export default App;
