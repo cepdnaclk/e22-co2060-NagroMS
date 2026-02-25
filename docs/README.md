@@ -73,8 +73,8 @@ What was achieved, future developments, commercialization plans
 
 ## Links
 
-- [Project Repository](https://github.com/cepdnaclk/{{ e22-co2060-nagroms }})
-- [Project Page](https://cepdnaclk.github.io/{{ e22-co2060-nagroms }}) 
+- [Project Repository](https://github.com/cepdnaclk/{{ e22-co2060-nagroms }}
+- [Project Page](https://cepdnaclk.github.io/{{ e22-co2060-nagroms }} 
 - [Department of Computer Engineering](http://www.ce.pdn.ac.lk/)
 - [University of Peradeniya](https://eng.pdn.ac.lk/)
 
