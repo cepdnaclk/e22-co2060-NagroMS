@@ -3,8 +3,8 @@ layout: home
 permalink: index.html
 
 # Please update this with your repository name and project title
-repository-name: eYY-co2060-project-template
-title: Project Template
+repository-name: e22-co2060-nagroms
+title: NagroMS - Networked agro Management System
 ---
 
 [comment]: # "This is the standard layout for the project, but you can clean this and use your own template, and add more information required for your own project"
@@ -24,10 +24,10 @@ A HTML template integrated with the given GitHub repository templates, based on 
 ---
 
 ## Team
--  E/22/330, R.Shathursima, [email](e22330@eng.pdn.ac.lk)
--  E/22/381, S.Monisha, [email](e22381@eng.pdn.ac.lk)
--  E/22/261, N.Sathurjika, [email](e22261@eng.pdn.ac.lk) 
--  E/22/260, K.Nithilaa, [email](e22260@eng.pdn.ac.lk)
+-  E/22/330, R.Shathursima, [e22330@eng.pdn.ac.lk]
+-  E/22/381, S.Monisha, [e22381@eng.pdn.ac.lk]
+-  E/22/261, N.Sathurjika, [e22261@eng.pdn.ac.lk]
+-  E/22/260, K.Nithilaa, [e22260@eng.pdn.ac.lk]
 
 <!-- Image (photo/drawing of the final hardware) should be here -->
 
