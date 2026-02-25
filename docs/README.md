@@ -24,10 +24,10 @@ A HTML template integrated with the given GitHub repository templates, based on 
 ---
 
 ## Team
--  E/22/330, R.Shathursima, [e22330@eng.pdn.ac.lk]
--  E/22/381, S.Monisha, [e22381@eng.pdn.ac.lk]
--  E/22/261, N.Sathurjika, [e22261@eng.pdn.ac.lk]
--  E/22/260, K.Nithilaa, [e22260@eng.pdn.ac.lk]
+-  E/22/330, R.Shathursima, e22330@eng.pdn.ac.lk
+-  E/22/381, S.Monisha, e22381@eng.pdn.ac.lk
+-  E/22/261, N.Sathurjika, e22261@eng.pdn.ac.lk
+-  E/22/260, K.Nithilaa, e22260@eng.pdn.ac.lk
 
 <!-- Image (photo/drawing of the final hardware) should be here -->
 
@@ -73,10 +73,10 @@ What was achieved, future developments, commercialization plans
 
 ## Links
 
-- [Project Repository](https://github.com/cepdnaclk/{{ e22-co2060-nagroms }}
-- [Project Page](https://cepdnaclk.github.io/{{ e22-co2060-nagroms }} 
-- [Department of Computer Engineering](http://www.ce.pdn.ac.lk/)
-- [University of Peradeniya](https://eng.pdn.ac.lk/)
+- Project Repository: https://github.com/cepdnaclk/e22-co2060-nagroms
+- Project Page: https://cepdnaclk.github.io/e22-co2060-nagroms
+- Department of Computer Engineering: http://www.ce.pdn.ac.lk/
+- University of Peradeniya: https://eng.pdn.ac.lk/
 
 [//]: # (Please refer this to learn more about Markdown syntax)
 [//]: # (https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
