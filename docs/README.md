@@ -1,40 +1,21 @@
 ---
 layout: home
 permalink: index.html
-
-# Please update this with your repository name and project title
 repository-name: e22-co2060-nagroms
 title: NagroMS - Networked agro Management System
 ---
 
-[comment]: # "This is the standard layout for the project, but you can clean this and use your own template, and add more information required for your own project"
+# Networked Agro Management System (NagroMS)
 
-<!-- Once you fill the index.json file inside /docs/data, please make sure the syntax is correct. (You can use this tool to identify syntax errors)
-
-Please include the "correct" email address of your supervisors. (You can find them from https://people.ce.pdn.ac.lk/ )
-
-Please include an appropriate cover page image ( cover_page.jpg ) and a thumbnail image ( thumbnail.jpg ) in the same folder as the index.json (i.e., /docs/data ). The cover page image must be cropped to 940×352 and the thumbnail image must be cropped to 640×360 . Use https://croppola.com/ for cropping and https://squoosh.app/ to reduce the file size.
-
-If your followed all the given instructions correctly, your repository will be automatically added to the department's project web site (Update daily)
-
-A HTML template integrated with the given GitHub repository templates, based on github.com/cepdnaclk/eYY-project-theme . If you like to remove this default theme and make your own web page, you can remove the file, docs/_config.yml and create the site using HTML. -->
-
-# Project Title
-
----
+NagroMS is a web-based platform designed to connect farmers directly with bulk buyers, retail shops, and individual customers. The system aims to reduce dependency on middle vendors and improve farmers’ profit margins by enabling transparent and direct trading.
+NagroMS creates a centralized digital marketplace that improves efficiency, accessibility, and transparency in the agricultural supply chain.
 
 ## Team
--  E/22/330, R.Shathursima, e22330@eng.pdn.ac.lk
--  E/22/381, S.Monisha, e22381@eng.pdn.ac.lk
--  E/22/261, N.Sathurjika, e22261@eng.pdn.ac.lk
--  E/22/260, K.Nithilaa, e22260@eng.pdn.ac.lk
-
-<!-- Image (photo/drawing of the final hardware) should be here -->
-
-<!-- This is a sample image, to show how to add images to your page. To learn more options, please refer [this](https://projects.ce.pdn.ac.lk/docs/faq/how-to-add-an-image/) -->
-
-<!-- ![Sample Image](./images/sample.png) -->
-
+-  [E/22/330, R.Shathursima,](e22330@eng.pdn.ac.lk)
+-  [E/22/381, S.Monisha,](e22381@eng.pdn.ac.lk)
+-  [E/22/261, N.Sathurjika,](e22261@eng.pdn.ac.lk)
+-  [E/22/260, K.Nithilaa,](e22260@eng.pdn.ac.lk)
+ 
 #### Table of Contents
 1. [Introduction](#introduction)
 2. [Solution Architecture](#solution-architecture )
@@ -45,38 +26,28 @@ A HTML template integrated with the given GitHub repository templates, based on 
 
 ## Introduction
 
-Problem Domain
-Farmers often rely on middle vendors to sell their products, which reduces their profit and limits direct interaction with customers. In Sri Lanka, farmers also face challenges such as limited access to agricultural equipment, lack of awareness about suitable loan options, insufficient expert guidance, unpredictable weather conditions, and limited knowledge of sustainable farming practices. There is no single platform that connects farmers with consumers, transport providers, agricultural experts, financial information, and local farming resources in real time, leading to inefficiencies and increased crop losses, particularly for locally cultivated Sri Lankan crops.
-
-Proposed Solution
-The proposed system, NagroMS (Networked Agro Management System), is a real-time, vendor-free digital platform primarily focused on supporting Sri Lankan farmers and Sri Lankan agricultural practices. The system connects farmers, customers, service providers, and agricultural experts while incorporating equipment rental, financial advisory support, weather-based insights, and intelligent farming guidance. The platform aims to improve transparency, encourage collaboration, reduce risks, and promote sustainable agricultural practices.
-
-
+The Networked Agro Management System (NagroMS) is a web-based platform designed to connect farmers directly with bulk buyers such as grocery shops, food cities, and individual customers. The system aims to reduce the dependency on middle vendors who often decrease farmers’ profit margins. By creating a centralized digital marketplace, the platform improves transparency, ensures fair pricing, and enables direct communication between stakeholders. Additionally, the system integrates agricultural service providers such as transportation and plant-related medical services, making it a complete ecosystem for agricultural trade and support.
 
 ## Solution Architecture
 
-The system supports multiple user roles including admin, farmer, customer, service provider, and expert. Farmers can add and manage product listings with real-time availability updates, focusing on locally grown Sri Lankan crops. Customers can browse products, communicate directly with farmers, and place order requests. Farmers can also list agricultural equipment for rent, enabling other farmers to rent equipment based on availability, location, and pricing. Service providers can offer transport and equipment maintenance services, while agricultural experts provide advisory support through real-time chat.
+NagroMS follows a client-server architecture using the MERN stack. The frontend handles user interaction and sends requests to the backend through RESTful APIs. The backend processes business logic, manages authentication, and communicates with the Firebase as database for data storage and retrieval. JWT-based authentication ensures secure login and role-based access control. The system supports multiple user roles including farmers, buyers, service providers, and administrators, ensuring structured and secure operations.
 
 ## Software Designs
 
-The system features a weather-based alert module that provides timely updates and warnings for conditions such as heavy rainfall, drought, and extreme heat. Based on seasonal patterns and forecasted conditions, it suggests suitable crops and farming practices, helping farmers plan cultivation activities effectively and reduce crop losses.  Farm management tools allow farmers to track inventory of seeds, fertilizers, and pesticides.  An AI-powered chatbot is integrated to provide instant assistance, answer farming-related queries, and guide users through equipment rental, weather, and advisory services.
-Technologies Used
-The application will be developed as a web-based system using React for the frontend and Node.js with Express for the backend. Firebase Firestore will be used for real-time data storage, and Firebase Authentication will manage secure user access. Intelligent services such as weather-based insights, pest alerts, farm management, and the chatbot will be integrated into the system.
-Expected Deliverables
+The system is designed with modular components including user management, product management, order management, service management, and admin control. Farmers can register, list products, and manage inventory. Buyers can browse products, place orders, and track purchases. Service providers can register their services for agricultural support. The database structure is organized into collections such as users, products, orders, and services, ensuring efficient data handling and scalability.
+
 ## Testing
 
-Testing done on software : detailed + summarized results
+The system undergoes multiple levels of testing including unit testing for backend functions, API testing using Postman, integration testing to verify frontend-backend communication, and user acceptance testing to ensure system usability. Security testing is also implemented to validate JWT authentication and role-based authorization mechanisms, ensuring safe and reliable system performance.
 
 ## Conclusion
 
-What was achieved, future developments, commercialization plans
+NagroMS provides a practical digital solution to improve the agricultural supply chain by directly connecting farmers with buyers and service providers. The platform enhances profit margins, improves transparency, and reduces unnecessary intermediaries. With scalable architecture and secure authentication mechanisms, the system can be further enhanced in the future with features such as online payments, real-time chat, and mobile application integration.
 
 ## Links
 
-- Project Repository: https://github.com/cepdnaclk/e22-co2060-nagroms
-- Project Page: https://cepdnaclk.github.io/e22-co2060-nagroms
-- Department of Computer Engineering: http://www.ce.pdn.ac.lk/
-- University of Peradeniya: https://eng.pdn.ac.lk/
+- [Project Repository:](https://github.com/cepdnaclk/e22-co2060-nagroms)
+- [Project Page:](https://cepdnaclk.github.io/e22-co2060-nagroms)
+- [Department of Computer Engineering](http://www.ce.pdn.ac.lk/)
+- [University of Peradeniya:](https://eng.pdn.ac.lk/)
 
-[//]: # (Please refer this to learn more about Markdown syntax)
-[//]: # (https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
