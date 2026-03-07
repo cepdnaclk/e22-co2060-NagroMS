@@ -3,7 +3,7 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAYbskUuo_Iy1DljdoHxmk3qKCbLzmE5To",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: "nagromsnew.firebaseapp.com",
   projectId: "nagromsnew",
   storageBucket: "nagromsnew.firebasestorage.app",
