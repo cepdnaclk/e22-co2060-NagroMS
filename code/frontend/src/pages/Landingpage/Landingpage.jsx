@@ -1,6 +1,12 @@
 import React from 'react';
 import imageFallback from './assets/images/imagefallback.jpg';
 
+// Feature Card icons
+import farmImg from './assets/images/farm.png';
+import tractorImg from './assets/images/tractor.png';
+import expertImg from './assets/images/expert.png';
+import phoneImg from './assets/images/phone.png';
+
 
 
 import coverImg from './assets/images/cover.png';
@@ -236,9 +242,51 @@ function LandingPage() {
         </div>
       </section>
 
-    
-        
+      {/* Features Section */}
+      <section id="features" style={{ padding: '64px 32px' }}>
+        <h3
+          style={{
+            color: '#1a7f37',
+            textAlign: 'center',
+            fontSize: '32px',
+            marginBottom: '24px',
+          }}
+        >
+          Platform Features
+        </h3>
 
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns:
+              'repeat(auto-fit,minmax(220px,1fr))',
+            gap: '24px',
+          }}
+        >
+          <FeatureCard
+            icon={<img src={farmImg} alt="Farm" style={{ width: '250px', height: '150px' }} />}
+            title="Direct Farm Sales"
+            description="Farmers can sell produce directly to customers with secure payment processing"
+          />
+          <FeatureCard
+            icon={<img src={tractorImg} alt="Tractor" style={{ width: '250px', height: '150px' }} />}
+            title="Equipment Rental"
+            description="Access modern farming equipment when you need it"
+          />
+          <FeatureCard
+            icon={<img src={expertImg} alt="Expert" style={{ width: '250px', height: '150px' }} />}
+            title="Expert Guidance"
+            description="Connect with agricultural experts for advice"
+          />
+          <FeatureCard
+            icon={<img src={phoneImg} alt="Phone" style={{ width: '250px', height: '150px' }} />}
+            title="Weather Alerts"
+            description="Get real-time weather updates and alerts"
+          />
+        </div>
+      </section>
+
+    
     </div>
   );
 }
