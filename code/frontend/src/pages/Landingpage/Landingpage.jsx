@@ -7,7 +7,10 @@ import tractorImg from './assets/images/tractor.png';
 import expertImg from './assets/images/expert.png';
 import phoneImg from './assets/images/phone.png';
 
-
+//Visual Section images 
+import produceImg from './assets/images/produce.jpg';
+import equipmentImg from './assets/images/equipment.jpg';
+import technologyImg from './assets/images/technology.jpg';
 
 import coverImg from './assets/images/cover.png';
 
@@ -286,9 +289,116 @@ function LandingPage() {
         </div>
       </section>
 
-    
+      {/* Visual Section */}
+      <section style={{ padding: '64px 32px', background: '#ffffff' }}>
+        <div
+          style={{
+
+            maxWidth: '1100px',
+            margin: '0 auto',
+            display: 'grid',
+            gridTemplateColumns:
+              'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: '24px',
+
+          }}
+        >
+          {[
+            {
+              src: produceImg,
+              text: 'Fresh Local Produce',
+            },
+            {
+              src: equipmentImg,
+              text: 'Modern Equipment',
+            },
+            {
+              src: technologyImg,
+              text: 'Smart Technology',
+            },
+          ].map((item, index) => (
+            <div
+              key={index}
+              style={{
+                position: 'relative',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                boxShadow:
+                  '0 4px 12px rgba(0,0,0,0.1)',
+              }}
+            >
+              <ImageWithFallback
+                src={item.src}
+                alt={item.text}
+                style={{
+                  width: '100%',
+                  height: '250px',
+                  objectFit: 'cover',
+                }}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  width: '100%',
+                  padding: '16px',
+                  background:
+                    'linear-gradient(to top, rgba(0,0,0,0.6), transparent)',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  fontSize : ' 24px',
+                }}
+              >
+                {item.text}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* About */}
+      <section
+        id="about"
+        style={{ padding: '64px 32px', textAlign: 'center' }}
+      >
+        <h3 style={{ color: '#1a7f37', fontSize: '32px' }}>
+          About NagroMS
+        </h3>
+        <p style={{ color: '#555', maxWidth: '700px', margin: '16px auto' }}>
+          NagroMS connects farmers, customers, and experts through
+          modern agricultural technology.
+        </p>
+      </section>
+
+      {/* Contact */}
+      <section
+        id="contact"
+        style={{ padding: '64px 32px', textAlign: 'center' }}
+      >
+        <h3 style={{ color: '#1a7f37', fontSize: '32px' }}>
+          Contact Us
+        </h3>
+        <p style={{ color: '#555', fontSize: '18px', lineHeight: '2' }}>
+          📧 Email: info@nagroms.lk <br />
+          📞 Phone: +94 11 234 5678 <br />
+          📍 Kandy, Sri Lanka
+        </p>
+      </section>
+
+      {/* Footer */}
+      <footer
+        style={{
+          background: '#1a7f37',
+          color: 'white',
+          padding: '48px 32px',
+          textAlign: 'center',
+        }}
+      >
+        <h4>© 2026 NagroMS. All rights reserved.</h4>
+      </footer>
     </div>
   );
 }
+
 
 export default LandingPage;
