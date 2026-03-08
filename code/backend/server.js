@@ -1,23 +1,86 @@
-const express = require("express");
-const cors    = require("cors");
-const app     = express();
+// ============================================================
+// NagroMS Backend — server.js
+// ============================================================
 
-// ── Middleware ────────────────────────────────────────
-app.use(cors({ origin: "http://localhost:3000" }));
-app.use(express.json());
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
 
-// ── Routes ────────────────────────────────────────────
-app.use("/api/expert", require("./routes/expertRoutes"));
+const authRoutes = require('./routes/authRoutes');
 
-// Add other team members' routes here when ready:
-// app.use("/api/auth",     require("./routes/authRoutes"));
-// app.use("/api/farmer",   require("./routes/farmerRoutes"));
-// app.use("/api/customer", require("./routes/customerRoutes"));
-// app.use("/api/admin",    require("./routes/adminRoutes"));
-
-// ── Health check ──────────────────────────────────────
-app.get("/", (req, res) => res.json({ message: "NagroMS API running ✅" }));
-
-// ── Start ─────────────────────────────────────────────
+const app = express();
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// ── Security middleware ──────────────────────────────────────
+app.use(helmet());
+
+// ── CORS ─────────────────────────────────────────────────────
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+}));
+
+// ── Rate limiting ────────────────────────────────────────────
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { success: false, message: 'Too many requests. Please try again after 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// ── Body parsing ─────────────────────────────────────────────
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// ── Request logging (dev only) ───────────────────────────────
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+}
+
+// ── Health check ─────────────────────────────────────────────
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: '🌾 NagroMS API is running',
+    environment: process.env.NODE_ENV,
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// ── Routes ───────────────────────────────────────────────────
+app.use('/api/auth', authLimiter, authRoutes);
+
+// Add other routes when ready:
+// app.use('/api/expert',   require('./routes/expertRoutes'));
+// app.use('/api/farmer',   require('./routes/farmerRoutes'));
+
+// ── 404 handler ──────────────────────────────────────────────
+app.use((req, res) => {
+  res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` });
+});
+
+// ── Global error handler ─────────────────────────────────────
+app.use((err, req, res, next) => {
+  console.error('❌ Server Error:', err.stack);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Internal server error',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+  });
+});
+
+// ── Start server ─────────────────────────────────────────────
+app.listen(PORT, () => {
+  console.log(`\n🌾 NagroMS Backend running`);
+  console.log(`📡 Port     : ${PORT}`);
+  console.log(`🌍 Env      : ${process.env.NODE_ENV}`);
+  console.log(`🔗 Health   : http://localhost:${PORT}/health\n`);
+});
+
+module.exports = app;
