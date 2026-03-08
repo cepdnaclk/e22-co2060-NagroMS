@@ -1,0 +1,253 @@
+/* ============================================================
+   NagroMS — forms.css
+   Global form element visibility, overrides, and utilities
+   ============================================================ */
+
+/* ── Input fields — base text visibility ── */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="number"],
+input[type="password"],
+input[type="search"],
+input[type="url"],
+input[type="date"],
+textarea,
+select {
+  color: #1a3a1a !important;
+  background-color: #f9fafb;
+  font-family: var(--font-body, 'Plus Jakarta Sans', sans-serif);
+}
+
+/* ── Focused state ── */
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="tel"]:focus,
+input[type="number"]:focus,
+input[type="password"]:focus,
+input[type="search"]:focus,
+input[type="url"]:focus,
+input[type="date"]:focus,
+textarea:focus,
+select:focus {
+  color: #1a3a1a !important;
+  background-color: #ffffff;
+  outline: none;
+}
+
+/* ── Disabled state ── */
+input:disabled,
+textarea:disabled,
+select:disabled {
+  color: #6b7280 !important;
+  background-color: #f3f4f6 !important;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* ── Placeholder text ── */
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af !important;
+  opacity: 1;
+}
+input::-webkit-input-placeholder,
+textarea::-webkit-input-placeholder { color: #9ca3af !important; opacity: 1; }
+input::-moz-placeholder,
+textarea::-moz-placeholder           { color: #9ca3af !important; opacity: 1; }
+input:-ms-input-placeholder,
+textarea:-ms-input-placeholder       { color: #9ca3af !important; opacity: 1; }
+
+/* ── Select dropdowns ── */
+select {
+  color: #1a3a1a !important;
+  cursor: pointer;
+}
+select option {
+  color: #1a3a1a !important;
+  background-color: #ffffff !important;
+}
+
+/* ── Number inputs — always show spinner ── */
+input[type="number"] {
+  color: #1a3a1a !important;
+  -webkit-text-fill-color: #1a3a1a !important;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  opacity: 1;
+  height: auto;
+}
+
+/* ── Search input ── */
+input[type="search"] {
+  color: #1a3a1a !important;
+  -webkit-text-fill-color: #1a3a1a !important;
+}
+
+/* ── Checkbox & Radio ── */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: #2d7a2d;
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+/* ── Labels ── */
+label {
+  color: #1a3a1a !important;
+  cursor: pointer;
+}
+
+/* ── Inputs inside colored/gray containers ── */
+.bg-gray-50 input,
+.bg-gray-50 textarea,
+.bg-gray-50 select,
+.bg-green-50 input,
+.bg-green-50 textarea,
+.bg-green-50 select {
+  color: #1a3a1a !important;
+}
+
+/* ── Safari autofill fix ── */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: #1a3a1a !important;
+  -webkit-box-shadow: 0 0 0 30px #f9fafb inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ============================================================
+   BUTTON TEXT VISIBILITY
+   ============================================================ */
+
+/* Default button — inherits color from context */
+button {
+  color: inherit;
+  font-family: var(--font-body, 'Plus Jakarta Sans', sans-serif);
+}
+
+/* Primary / green gradient buttons — always white text */
+button.bg-primary,
+button.bg-primary span,
+button.bg-primary svg,
+button[class*="from-green"],
+button[class*="from-green"] span,
+button[class*="from-green"] svg,
+.nagro-submit-btn,
+.nagro-submit-btn span,
+.nagro-submit-btn svg {
+  color: #ffffff !important;
+}
+
+/* White text only on colored backgrounds */
+.text-white { color: #ffffff !important; }
+
+/* ── Gradient container text — white ── */
+.bg-gradient-to-r h1,
+.bg-gradient-to-r h2,
+.bg-gradient-to-r h3,
+.bg-gradient-to-r p,
+.bg-gradient-to-r span,
+.bg-gradient-to-r strong,
+.from-green-600 h1,
+.from-green-600 h2,
+.from-green-600 h3,
+.from-green-600 p,
+.from-green-600 span:not(.bg-white *),
+.from-orange-600 h1,
+.from-orange-600 h2,
+.from-orange-600 h3,
+.from-orange-600 p,
+.from-orange-600 span:not(.bg-white *),
+.from-blue-600 h1,
+.from-blue-600 h2,
+.from-blue-600 h3,
+.from-blue-600 p,
+.from-blue-600 span:not(.bg-white *),
+.from-purple-600 h1,
+.from-purple-600 h2,
+.from-purple-600 h3,
+.from-purple-600 p,
+.from-purple-600 span:not(.bg-white *) {
+  color: #ffffff !important;
+}
+
+/* ── Dashed border buttons (e.g. request product) ── */
+button.border-dashed,
+button.border-dashed span,
+button.border-dashed svg,
+.request-product-btn,
+.request-product-btn *,
+.request-product-btn div,
+.request-product-btn span,
+button.bg-white.border-dashed,
+button.bg-white.border-dashed *,
+button.bg-white.border-dashed div,
+button.bg-white.border-dashed span {
+  color: #2d7a2d !important;
+}
+
+.request-product-btn svg,
+button.border-dashed svg,
+button.bg-white.border-dashed svg {
+  color: #2d7a2d !important;
+  stroke: #2d7a2d !important;
+}
+
+/* ============================================================
+   SEMANTIC TEXT UTILITIES
+   ============================================================ */
+
+.text-foreground       { color: #1a3a1a !important; }
+.text-muted-foreground { color: #6b7280 !important; }
+.text-primary          { color: #2d7a2d !important; }
+
+/* ============================================================
+   NAGRO COMPONENT INPUT OVERRIDES
+   (ensures nagro-styles.css components respect color tokens)
+   ============================================================ */
+
+/* Input inside nagro wrapper */
+.nagro-input {
+  color: #1a3a1a !important;
+  -webkit-text-fill-color: #1a3a1a !important;
+}
+
+.nagro-input::placeholder {
+  color: #9ca3af !important;
+  -webkit-text-fill-color: #9ca3af !important;
+}
+
+/* Input in error state */
+.nagro-input-wrap.error .nagro-input {
+  color: #1a3a1a !important;
+  background-color: transparent !important;
+}
+
+/* Select in nagro wrapper */
+.nagro-select {
+  color: #1a3a1a !important;
+}
+
+/* OTP boxes */
+.nagro-otp-box {
+  color: #1a3a1a !important;
+  -webkit-text-fill-color: #1a3a1a !important;
+}
+
+/* ── FINAL OVERRIDE — request product button ── */
+/* (must remain at end of file for highest specificity) */
+.request-product-btn,
+.request-product-btn *,
+.request-product-btn div,
+.request-product-btn span {
+  color: #2d7a2d !important;
+}
+.request-product-btn svg {
+  color: #2d7a2d !important;
+  stroke: #2d7a2d !important;
+}
