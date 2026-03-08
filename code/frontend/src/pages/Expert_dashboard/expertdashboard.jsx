@@ -1,18 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link, Outlet, useLocation } from "react-router-dom";
-import { auth, db } from "../../utils/firebase";
+import { auth } from "../../utils/firebase";
 import { signOut } from "firebase/auth";
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  orderBy,
-  limit,
-} from "firebase/firestore";
+import { getDashboardStats } from "../../utils/api";
 import { Icon } from "@iconify/react";
 
-// ─── Sidebar Layout (shared across all expert pages) ────────────────────────
 export function ExpertLayout() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -43,113 +35,56 @@ export function ExpertLayout() {
           <span style={styles.logoText}>NagroMS</span>
           <span style={styles.logoRole}>Expert Portal</span>
         </div>
-
         <nav style={styles.nav}>
           {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              style={{
-                ...styles.navItem,
-                ...(isActive(item.path) ? styles.navItemActive : {}),
-              }}
-            >
-              <Icon
-                icon={item.icon}
-                width={20}
-                height={20}
-                color={isActive(item.path) ? GREEN : "#888"}
-              />
+            <Link key={item.path} to={item.path} style={{ ...styles.navItem, ...(isActive(item.path) ? styles.navItemActive : {}) }}>
+              <Icon icon={item.icon} width={20} height={20} color={isActive(item.path) ? GREEN : "#888"} />
               <span>{item.label}</span>
             </Link>
           ))}
         </nav>
-
         <button onClick={handleLogout} style={styles.logoutBtn}>
           <Icon icon="solar:logout-bold-duotone" width={18} height={18} color="#e53935" />
           Logout
         </button>
       </aside>
-
-      <main style={styles.mainContent}>
-        <Outlet />
-      </main>
+      <main style={styles.mainContent}><Outlet /></main>
     </div>
   );
 }
 
-// ─── Expert Dashboard Overview ───────────────────────────────────────────────
 export default function ExpertDashboard() {
-  const [stats, setStats] = useState({
-    totalConsultations: 0,
-    thisMonth: 0,
-    rating: 0,
-    activeFarmers: 0,
-  });
-  const [upcomingConsultations, setUpcomingConsultations] = useState([]);
+  const [stats, setStats]                     = useState({ totalConsultations: 0, thisMonth: 0, rating: 0, activeFarmers: 0 });
+  const [upcomingConsultations, setUpcoming]  = useState([]);
   const [recentQuestions, setRecentQuestions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const expertId = auth.currentUser?.uid;
+  const [loading, setLoading]                 = useState(true);
+  const [error, setError]                     = useState(null);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
-  const fetchDashboardData = async () => {
+  const fetchData = async () => {
     try {
-      const consultRef = collection(db, "consultations");
-      const consultQ = query(consultRef, where("expertId", "==", expertId));
-      const consultSnap = await getDocs(consultQ);
-      const allConsultations = consultSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-
-      const now = new Date();
-      const thisMonthConsults = allConsultations.filter((c) => {
-        const date = c.scheduledAt?.toDate?.();
-        return date && date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-      });
-
-      const upcoming = allConsultations
-        .filter((c) => {
-          const date = c.scheduledAt?.toDate?.();
-          return date && date > now && ["pending", "confirmed"].includes(c.status);
-        })
-        .sort((a, b) => a.scheduledAt?.toDate() - b.scheduledAt?.toDate())
-        .slice(0, 3);
-
-      const uniqueFarmers = new Set(allConsultations.map((c) => c.farmerId)).size;
-
-      setStats({
-        totalConsultations: allConsultations.length,
-        thisMonth: thisMonthConsults.length,
-        rating: 4.9,
-        activeFarmers: uniqueFarmers,
-      });
-      setUpcomingConsultations(upcoming);
-
-      const qRef = collection(db, "questions");
-      const qQ = query(qRef, orderBy("createdAt", "desc"), limit(3));
-      const qSnap = await getDocs(qQ);
-      setRecentQuestions(qSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      const data = await getDashboardStats();
+      setStats(data.stats);
+      setUpcoming(data.upcomingConsultations);
+      setRecentQuestions(data.recentQuestions);
     } catch (err) {
-      console.error("Error fetching dashboard data:", err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const formatDate = (timestamp) => {
-    if (!timestamp) return "—";
-    const date = timestamp.toDate?.() || new Date(timestamp);
-    return date.toLocaleString("en-US", {
-      year: "numeric", month: "2-digit", day: "2-digit",
-      hour: "2-digit", minute: "2-digit",
-    });
+  const formatDate = (ts) => {
+    if (!ts) return "—";
+    const date = ts._seconds ? new Date(ts._seconds * 1000) : new Date(ts);
+    return date.toLocaleString("en-US", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
   };
 
-  const timeAgo = (timestamp) => {
-    if (!timestamp) return "";
-    const date = timestamp.toDate?.() || new Date(timestamp);
-    const diff = Math.floor((Date.now() - date) / 1000 / 60);
+  const timeAgo = (ts) => {
+    if (!ts) return "";
+    const date = ts._seconds ? new Date(ts._seconds * 1000) : new Date(ts);
+    const diff = Math.floor((Date.now() - date) / 60000);
     if (diff < 60) return `${diff} minutes ago`;
     if (diff < 1440) return `${Math.floor(diff / 60)} hours ago`;
     return `${Math.floor(diff / 1440)} days ago`;
@@ -161,14 +96,20 @@ export default function ExpertDashboard() {
     phone: "solar:phone-bold-duotone",
   };
 
-  if (loading) {
-    return (
-      <div style={styles.loadingBox}>
-        <Icon icon="solar:refresh-bold-duotone" width={32} color={GREEN} />
-        <p>Loading dashboard...</p>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div style={styles.loadingBox}>
+      <Icon icon="solar:refresh-bold-duotone" width={32} color={GREEN} />
+      <p>Loading dashboard...</p>
+    </div>
+  );
+
+  if (error) return (
+    <div style={styles.loadingBox}>
+      <Icon icon="solar:danger-bold-duotone" width={32} color="#e53935" />
+      <p style={{ color: "#e53935" }}>{error}</p>
+      <button onClick={fetchData} style={styles.retryBtn}>Retry</button>
+    </div>
+  );
 
   return (
     <div style={styles.page}>
@@ -192,27 +133,16 @@ export default function ExpertDashboard() {
             <h2 style={styles.cardTitle}>Upcoming Consultations</h2>
             <Link to="/expert/consultations" style={styles.viewAllLink}>View All</Link>
           </div>
-          {upcomingConsultations.length === 0 ? (
-            <p style={styles.emptyText}>No upcoming consultations.</p>
-          ) : (
+          {upcomingConsultations.length === 0 ? <p style={styles.emptyText}>No upcoming consultations.</p> : (
             upcomingConsultations.map((c) => (
               <div key={c.id} style={styles.consultItem}>
-                <Icon
-                  icon={consultIconMap[c.type] || "solar:calendar-bold-duotone"}
-                  width={22} height={22} color={GREEN}
-                  style={{ marginTop: 2, flexShrink: 0 }}
-                />
+                <Icon icon={consultIconMap[c.type] || "solar:calendar-bold-duotone"} width={22} height={22} color={GREEN} style={{ marginTop: 2, flexShrink: 0 }} />
                 <div style={styles.consultInfo}>
                   <p style={styles.consultTopic}>{c.topic}</p>
                   <p style={styles.consultMeta}>{c.farmerName}</p>
                   <p style={styles.consultMeta}>{formatDate(c.scheduledAt)}</p>
                 </div>
-                <span style={{
-                  ...styles.statusBadge,
-                  ...(c.status === "confirmed" ? styles.badgeConfirmed : styles.badgePending),
-                }}>
-                  {c.status}
-                </span>
+                <span style={{ ...styles.statusBadge, ...(c.status === "confirmed" ? styles.badgeConfirmed : styles.badgePending) }}>{c.status}</span>
               </div>
             ))
           )}
@@ -223,9 +153,7 @@ export default function ExpertDashboard() {
             <h2 style={styles.cardTitle}>Recent Questions</h2>
             <Link to="/expert/qa-forum" style={styles.viewAllLink}>View All</Link>
           </div>
-          {recentQuestions.length === 0 ? (
-            <p style={styles.emptyText}>No questions yet.</p>
-          ) : (
+          {recentQuestions.length === 0 ? <p style={styles.emptyText}>No questions yet.</p> : (
             recentQuestions.map((q) => (
               <div key={q.id} style={styles.questionItem}>
                 <p style={styles.questionText}>{q.question}</p>
@@ -255,91 +183,47 @@ function StatCard({ label, value, icon }) {
   );
 }
 
-// ─── Styles ──────────────────────────────────────────────────────────────────
-const GREEN    = "#2e7d32";
+const GREEN = "#2e7d32";
 const GREEN_BG = "#f1f8e9";
-
 const styles = {
-  layoutContainer: {
-    display: "flex", minHeight: "100vh",
-    fontFamily: "'Segoe UI', sans-serif", backgroundColor: "#f5f5f5",
-  },
-  sidebar: {
-    width: 220, backgroundColor: "#fff", borderRight: "1px solid #e0e0e0",
-    display: "flex", flexDirection: "column", padding: "24px 0",
-    position: "fixed", top: 0, left: 0, height: "100vh",
-  },
+  layoutContainer: { display: "flex", minHeight: "100vh", fontFamily: "'Segoe UI', sans-serif", backgroundColor: "#f5f5f5" },
+  sidebar: { width: 220, backgroundColor: "#fff", borderRight: "1px solid #e0e0e0", display: "flex", flexDirection: "column", padding: "24px 0", position: "fixed", top: 0, left: 0, height: "100vh" },
   sidebarLogo: { padding: "0 20px 24px", borderBottom: "1px solid #e0e0e0" },
   logoText: { display: "block", fontSize: 20, fontWeight: 700, color: GREEN },
   logoRole: { fontSize: 12, color: "#888" },
   nav: { flex: 1, padding: "16px 0" },
-  navItem: {
-    display: "flex", alignItems: "center", gap: 10,
-    padding: "10px 20px", fontSize: 14, color: "#444",
-    textDecoration: "none", cursor: "pointer",
-    borderLeft: "3px solid transparent",
-  },
-  navItemActive: {
-    color: GREEN, backgroundColor: GREEN_BG,
-    borderLeft: `3px solid ${GREEN}`, fontWeight: 600,
-  },
-  logoutBtn: {
-    margin: "0 16px", padding: "10px 14px", backgroundColor: "#fff",
-    border: "1px solid #e0e0e0", borderRadius: 8, cursor: "pointer",
-    fontSize: 13, color: "#666", display: "flex", alignItems: "center", gap: 8,
-  },
+  navItem: { display: "flex", alignItems: "center", gap: 10, padding: "10px 20px", fontSize: 14, color: "#444", textDecoration: "none", cursor: "pointer", borderLeft: "3px solid transparent" },
+  navItemActive: { color: GREEN, backgroundColor: GREEN_BG, borderLeft: `3px solid ${GREEN}`, fontWeight: 600 },
+  logoutBtn: { margin: "0 16px", padding: "10px 14px", backgroundColor: "#fff", border: "1px solid #e0e0e0", borderRadius: 8, cursor: "pointer", fontSize: 13, color: "#666", display: "flex", alignItems: "center", gap: 8 },
   mainContent: { marginLeft: 220, flex: 1, padding: "32px", minHeight: "100vh" },
   page: { maxWidth: 960, margin: "0 auto" },
-  loadingBox: {
-    display: "flex", flexDirection: "column", alignItems: "center",
-    justifyContent: "center", height: "60vh", gap: 12, color: "#888",
-  },
-  pageHeader: {
-    marginBottom: 28, display: "flex",
-    justifyContent: "space-between", alignItems: "center",
-  },
+  loadingBox: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "60vh", gap: 12, color: "#888" },
+  retryBtn: { padding: "8px 20px", backgroundColor: GREEN, color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 14 },
+  pageHeader: { marginBottom: 28, display: "flex", justifyContent: "space-between", alignItems: "center" },
   pageTitle: { fontSize: 26, fontWeight: 700, color: GREEN, margin: 0 },
   pageSubtitle: { fontSize: 14, color: "#777", margin: "4px 0 0" },
-  statsRow: {
-    display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
-    gap: 16, marginBottom: 28,
-  },
-  statCard: {
-    backgroundColor: "#fff", borderRadius: 12,
-    padding: "20px", boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-  },
-  statTop: {
-    display: "flex", justifyContent: "space-between",
-    alignItems: "center", marginBottom: 8,
-  },
+  statsRow: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 28 },
+  statCard: { backgroundColor: "#fff", borderRadius: 12, padding: "20px", boxShadow: "0 1px 4px rgba(0,0,0,0.08)" },
+  statTop: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
   statLabel: { fontSize: 12, color: "#888" },
   statValue: { fontSize: 32, fontWeight: 700, color: GREEN, margin: 0 },
   twoCol: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 },
-  card: {
-    backgroundColor: "#fff", borderRadius: 12,
-    padding: 24, boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-  },
-  cardHeader: {
-    display: "flex", justifyContent: "space-between",
-    alignItems: "center", marginBottom: 16,
-  },
+  card: { backgroundColor: "#fff", borderRadius: 12, padding: 24, boxShadow: "0 1px 4px rgba(0,0,0,0.08)" },
+  cardHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   cardTitle: { fontSize: 16, fontWeight: 600, color: "#333", margin: 0 },
   viewAllLink: { fontSize: 13, color: GREEN, textDecoration: "none" },
-  consultItem: {
-    display: "flex", alignItems: "flex-start",
-    gap: 12, padding: "12px 0", borderBottom: "1px solid #f0f0f0",
-  },
+  consultItem: { display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 0", borderBottom: "1px solid #f0f0f0" },
   consultInfo: { flex: 1 },
   consultTopic: { fontSize: 14, fontWeight: 600, color: "#333", margin: "0 0 2px" },
   consultMeta: { fontSize: 12, color: "#777", margin: 0 },
   statusBadge: { fontSize: 11, padding: "3px 8px", borderRadius: 20, fontWeight: 500, whiteSpace: "nowrap" },
   badgeConfirmed: { backgroundColor: "#e8f5e9", color: GREEN },
-  badgePending:   { backgroundColor: "#fff3e0", color: "#f57c00" },
+  badgePending: { backgroundColor: "#fff3e0", color: "#f57c00" },
   questionItem: { padding: "12px 0", borderBottom: "1px solid #f0f0f0" },
-  questionText:   { fontSize: 14, fontWeight: 500, color: "#333", margin: "0 0 4px" },
-  questionMeta:   { fontSize: 12, color: "#777", margin: "0 0 4px" },
+  questionText: { fontSize: 14, fontWeight: 500, color: "#333", margin: "0 0 4px" },
+  questionMeta: { fontSize: 12, color: "#777", margin: "0 0 4px" },
   questionFooter: { display: "flex", justifyContent: "space-between" },
-  questionTime:   { fontSize: 12, color: "#aaa" },
-  replyCount:     { fontSize: 12, color: GREEN },
-  emptyText:      { color: "#aaa", fontSize: 14, textAlign: "center", padding: 20 },
+  questionTime: { fontSize: 12, color: "#aaa" },
+  replyCount: { fontSize: 12, color: GREEN },
+  emptyText: { color: "#aaa", fontSize: 14, textAlign: "center", padding: 20 },
 };

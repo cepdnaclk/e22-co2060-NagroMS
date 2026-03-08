@@ -24,13 +24,13 @@ export default function ExpertSettings() {
       if (docSnap.exists()) {
         const data = docSnap.data();
         setForm({
-          fullName: data.name || auth.currentUser?.displayName || "",
-          specialization: data.specialization || "",
+          fullName:          data.name || auth.currentUser?.displayName || "",
+          specialization:    data.specialization    || "",
           yearsOfExperience: data.yearsOfExperience || "",
-          bio: data.bio || "",
-          availableVideo: data.availableVideo ?? true,
-          availablePhone: data.availablePhone ?? true,
-          availableChat:  data.availableChat  ?? true,
+          bio:               data.bio               || "",
+          availableVideo:    data.availableVideo  ?? true,
+          availablePhone:    data.availablePhone  ?? true,
+          availableChat:     data.availableChat   ?? true,
         });
       }
     } catch (err) {
@@ -44,13 +44,13 @@ export default function ExpertSettings() {
     setSaving(true);
     try {
       await updateDoc(doc(db, "users", expertId), {
-        name: form.fullName,
-        specialization: form.specialization,
+        name:              form.fullName,
+        specialization:    form.specialization,
         yearsOfExperience: Number(form.yearsOfExperience),
-        bio: form.bio,
-        availableVideo: form.availableVideo,
-        availablePhone: form.availablePhone,
-        availableChat:  form.availableChat,
+        bio:               form.bio,
+        availableVideo:    form.availableVideo,
+        availablePhone:    form.availablePhone,
+        availableChat:     form.availableChat,
       });
       await updateProfile(auth.currentUser, { displayName: form.fullName });
       setSaved(true);
@@ -62,12 +62,13 @@ export default function ExpertSettings() {
     }
   };
 
-  const handleChange = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
+  const handleChange = (field, value) =>
+    setForm((prev) => ({ ...prev, [field]: value }));
 
   const availabilityOptions = [
-    { key: "availableVideo", label: "Available for video consultations", icon: "solar:videocamera-bold-duotone" },
-    { key: "availablePhone", label: "Available for phone consultations", icon: "solar:phone-bold-duotone"       },
-    { key: "availableChat",  label: "Available for chat consultations",  icon: "solar:chat-round-dots-bold-duotone" },
+    { key: "availableVideo", label: "Available for video consultations", icon: "solar:videocamera-bold-duotone"      },
+    { key: "availablePhone", label: "Available for phone consultations", icon: "solar:phone-bold-duotone"            },
+    { key: "availableChat",  label: "Available for chat consultations",  icon: "solar:chat-round-dots-bold-duotone"  },
   ];
 
   if (loading) {
@@ -87,7 +88,6 @@ export default function ExpertSettings() {
       </div>
 
       <div style={styles.card}>
-        {/* Profile Section */}
         <div style={styles.sectionHeader}>
           <Icon icon="solar:user-bold-duotone" width={20} color={GREEN} />
           <h2 style={styles.sectionTitle}>Expert Profile</h2>
@@ -146,13 +146,11 @@ export default function ExpertSettings() {
           />
         </div>
 
-        {/* Availability Section */}
         <div style={styles.availabilitySection}>
           <div style={styles.sectionHeader}>
             <Icon icon="solar:clock-circle-bold-duotone" width={20} color={GREEN} />
             <h3 style={styles.availTitle}>Availability Settings</h3>
           </div>
-
           {availabilityOptions.map(({ key, label, icon }) => (
             <label key={key} style={styles.checkboxRow}>
               <input
@@ -167,7 +165,6 @@ export default function ExpertSettings() {
           ))}
         </div>
 
-        {/* Save Row */}
         <div style={styles.saveRow}>
           {saved && (
             <div style={styles.savedMsg}>
@@ -176,9 +173,7 @@ export default function ExpertSettings() {
             </div>
           )}
           <button style={styles.saveBtn} onClick={handleSave} disabled={saving}>
-            {saving ? (
-              "Saving..."
-            ) : (
+            {saving ? "Saving..." : (
               <>
                 <Icon icon="solar:diskette-bold-duotone" width={16} />
                 Save Changes
@@ -201,14 +196,12 @@ const styles = {
   title:    { fontSize: 26, fontWeight: 700, color: GREEN, margin: 0 },
   subtitle: { fontSize: 14, color: "#777", margin: "4px 0 0" },
   card: {
-    backgroundColor: "#fff", borderRadius: 12, padding: 28,
-    boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+    backgroundColor: "#fff", borderRadius: 12,
+    padding: 28, boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
   },
-  sectionHeader: {
-    display: "flex", alignItems: "center", gap: 8, marginBottom: 20,
-  },
-  sectionTitle: { fontSize: 17, fontWeight: 600, color: "#333", margin: 0 },
-  field: { marginBottom: 18 },
+  sectionHeader: { display: "flex", alignItems: "center", gap: 8, marginBottom: 20 },
+  sectionTitle:  { fontSize: 17, fontWeight: 600, color: "#333", margin: 0 },
+  field:         { marginBottom: 18 },
   label: {
     display: "flex", alignItems: "center", gap: 5,
     fontSize: 13, fontWeight: 500, color: "#555", marginBottom: 6,
@@ -221,25 +214,21 @@ const styles = {
   availabilitySection: {
     borderTop: "1px solid #f0f0f0", paddingTop: 20, marginTop: 8, marginBottom: 20,
   },
-  availTitle: { fontSize: 15, fontWeight: 600, color: "#333", margin: 0 },
+  availTitle:   { fontSize: 15, fontWeight: 600, color: "#333", margin: 0 },
   checkboxRow: {
     display: "flex", alignItems: "center", gap: 10,
     marginBottom: 12, cursor: "pointer",
   },
-  checkbox: { width: 16, height: 16, accentColor: GREEN, cursor: "pointer" },
+  checkbox:      { width: 16, height: 16, accentColor: GREEN, cursor: "pointer" },
   checkboxLabel: { fontSize: 14, color: "#444" },
   saveRow: {
     display: "flex", justifyContent: "space-between", alignItems: "center",
     borderTop: "1px solid #f0f0f0", paddingTop: 20,
   },
-  savedMsg: {
-    display: "flex", alignItems: "center", gap: 6,
-    fontSize: 13, color: GREEN,
-  },
+  savedMsg: { display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: GREEN },
   saveBtn: {
     display: "flex", alignItems: "center", gap: 6,
     padding: "10px 24px", border: "none", borderRadius: 8,
-    backgroundColor: GREEN, color: "#fff",
-    cursor: "pointer", fontSize: 14, fontWeight: 600,
+    backgroundColor: GREEN, color: "#fff", cursor: "pointer", fontSize: 14, fontWeight: 600,
   },
 };

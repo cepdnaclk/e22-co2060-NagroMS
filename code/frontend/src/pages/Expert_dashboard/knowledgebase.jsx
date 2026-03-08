@@ -10,12 +10,12 @@ import { Icon } from "@iconify/react";
 const GREEN = "#2e7d32";
 
 export default function KnowledgeBase() {
-  const [articles, setArticles]           = useState([]);
-  const [loading, setLoading]             = useState(true);
-  const [showForm, setShowForm]           = useState(false);
+  const [articles, setArticles]             = useState([]);
+  const [loading, setLoading]               = useState(true);
+  const [showForm, setShowForm]             = useState(false);
   const [editingArticle, setEditingArticle] = useState(null);
-  const [form, setForm]                   = useState({ title: "", content: "", category: "" });
-  const [submitting, setSubmitting]       = useState(false);
+  const [form, setForm]                     = useState({ title: "", content: "", category: "" });
+  const [submitting, setSubmitting]         = useState(false);
   const expertId = auth.currentUser?.uid;
 
   useEffect(() => { fetchArticles(); }, []);
@@ -118,11 +118,13 @@ export default function KnowledgeBase() {
         </button>
       </div>
 
-      {/* Article Form */}
       {showForm && (
         <div style={styles.formCard}>
           <h3 style={styles.formTitle}>
-            <Icon icon={editingArticle ? "solar:pen-bold-duotone" : "solar:document-add-bold-duotone"} width={18} color={GREEN} />
+            <Icon
+              icon={editingArticle ? "solar:pen-bold-duotone" : "solar:document-add-bold-duotone"}
+              width={18} color={GREEN}
+            />
             {editingArticle ? "Edit Article" : "New Article"}
           </h3>
           <input
@@ -157,7 +159,6 @@ export default function KnowledgeBase() {
         </div>
       )}
 
-      {/* Articles Grid */}
       {articles.length === 0 && !showForm ? (
         <div style={styles.emptyBox}>
           <Icon icon="solar:book-bold-duotone" width={48} color="#ccc" />
@@ -222,8 +223,7 @@ const styles = {
   newBtn: {
     display: "flex", alignItems: "center", gap: 6,
     padding: "10px 18px", backgroundColor: GREEN, color: "#fff",
-    border: "none", borderRadius: 8, cursor: "pointer",
-    fontSize: 14, fontWeight: 600,
+    border: "none", borderRadius: 8, cursor: "pointer", fontSize: 14, fontWeight: 600,
   },
   formCard: {
     backgroundColor: "#fff", borderRadius: 12, padding: 24,
@@ -247,8 +247,7 @@ const styles = {
   saveBtn: {
     display: "flex", alignItems: "center", gap: 6,
     padding: "9px 18px", border: "none", borderRadius: 8,
-    backgroundColor: GREEN, color: "#fff",
-    cursor: "pointer", fontSize: 13, fontWeight: 600,
+    backgroundColor: GREEN, color: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 600,
   },
   grid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 },
   articleCard: {
@@ -260,15 +259,11 @@ const styles = {
   articleTitle: { fontSize: 15, fontWeight: 600, color: "#333", margin: "0 0 6px" },
   categoryTag: {
     display: "inline-block", fontSize: 11, padding: "2px 8px",
-    backgroundColor: "#f1f8e9", color: GREEN,
-    borderRadius: 20, marginBottom: 6,
+    backgroundColor: "#f1f8e9", color: GREEN, borderRadius: 20, marginBottom: 6,
   },
-  articleDate: { fontSize: 12, color: "#aaa", margin: "0 0 8px" },
+  articleDate:  { fontSize: 12, color: "#aaa", margin: "0 0 8px" },
   articleStats: { display: "flex", gap: 12, marginBottom: 12 },
-  statItem: {
-    display: "flex", alignItems: "center", gap: 4,
-    fontSize: 12, color: "#777",
-  },
+  statItem: { display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#777" },
   articleActions: { display: "flex", gap: 10 },
   editBtn: {
     display: "flex", alignItems: "center", gap: 4,
