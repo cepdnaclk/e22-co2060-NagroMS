@@ -1,51 +1,63 @@
-const { auth, db } = require("../config/firebase");
+// ============================================================
+// NagroMS — middleware/authMiddleware.js
+// Firebase ID Token verification + role-based access control
+// ============================================================
 
-/**
- * Verifies Firebase ID token sent in Authorization header.
- * Attaches req.user = { uid, email, role } for use in controllers.
- *
- * Frontend must send:
- *   Authorization: Bearer <idToken>
- */
-async function authMiddleware(req, res, next) {
-  const authHeader = req.headers.authorization;
+const { auth } = require('../config/firebase');
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Unauthorized — no token provided" });
-  }
-
-  const idToken = authHeader.split("Bearer ")[1];
-
+// ──────────────────────────────────────────────────────────────
+// verifyToken — verify Firebase Bearer token
+// ──────────────────────────────────────────────────────────────
+async function verifyToken(req, res, next) {
   try {
-    // Verify the token with Firebase Admin
-    const decoded = await auth.verifyIdToken(idToken);
+    const authHeader = req.headers.authorization;
 
-    // Get user role from Firestore users collection
-    const userDoc = await db.collection("users").doc(decoded.uid).get();
-    const roles = userDoc.exists ? (userDoc.data().roles || []) : [];
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ success: false, message: 'Access denied. No token provided.' });
+    }
+
+    const idToken = authHeader.split('Bearer ')[1];
+    const decodedToken = await auth.verifyIdToken(idToken);
+
     req.user = {
-         uid: decoded.uid, 
-         email: decoded.email, 
-         roles };
+      uid: decodedToken.uid,
+      email: decodedToken.email,
+      roles: decodedToken.roles || [],
+    };
 
     next();
-  } catch (err) {
-    console.error("Auth middleware error:", err.message);
-    return res.status(401).json({ error: "Unauthorized — invalid token" });
+  } catch (error) {
+    console.error('Token verification error:', error.code, error.message);
+
+    if (error.code === 'auth/id-token-expired') {
+      return res.status(401).json({ success: false, message: 'Session expired. Please log in again.' });
+    }
+    return res.status(401).json({ success: false, message: 'Authentication failed.' });
   }
 }
 
-/**
- * Role guard — use after authMiddleware
- * Usage: requireRole("expert")
- */
-function requireRole(role) {
+// Alias for backward compatibility
+const authMiddleware = verifyToken;
+
+// ──────────────────────────────────────────────────────────────
+// requireRole(...roles) — user must have at least one role
+// ──────────────────────────────────────────────────────────────
+function requireRole(...allowedRoles) {
   return (req, res, next) => {
-    if (!req.user?.roles?.includes(role)) {
-      return res.status(403).json({ error: `Forbidden — requires role: ${role}` });
+    if (!req.user) return res.status(401).json({ success: false, message: 'Not authenticated.' });
+
+    const userRoles = req.user.roles || [];
+    const hasRole = allowedRoles.some(role => userRoles.includes(role));
+
+    if (!hasRole) {
+      return res.status(403).json({
+        success: false,
+        message: `Access denied. Required role(s): ${allowedRoles.join(', ')}`,
+        yourRoles: userRoles,
+      });
     }
     next();
   };
 }
 
-module.exports = { authMiddleware, requireRole };
+module.exports = { verifyToken, authMiddleware, requireRole };
