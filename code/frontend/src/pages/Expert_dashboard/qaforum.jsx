@@ -10,11 +10,11 @@ import { Icon } from "@iconify/react";
 const GREEN = "#2e7d32";
 
 export default function QAForum() {
-  const [questions, setQuestions]         = useState([]);
-  const [loading, setLoading]             = useState(true);
+  const [questions, setQuestions]           = useState([]);
+  const [loading, setLoading]               = useState(true);
   const [activeQuestion, setActiveQuestion] = useState(null);
-  const [replyText, setReplyText]         = useState("");
-  const [submitting, setSubmitting]       = useState(false);
+  const [replyText, setReplyText]           = useState("");
+  const [submitting, setSubmitting]         = useState(false);
 
   useEffect(() => { fetchQuestions(); }, []);
 
@@ -45,7 +45,9 @@ export default function QAForum() {
       });
       setQuestions((prev) =>
         prev.map((q) =>
-          q.id === questionId ? { ...q, replyCount: (q.replyCount ?? 0) + 1 } : q
+          q.id === questionId
+            ? { ...q, replyCount: (q.replyCount ?? 0) + 1 }
+            : q
         )
       );
       setReplyText("");
@@ -114,7 +116,8 @@ export default function QAForum() {
               <span style={styles.dot}>•</span>
               <Icon icon="solar:chat-round-bold-duotone" width={13} color={GREEN} />
               <span style={styles.replyCount}>
-                {q.replyCount ?? 0} {(q.replyCount ?? 0) === 1 ? "reply" : "replies"}
+                {q.replyCount ?? 0}{" "}
+                {(q.replyCount ?? 0) === 1 ? "reply" : "replies"}
               </span>
             </div>
 
@@ -139,9 +142,7 @@ export default function QAForum() {
                     style={styles.submitBtn}
                     disabled={submitting}
                   >
-                    {submitting ? (
-                      "Submitting..."
-                    ) : (
+                    {submitting ? "Submitting..." : (
                       <>
                         <Icon icon="solar:send-bold-duotone" width={15} />
                         Submit Reply
@@ -194,11 +195,11 @@ const styles = {
     marginBottom: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
   },
   questionRow: { display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 10 },
-  question:   { fontSize: 15, fontWeight: 600, color: "#333", margin: 0 },
-  metaRow:    { display: "flex", alignItems: "center", gap: 5, marginBottom: 14, flexWrap: "wrap" },
-  meta:       { fontSize: 13, color: "#777" },
-  dot:        { color: "#ddd" },
-  replyCount: { fontSize: 13, color: GREEN, fontWeight: 500 },
+  question:    { fontSize: 15, fontWeight: 600, color: "#333", margin: 0 },
+  metaRow:     { display: "flex", alignItems: "center", gap: 5, marginBottom: 14, flexWrap: "wrap" },
+  meta:        { fontSize: 13, color: "#777" },
+  dot:         { color: "#ddd" },
+  replyCount:  { fontSize: 13, color: GREEN, fontWeight: 500 },
   replyBtn: {
     display: "flex", alignItems: "center", gap: 6,
     padding: "8px 16px", border: `1px solid ${GREEN}`,

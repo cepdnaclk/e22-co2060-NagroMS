@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { auth, db } from "../../utils/firebase";
 import {
-  collection, query, where, getDocs,
-  doc, updateDoc, orderBy,
+  collection, query, where,
+  getDocs, doc, updateDoc, orderBy,
 } from "firebase/firestore";
 import { Icon } from "@iconify/react";
 
@@ -79,7 +79,7 @@ export default function ConsultationRequests() {
           <p style={styles.subtitle}>Manage your consultation schedule</p>
         </div>
         <button style={styles.availBtn}>
-          <Icon icon="solar:clock-circle-bold-duotone" width={16} height={16} />
+          <Icon icon="solar:clock-circle-bold-duotone" width={16} />
           Set Availability
         </button>
       </div>
