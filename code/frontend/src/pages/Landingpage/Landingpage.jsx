@@ -379,7 +379,7 @@ function LandingPage() {
           Contact Us
         </h3>
         <p style={{ color: '#555', fontSize: '18px', lineHeight: '2' }}>
-          📧 Email: info@nagroms.lk <br />
+          📧 Email: nagroms16@gmail.com <br />
           📞 Phone: +94 11 234 5678 <br />
           📍 Kandy, Sri Lanka
         </p>
