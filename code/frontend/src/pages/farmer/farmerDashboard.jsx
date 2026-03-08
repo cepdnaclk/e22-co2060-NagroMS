@@ -484,25 +484,6 @@ function EditProductModal({ product, onChange, onSave, onCancel }) {
       <div className="bg-white rounded-2xl p-8 w-[500px]">
         <h2 className="text-2xl text-primary mb-6">Edit Product</h2>
         <div className="space-y-4">
-          {/* Image Upload */}
-          <div>
-            <label className="block text-sm text-muted-foreground mb-1">Product Image</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={e => {
-                const file = e.target.files[0];
-                if (file) {
-                  const imageUrl = URL.createObjectURL(file); // convert to local preview
-                  onChange('image', imageUrl);
-                }
-              }}
-              className="w-full p-3 border rounded-lg text-sm"
-            />
-            {product.image && (
-              <img src={product.image} alt="Preview" className="mt-2 w-32 h-32 object-cover rounded-lg" />
-            )}
-          </div>
           <div>
             <label className="block text-sm text-muted-foreground mb-1">Name</label>
             <input type="text" value={product.name} onChange={e => onChange('name', e.target.value)} className="w-full p-3 border rounded-lg text-lg" />
