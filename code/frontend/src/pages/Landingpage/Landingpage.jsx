@@ -54,9 +54,11 @@ function FeatureCard({ icon, title, description }) {
 }
 
 // Landing Page
-function LandingPage() {
+function LandingPage({ onNavigate }) {
   const handleNavigate = (page) => {
-    alert(`Navigate to ${page}`);
+    if (onNavigate) {
+      onNavigate(page);
+    }
   };
 
   return (
@@ -200,6 +202,7 @@ function LandingPage() {
           }}
         >
           <button
+            onClick={() => handleNavigate('signup')}
             style={{
               padding: '12px 32px',
               background: '#1a7f37',
@@ -215,6 +218,7 @@ function LandingPage() {
           </button>
 
           <button
+            onClick={() => handleNavigate('login')}
             style={{
               padding: '12px 32px',
               background: 'white',

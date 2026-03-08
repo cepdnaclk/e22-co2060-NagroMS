@@ -9,6 +9,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { RoleSwitcher } from "../RoleSwitcher.jsx"; 
+import { logout } from "../../utils/firebase";
 import './farmerDashboard.css';
 
 import tomatoImg from "./images/products/tomato.png";
@@ -268,23 +269,26 @@ export function FarmerDashboard({ onNavigate }) {
 
           {/* User Info & Logout at bottom of sidebar */}
           <div className="p-4 border-t border-green-200">
+            <div className="w-full bg-green-50 rounded-lg p-3 mb-3 text-left">
+              <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <span>👨‍🌾</span>
+                <span>{localStorage.getItem('userName') || 'Farmer'}</span>
+              </p>
+              <p className="text-xs text-muted-foreground truncate">{localStorage.getItem('userEmail') || 'farmer@nagroms.local'}</p>
+              <button 
+                onClick={() => { setActiveNav('settings'); setSidebarOpen(false); }}
+                className="text-xs text-primary mt-1 hover:underline block"
+              >
+                ⚙️ View settings
+              </button>
+            </div>
+            
             <button
-              onClick={() => {
-                setActiveNav('settings');
-                if (window.innerWidth < 1024) setSidebarOpen(false);
-              }}
-              className="w-full bg-green-50 rounded-lg p-3 mb-3 hover:bg-green-100 transition-colors text-left"
-            >
-              <p className="text-sm text-foreground">👨‍🌾 Sunil Perera</p>
-              <p className="text-xs text-muted-foreground">farmer@example.com</p>
-              <p className="text-xs text-primary mt-1">⚙️ Click to view settings</p>
-            </button>
-            <button
-              onClick={() => onNavigate('landing')}
-              className="w-full flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+              onClick={() => { logout(); onNavigate('landing'); }}
+              className="w-full flex items-center gap-2 py-2 text-muted-foreground hover:text-primary transition-colors"
             >
               <LogOut className="w-4 h-4" />
-              <span className="text-sm">Logout</span>
+              <span className="text-sm font-medium">Logout</span>
             </button>
           </div>
         </div>
