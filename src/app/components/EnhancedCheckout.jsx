@@ -6,21 +6,23 @@ import {
   CreditCard, 
   Smartphone,
   Wallet,
-  ImageIcon,
   X,
   AlertCircle
 } from 'lucide-react';
 import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
+import { PhoneOTPModal } from './PhoneOTPModel';
 
 // Enhanced Checkout Section with Payment Receipt Upload
 export function EnhancedCheckoutSection({ cart, profile, getCartTotal, getTotalDeliveryFee, setActiveSection, setCart, PRODUCTS }) {
   const [orderPlaced, setOrderPlaced] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('cod'); // 'cod', 'bank-transfer', 'mobile-payment'
+  const [paymentMethod, setPaymentMethod] = useState('cod');
   const [paymentReceipt, setPaymentReceipt] = useState(null);
   const [receiptPreview, setReceiptPreview] = useState(null);
   const [deliveryNotes, setDeliveryNotes] = useState('');
   const [contactNumber, setContactNumber] = useState(profile.phone || '');
   const [errors, setErrors] = useState({});
+  const [showOTPModal, setShowOTPModal] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
 
   const deliveryFee = getTotalDeliveryFee();
   const totalAmount = getCartTotal() + deliveryFee;
@@ -28,7 +30,7 @@ export function EnhancedCheckoutSection({ cart, profile, getCartTotal, getTotalD
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 5 * 1024 * 1024) {
         setErrors({ ...errors, receipt: 'File size must be less than 5MB' });
         return;
       }
@@ -43,13 +45,12 @@ export function EnhancedCheckoutSection({ cart, profile, getCartTotal, getTotalD
   };
 
   const handlePlaceOrder = () => {
-    // Validation
     const newErrors = {};
-    
+
     if (!contactNumber) {
       newErrors.contact = 'Contact number is required';
     }
-    
+
     if (paymentMethod === 'bank-transfer' && !paymentReceipt) {
       newErrors.receipt = 'Please upload payment receipt for bank transfer';
     }
@@ -59,7 +60,16 @@ export function EnhancedCheckoutSection({ cart, profile, getCartTotal, getTotalD
       return;
     }
 
-    // Save order with payment details
+    // If phone not verified yet, show OTP modal
+    if (!phoneVerified) {
+      setShowOTPModal(true);
+      return;
+    }
+
+    placeOrder();
+  };
+
+  const placeOrder = () => {
     const orderData = {
       cart,
       profile,
@@ -71,9 +81,9 @@ export function EnhancedCheckoutSection({ cart, profile, getCartTotal, getTotalD
       deliveryFee,
       orderDate: new Date().toISOString()
     };
-    
+
     console.log('Order placed:', orderData);
-    
+
     setOrderPlaced(true);
     setTimeout(() => {
       setCart([]);
@@ -102,6 +112,7 @@ export function EnhancedCheckoutSection({ cart, profile, getCartTotal, getTotalD
 
   return (
     <div className="space-y-6">
+
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-purple-600 to-purple-500 rounded-2xl p-8 text-white">
         <h1 className="text-3xl mb-2">✅ Checkout</h1>
@@ -119,7 +130,7 @@ export function EnhancedCheckoutSection({ cart, profile, getCartTotal, getTotalD
             Edit Address
           </button>
         </div>
-        
+
         {isAddressComplete ? (
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
@@ -147,29 +158,41 @@ export function EnhancedCheckoutSection({ cart, profile, getCartTotal, getTotalD
         )}
       </div>
 
-      {/* Contact Number Confirmation */}
+      {/* Contact Number */}
       <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
         <h2 className="text-2xl text-primary mb-4">📞 Contact Number</h2>
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">
             Contact Number for Delivery *
           </label>
-          <input
-            type="tel"
-            value={contactNumber}
-            onChange={(e) => {
-              setContactNumber(e.target.value);
-              setErrors({ ...errors, contact: '' });
-            }}
-            placeholder="+94 77 123 4567"
-            className={`w-full px-4 py-3 bg-gray-50 rounded-lg border-2 ${
-              errors.contact ? 'border-red-500' : 'border-gray-200'
-            } focus:outline-none focus:ring-2 focus:ring-primary text-foreground`}
-          />
+          <div className="flex gap-3">
+            <input
+              type="tel"
+              value={contactNumber}
+              onChange={(e) => {
+                setContactNumber(e.target.value);
+                setPhoneVerified(false); // reset verification if number changes
+                setErrors({ ...errors, contact: '' });
+              }}
+              placeholder="+94 77 123 4567"
+              className={`flex-1 px-4 py-3 bg-gray-50 rounded-lg border-2 ${
+                errors.contact ? 'border-red-500' : phoneVerified ? 'border-green-500' : 'border-gray-200'
+              } focus:outline-none focus:ring-2 focus:ring-primary text-foreground`}
+            />
+            {phoneVerified && (
+              <div className="flex items-center gap-2 px-4 py-3 bg-green-100 text-green-700 rounded-lg font-medium">
+                <Check className="w-5 h-5" />
+                Verified
+              </div>
+            )}
+          </div>
           {errors.contact && (
             <p className="text-red-600 text-sm mt-1 flex items-center gap-1">
               <AlertCircle className="w-4 h-4" /> {errors.contact}
             </p>
+          )}
+          {phoneVerified && (
+            <p className="text-green-600 text-sm mt-1">✅ Phone number verified successfully</p>
           )}
         </div>
       </div>
@@ -177,7 +200,7 @@ export function EnhancedCheckoutSection({ cart, profile, getCartTotal, getTotalD
       {/* Payment Method Selection */}
       <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
         <h2 className="text-2xl text-primary mb-6">💳 Payment Method</h2>
-        
+
         <div className="grid md:grid-cols-3 gap-4">
           {/* Cash on Delivery */}
           <button
@@ -297,67 +320,67 @@ export function EnhancedCheckoutSection({ cart, profile, getCartTotal, getTotalD
       {paymentMethod === 'bank-transfer' && (
         <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
           <h2 className="text-2xl text-primary mb-4">📄 Payment Receipt</h2>
-        
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Upload Payment Receipt *
-            </label>
-            
-            {!receiptPreview ? (
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-primary transition-colors">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  id="receipt-upload"
-                />
-                <label
-                  htmlFor="receipt-upload"
-                  className="cursor-pointer flex flex-col items-center"
-                >
-                  <Upload className="w-12 h-12 text-gray-400 mb-3" />
-                  <p className="text-foreground font-medium mb-1">Click to upload receipt</p>
-                  <p className="text-sm text-muted-foreground">PNG, JPG up to 5MB</p>
-                </label>
-              </div>
-            ) : (
-              <div className="relative border-2 border-green-300 rounded-lg p-4 bg-green-50">
-                <button
-                  onClick={() => {
-                    setPaymentReceipt(null);
-                    setReceiptPreview(null);
-                  }}
-                  className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-                <div className="flex items-center gap-4">
-                  <img 
-                    src={receiptPreview} 
-                    alt="Receipt preview" 
-                    className="w-24 h-24 object-cover rounded-lg"
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Upload Payment Receipt *
+              </label>
+
+              {!receiptPreview ? (
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-primary transition-colors">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    id="receipt-upload"
                   />
-                  <div>
-                    <p className="font-medium text-foreground flex items-center gap-2">
-                      <Check className="w-5 h-5 text-green-600" />
-                      Receipt uploaded successfully
-                    </p>
-                    <p className="text-sm text-muted-foreground">{paymentReceipt?.name}</p>
+                  <label
+                    htmlFor="receipt-upload"
+                    className="cursor-pointer flex flex-col items-center"
+                  >
+                    <Upload className="w-12 h-12 text-gray-400 mb-3" />
+                    <p className="text-foreground font-medium mb-1">Click to upload receipt</p>
+                    <p className="text-sm text-muted-foreground">PNG, JPG up to 5MB</p>
+                  </label>
+                </div>
+              ) : (
+                <div className="relative border-2 border-green-300 rounded-lg p-4 bg-green-50">
+                  <button
+                    onClick={() => {
+                      setPaymentReceipt(null);
+                      setReceiptPreview(null);
+                    }}
+                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={receiptPreview}
+                      alt="Receipt preview"
+                      className="w-24 h-24 object-cover rounded-lg"
+                    />
+                    <div>
+                      <p className="font-medium text-foreground flex items-center gap-2">
+                        <Check className="w-5 h-5 text-green-600" />
+                        Receipt uploaded successfully
+                      </p>
+                      <p className="text-sm text-muted-foreground">{paymentReceipt?.name}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-            
-            {errors.receipt && (
-              <p className="text-red-600 text-sm mt-2 flex items-center gap-1">
-                <AlertCircle className="w-4 h-4" /> {errors.receipt}
-              </p>
-            )}
+              )}
+
+              {errors.receipt && (
+                <p className="text-red-600 text-sm mt-2 flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4" /> {errors.receipt}
+                </p>
+              )}
+            </div>
           </div>
         </div>
-      </div>
       )}
 
       {/* Delivery Notes */}
@@ -379,15 +402,14 @@ export function EnhancedCheckoutSection({ cart, profile, getCartTotal, getTotalD
           {cart.map(item => {
             const product = PRODUCTS.find(p => p.id === item.id);
             if (!product) return null;
-            
-            // Get price based on selected unit
+
             let itemPrice = product.price;
             if (product.availableUnits && item.unit) {
               const unitInfo = product.availableUnits.find(u => u.unit === item.unit);
               if (unitInfo) itemPrice = unitInfo.price;
             }
             const itemUnit = item.unit || product.unit;
-            
+
             return (
               <div key={item.id} className="flex justify-between items-center py-3 border-b border-gray-100 last:border-0">
                 <div className="flex items-center gap-3">
@@ -436,7 +458,7 @@ export function EnhancedCheckoutSection({ cart, profile, getCartTotal, getTotalD
             </div>
           </div>
         </div>
-        
+
         <div className="mt-6 space-y-3">
           <button
             onClick={handlePlaceOrder}
@@ -444,7 +466,7 @@ export function EnhancedCheckoutSection({ cart, profile, getCartTotal, getTotalD
             className="w-full px-6 py-4 bg-primary text-white rounded-lg hover:bg-green-700 transition-colors text-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             <Check className="w-5 h-5" />
-            Confirm & Place Order
+            {phoneVerified ? 'Confirm & Place Order' : 'Verify Phone & Place Order'}
           </button>
           <button
             onClick={() => setActiveSection('cart')}
@@ -454,6 +476,20 @@ export function EnhancedCheckoutSection({ cart, profile, getCartTotal, getTotalD
           </button>
         </div>
       </div>
+
+      {/* OTP Modal */}
+      {showOTPModal && (
+        <PhoneOTPModal
+          phoneNumber={contactNumber}
+          onVerified={() => {
+            setPhoneVerified(true);
+            setShowOTPModal(false);
+            placeOrder();
+          }}
+          onClose={() => setShowOTPModal(false)}
+        />
+      )}
+
     </div>
   );
 }
