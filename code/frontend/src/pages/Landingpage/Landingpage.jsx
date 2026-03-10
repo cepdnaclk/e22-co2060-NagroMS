@@ -164,86 +164,94 @@ function LandingPage({ onNavigate }) {
       {/* Hero Section */}
       <section
         style={{
-          maxWidth: '800px',
+          maxWidth: '1440px',
           margin: '0 auto',
-          padding: '64px 32px',
-          textAlign: 'center',
+          padding: '80px 32px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '60px',
+          flexWrap: 'wrap',
         }}
       >
-        <h2
-          style={{
-            fontSize: '48px',
-            color: '#1a7f37',
-            marginBottom: '24px',
-          }}
-        >
-          Empowering Sri Lankan Farmers with Technology
-        </h2>
-
-        <p
-          style={{
-            fontSize: '21px',
-            color: '#555',
-            marginBottom: '32px',
-            lineHeight: '1.6',
-          }}
-        >
-          Connect farmers, customers, and agricultural experts through our
-          modern platform. Access equipment, get weather alerts, and sell
-          your produce directly to customers.
-        </p>
-
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '16px',
-            flexWrap: 'wrap',
-          }}
-        >
-          <button
-            onClick={() => handleNavigate('signup')}
+        <div style={{ flex: '1', minWidth: '400px', textAlign: 'left' }}>
+          <h2
             style={{
-              padding: '12px 32px',
-              background: '#1a7f37',
-              color: 'white',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              border: 'none',
-              fontSize: '16px',       // default font size
-  
-            }}
-          >
-            Get Started
-          </button>
-
-          <button
-            onClick={() => handleNavigate('login')}
-            style={{
-              padding: '12px 32px',
-              background: 'white',
+              fontSize: '56px',
               color: '#1a7f37',
-              border: '1px solid #1a7f37',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '16px',       // default font size
-  
+              marginBottom: '24px',
+              fontWeight: 'bold',
             }}
           >
-            Login
-          </button>
+            Empowering Sri Lankan Farmers with Technology
+          </h2>
+
+          <p
+            style={{
+              fontSize: '22px',
+              color: '#555',
+              marginBottom: '40px',
+              lineHeight: '1.6',
+            }}
+          >
+            Connect farmers, customers, and agricultural experts through our
+            modern platform. Access equipment, get weather alerts, and sell
+            your produce directly to customers.
+          </p>
+
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-start',
+              gap: '20px',
+              flexWrap: 'wrap',
+            }}
+          >
+            <button
+              onClick={() => handleNavigate('signup')}
+              style={{
+                padding: '14px 40px',
+                background: '#1a7f37',
+                color: 'white',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                border: 'none',
+                fontSize: '18px',
+                fontWeight: '600',
+              }}
+            >
+              Get Started
+            </button>
+
+            <button
+              onClick={() => handleNavigate('login')}
+              style={{
+                padding: '14px 40px',
+                background: 'white',
+                color: '#1a7f37',
+                border: '2px solid #1a7f37',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '18px',
+                fontWeight: '600',
+              }}
+            >
+              Login
+            </button>
+          </div>
         </div>
 
-        <div style={{ marginTop: '48px' }}>
+        <div style={{ flex: '1.2', minWidth: '450px' }}>
           <ImageWithFallback
-            src={coverImg }
+            src={coverImg}
             alt="Farmer working"
             style={{
               width: '100%',
               height: 'auto',
-              borderRadius: '16px',
-              maxHeight: '500px',
+              borderRadius: '24px',
+              maxHeight: '650px',
               objectFit: 'cover',
+              boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
             }}
           />
         </div>
