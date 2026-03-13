@@ -1,16 +1,38 @@
 import { useState } from 'react';
-import { 
+import {
+  LayoutDashboard,
+  ShoppingBag,
+  Tractor,
+  CloudRain,
+  Package,
+  MessageCircle,
   Menu,
   X,
   Sprout,
+  Sun,
+  Droplets,
+  Wind,
+  TrendingUp,
+  Calendar,
   LogOut,
-  Plus,
+  Phone,
+  Users,
+  UserCheck,
   Edit,
-  Trash2
+  Trash2,
+  Plus,
+  Mail,
+  MapPin,
+  Settings,
+  CheckCircle,
+  AlertCircle,
+  ChevronDown,
+  ArrowRight,
+  CreditCard
 } from 'lucide-react';
-import { RoleSwitcher } from "../RoleSwitcher.jsx"; 
-import { logout } from "../../utils/firebase";
-import './farmerDashboard.css';
+import { RoleSwitcher } from "../RoleSwitcher.jsx";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "./InputOTP";
+import { farmerDashbord } from './farmerDashboard.css'
 
 import tomatoImg from "./images/products/tomato.png";
 import riceImg from "./images/products/rice.png";
@@ -18,13 +40,34 @@ import beansImg from "./images/products/beans.jpg";
 import carrotsImg from "./images/products/carrots.png";
 import cornImg from "./images/products/corn.png";
 import cucumberImg from "./images/products/cucumber.png";
+import tractorImg from "./images/products/tractor.png";
+import cultivatorImg from "./images/products/cultivator.png";
+import harvestorImg from "./images/products/harvestor.png";
+import seederImg from "./images/products/seeder.png";
+import sprayerImg from "./images/products/sprayer.png";
+import fertilizerImg from "./images/products/fertilizer.png";
+import pesticideImg from "./images/products/pesticide.png";
+import riceSeedsImg from "./images/products/riceseeds.png";
+import dieselImg from "./images/products/diesel.png";
+import storageBagImg from "./images/products/storagebag.png";
+import handtoolImg from "./images/products/handtool.png";
+import irrigationPumpImg from "./images/products/irrigation pump.png";
+import hnbImg from "./images/products/HNB.png";
+import bocImg from "./images/products/boc.png";
+import peoplesImg from "./images/products/peoples.png";
+
+import dashboardIcon from "./images/products/dashboard.png";
+import moneyIcon from "./images/products/money.png";
+import weatherIcon from "./images/products/weather.png";
+import chatbotIcon from "./images/products/chatbot.png";
+import settingsIcon from "./images/products/settings.png";
+import trendingUpIcon from "./images/products/money.png";
 
 export function FarmerDashboard({ onNavigate }) {
-  // State for navigation and sidebar
   const [activeNav, setActiveNav] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // --- NEW IN STEP 3: State for Products ---
+  // State for products
   const [products, setProducts] = useState([
     { id: 1, image: tomatoImg, name: 'Fresh Tomatoes', quantity: '50', price: '150', status: 'In Stock' },
     { id: 2, image: riceImg, name: 'Organic Rice', quantity: '200', price: '180', status: 'In Stock' },
@@ -34,19 +77,272 @@ export function FarmerDashboard({ onNavigate }) {
     { id: 6, image: cucumberImg, name: 'Cucumber', quantity: '25', price: '80', status: 'Low Stock' },
   ]);
 
+  // State for equipment (farmer's own equipment for rent)
+  const [myEquipment, setMyEquipment] = useState([
+    { id: 1, image: tractorImg, name: 'Tractor', price: '5000', available: true },
+    { id: 2, image: sprayerImg, name: 'Sprayer', price: '2500', available: true },
+  ]);
+
+  // State for rented equipment from others
+  const [rentedEquipment, setRentedEquipment] = useState([]);
+
+  // State for rental income (money earned from renting out equipment)
+  const [rentalIncome, setRentalIncome] = useState([
+    { id: 1, equipment: 'Modern Tractor', image: tractorImg, days: 3, pricePerDay: 5000, total: 15000, date: '2026-02-18', renter: 'Kumar Farm' },
+    { id: 2, equipment: 'Crop Sprayer', image: sprayerImg, days: 2, pricePerDay: 2500, total: 5000, date: '2026-02-15', renter: 'Silva Agro' },
+    { id: 3, equipment: 'Modern Tractor', image: tractorImg, days: 5, pricePerDay: 5000, total: 25000, date: '2026-02-10', renter: 'Green Fields' },
+  ]);
+
+  // State for rental expenses (money spent renting equipment from others)
+  const [rentalExpenses, setRentalExpenses] = useState([
+    { id: 1, equipment: 'Combine Harvester', image: harvestorImg, days: 2, pricePerDay: 8000, total: 16000, date: '2026-02-22', owner: 'Rajith Equipment' },
+    { id: 2, equipment: 'Power Cultivator', image: cultivatorImg, days: 1, pricePerDay: 3500, total: 3500, date: '2026-02-19', owner: 'Agro Rentals' },
+  ]);
+
+  // State for sales
+  const [sales, setSales] = useState([
+    { id: 1, product: 'Fresh Tomatoes', image: tomatoImg, quantity: '50 kg', price: 150, total: 7500, date: '2026-02-20', customer: 'Perera Stores' },
+    { id: 2, product: 'Organic Rice', image: riceImg, quantity: '100 kg', price: 180, total: 18000, date: '2026-02-19', customer: 'Green Market' },
+    { id: 3, product: 'Carrots', image: carrotsImg, quantity: '30 kg', price: 100, total: 3000, date: '2026-02-18', customer: 'Fresh Foods' },
+    { id: 4, product: 'Sweet Corn', image: cornImg, quantity: '40 kg', price: 90, total: 3600, date: '2026-02-17', customer: 'Organic Mart' },
+    { id: 5, product: 'Green Beans', image: beansImg, quantity: '20 kg', price: 120, total: 2400, date: '2026-02-16', customer: 'Perera Stores' },
+    { id: 6, product: 'Fresh Tomatoes', image: tomatoImg, quantity: '70 kg', price: 150, total: 10500, date: '2026-02-15', customer: 'Green Market' },
+  ]);
+
+  // State for orders
+  const [orders, setOrders] = useState([
+    { id: 1, product: 'Fresh Tomatoes', image: tomatoImg, quantity: '100 kg', customer: 'Perera Stores', phone: '077-567-8901', status: 'Pending', date: '2026-02-24' },
+    { id: 2, product: 'Organic Rice', image: riceImg, quantity: '150 kg', customer: 'Green Market', phone: '071-678-9012', status: 'Pending', date: '2026-02-24' },
+    { id: 3, product: 'Carrots', image: carrotsImg, quantity: '50 kg', customer: 'Fresh Foods', phone: '076-789-0123', status: 'Processing', date: '2026-02-23' },
+    { id: 4, product: 'Sweet Corn', image: cornImg, quantity: '80 kg', customer: 'Organic Mart', phone: '077-890-1234', status: 'Pending', date: '2026-02-23' },
+    { id: 5, product: 'Green Beans', image: beansImg, quantity: '40 kg', customer: 'Perera Stores', phone: '077-567-8901', status: 'Processing', date: '2026-02-22' },
+  ]);
+
+  // State for inventory
+  const [inventory, setInventory] = useState([
+    { id: 1, image: riceSeedsImg, name: 'Rice Seeds', quantity: '500 kg', status: 'In Stock' },
+    { id: 2, image: fertilizerImg, name: 'Fertilizer', quantity: '200 kg', status: 'Low Stock' },
+    { id: 3, image: pesticideImg, name: 'Pesticide', quantity: '50 L', status: 'In Stock' },
+    { id: 4, image: handtoolImg, name: 'Hand Tools', quantity: '15 pcs', status: 'In Stock' },
+    { id: 5, image: dieselImg, name: 'Diesel', quantity: '100 L', status: 'Low Stock' },
+    { id: 6, image: storageBagImg, name: 'Storage Bags', quantity: '200 pcs', status: 'In Stock' },
+  ]);
+
+  // State for available loans from banks
+  const [availableLoans] = useState([
+    {
+      id: 1,
+      bankName: 'Bank of Ceylon',
+      bankLogo: bocImg,
+      loanType: 'Agriculture Loan',
+      amount: '500,000 - 5,000,000',
+      interestRate: '8.5%',
+      duration: '1-5 years',
+      requirements: ['Land ownership proof', 'NIC', 'Income certificate'],
+      phone: '011-244-6000',
+      description: 'Low interest loan for farming activities'
+    },
+    {
+      id: 2,
+      bankName: 'People\'s Bank',
+      bankLogo: peoplesImg,
+      loanType: 'Crop Production Loan',
+      amount: '100,000 - 2,000,000',
+      interestRate: '7.5%',
+      duration: '6 months - 2 years',
+      requirements: ['Farmer registration', 'NIC', 'Guarantor'],
+      phone: '011-221-3010',
+      description: 'Special loan for crop cultivation'
+    },
+    {
+      id: 3,
+      bankName: 'Sampath Bank',
+      bankLogo: bocImg,
+      loanType: 'Equipment Purchase Loan',
+      amount: '1,000,000 - 10,000,000',
+      interestRate: '9.0%',
+      duration: '2-7 years',
+      requirements: ['Business plan', 'NIC', 'Asset proof'],
+      phone: '011-230-0260',
+      description: 'Buy tractors and farming equipment'
+    },
+    {
+      id: 4,
+      bankName: 'Commercial Bank',
+      bankLogo: bocImg,
+      loanType: 'Agro Micro Finance',
+      amount: '50,000 - 500,000',
+      interestRate: '10.0%',
+      duration: '3 months - 1 year',
+      requirements: ['NIC', 'Address proof'],
+      phone: '011-523-5000',
+      description: 'Quick small loans for immediate needs'
+    },
+    {
+      id: 5,
+      bankName: 'Hatton National Bank',
+      bankLogo: hnbImg,
+      loanType: 'Livestock Development Loan',
+      amount: '300,000 - 3,000,000',
+      interestRate: '8.0%',
+      duration: '1-4 years',
+      requirements: ['Veterinary certificate', 'NIC', 'Land proof'],
+      phone: '011-266-0000',
+      description: 'Special loan for livestock farming'
+    },
+    {
+      id: 6,
+      bankName: 'National Savings Bank',
+      bankLogo: hnbImg,
+      loanType: 'Organic Farming Loan',
+      amount: '200,000 - 1,500,000',
+      interestRate: '7.0%',
+      duration: '1-3 years',
+      requirements: ['Organic certification', 'NIC', 'Land documents'],
+      phone: '011-244-2000',
+      description: 'Lower rates for organic farmers'
+    }
+  ]);
+
+  // State for active loans (loans farmer has taken)
+  const [activeLoans] = useState([
+    {
+      id: 1,
+      bankName: 'Bank of Ceylon',
+      bankLogo: bocImg,
+      loanType: 'Agriculture Loan',
+      amount: 2000000,
+      borrowed: 2000000,
+      paid: 800000,
+      remaining: 1200000,
+      interestRate: '8.5%',
+      monthlyPayment: 50000,
+      nextPayment: '2026-03-05',
+      startDate: '2025-06-01',
+      endDate: '2028-06-01',
+      status: 'Active'
+    },
+    {
+      id: 2,
+      bankName: 'People\'s Bank',
+      bankLogo: peoplesImg,
+      loanType: 'Crop Production Loan',
+      amount: 500000,
+      borrowed: 500000,
+      paid: 400000,
+      remaining: 100000,
+      interestRate: '7.5%',
+      monthlyPayment: 25000,
+      nextPayment: '2026-03-10',
+      startDate: '2025-01-15',
+      endDate: '2026-07-15',
+      status: 'Active'
+    }
+  ]);
+
   // State for modals
   const [editingProduct, setEditingProduct] = useState(null);
+  const [editingInventory, setEditingInventory] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [deleteInventoryConfirm, setDeleteInventoryConfirm] = useState(null);
+  const [deleteEquipmentConfirm, setDeleteEquipmentConfirm] = useState(null);
   const [showAddProduct, setShowAddProduct] = useState(false);
+  const [showAddEquipment, setShowAddEquipment] = useState(false);
+  const [showAddInventory, setShowAddInventory] = useState(false);
+  const [rentConfirm, setRentConfirm] = useState(null);
+  const [rentQuantity, setRentQuantity] = useState(1);
+  const [rentDays, setRentDays] = useState(1);
 
   // New product form state
   const [newProduct, setNewProduct] = useState({
-    image: null,
     name: '',
     quantity: '',
     price: '',
     status: 'In Stock'
   });
+
+  // New equipment form state
+  const [newEquipment, setNewEquipment] = useState({
+    image: tractorImg,
+    name: '',
+    price: ''
+  });
+
+  // New inventory form state
+  const [newInventoryItem, setNewInventoryItem] = useState({
+    image: storageBagImg,
+    name: '',
+    quantity: '',
+    status: 'In Stock'
+  });
+
+  // Password change state
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordErrors, setPasswordErrors] = useState([]);
+
+  // Password validation function
+  const validatePassword = (password) => {
+    const errors = [];
+
+    if (password.length < 8) {
+      errors.push('Password must be more than 8 characters');
+    }
+
+    const invalidChars = ['<', '>', '{', '}', '[', ']', '|', '\\', '^', '~', '`'];
+    const foundInvalidChars = invalidChars.filter(char => password.includes(char));
+    if (foundInvalidChars.length > 0) {
+      errors.push(`Cannot use: ${foundInvalidChars.join(' ')}`);
+    }
+
+    if (!/\d/.test(password)) {
+      errors.push('Must have at least one number (0-9)');
+    }
+
+    if (!/[a-zA-Z]/.test(password)) {
+      errors.push('Must have at least one letter (a-z)');
+    }
+
+    return errors;
+  };
+
+  // Handle password change
+  const handlePasswordChange = (password) => {
+    setNewPassword(password);
+    if (password.length > 0) {
+      const errors = validatePassword(password);
+      setPasswordErrors(errors);
+    } else {
+      setPasswordErrors([]);
+    }
+  };
+
+  // Handle password update
+  const handleUpdatePassword = () => {
+    if (!currentPassword) {
+      alert('❌ Please enter your current password');
+      return;
+    }
+
+    const errors = validatePassword(newPassword);
+    if (errors.length > 0) {
+      alert('❌ Please fix password errors:\n\n' + errors.join('\n'));
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      alert('❌ New passwords do not match');
+      return;
+    }
+
+    // In real app, verify current password and update
+    alert('✅ Password updated successfully!');
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setPasswordErrors([]);
+  };
 
   // Handlers for products
   const handleEditProduct = (product) => {
@@ -54,7 +350,7 @@ export function FarmerDashboard({ onNavigate }) {
   };
 
   const handleSaveProduct = () => {
-    setProducts(products.map(p => 
+    setProducts(products.map(p =>
       p.id === editingProduct.id ? editingProduct : p
     ));
     setEditingProduct(null);
@@ -72,46 +368,131 @@ export function FarmerDashboard({ onNavigate }) {
         ...newProduct
       };
       setProducts([...products, product]);
-      setNewProduct({ image: null, name: '', quantity: '', price: '', status: 'In Stock' });
+      setNewProduct({ name: '', quantity: '', price: '', status: 'In Stock' });
       setShowAddProduct(false);
     }
   };
-  // ------------------------------------------
+
+  // Handlers for equipment
+  const handleDeleteEquipment = (id) => {
+    setMyEquipment(myEquipment.map(eq =>
+      eq.id === id ? { ...eq, available: !eq.available } : eq
+    ));
+    setDeleteEquipmentConfirm(null);
+  };
+
+  const handleAddEquipment = () => {
+    if (newEquipment.name && newEquipment.price) {
+      const equipment = {
+        id: Date.now(),
+        ...newEquipment,
+        available: true
+      };
+      setMyEquipment([...myEquipment, equipment]);
+      setNewEquipment({ emoji: '🚜', name: '', price: '' });
+      setShowAddEquipment(false);
+    }
+  };
+
+  const handleRentConfirm = () => {
+    if (!rentConfirm) return;
+    const rental = {
+      id: Date.now(),
+      ...rentConfirm,
+      quantity: rentQuantity,
+      days: rentDays,
+      total: rentConfirm.price * rentQuantity * rentDays,
+      rentalDate: new Date().toISOString().split('T')[0]
+    };
+    setRentedEquipment([...rentedEquipment, rental]);
+    setRentConfirm(null);
+    setRentQuantity(1);
+    setRentDays(1);
+  };
+
+  // Handlers for inventory
+  const handleEditInventory = (item) => {
+    setEditingInventory({ ...item });
+  };
+
+  const handleSaveInventory = () => {
+    setInventory(inventory.map(i =>
+      i.id === editingInventory.id ? editingInventory : i
+    ));
+    setEditingInventory(null);
+  };
+
+  const handleDeleteInventory = (id) => {
+    setInventory(inventory.filter(i => i.id !== id));
+    setDeleteInventoryConfirm(null);
+  };
+
+  const handleAddInventory = () => {
+    if (newInventoryItem.name && newInventoryItem.quantity) {
+      const item = {
+        id: Date.now(),
+        ...newInventoryItem
+      };
+      setInventory([...inventory, item]);
+      setNewInventoryItem({ emoji: '📦', name: '', quantity: '', status: 'In Stock' });
+      setShowAddInventory(false);
+    }
+  };
+
+  // Navigation handler for quick stats
+  const handleQuickNavigation = (nav) => {
+    setActiveNav(nav);
+    setSidebarOpen(false);
+  };
 
   // Render different content based on active nav
   const renderContent = () => {
     switch (activeNav) {
       case 'dashboard':
-        return <div className="p-8 text-center text-2xl text-gray-500">Dashboard Content Area</div>;
+        return <DashboardContent onNavigate={handleQuickNavigation} products={products} rentedEquipment={rentedEquipment} sales={sales} orders={orders} rentalIncome={rentalIncome} rentalExpenses={rentalExpenses} />;
       case 'products':
-        return <MyProductsContent 
+        return <MyProductsContent
           products={products}
           onAddClick={() => setShowAddProduct(true)}
           onEdit={handleEditProduct}
           onDelete={(id) => setDeleteConfirm(id)}
         />;
       case 'sales':
-        return <div className="p-8 text-center text-2xl text-gray-500">Sales & Income Content Area</div>;
+        return <SalesContent sales={sales} rentalIncome={rentalIncome} />;
       case 'expenses':
-        return <div className="p-8 text-center text-2xl text-gray-500">Expenses Content Area</div>;
-      case 'orders':
-        return <div className="p-8 text-center text-2xl text-gray-500">Orders Content Area</div>;
-      case 'contacts':
-        return <div className="p-8 text-center text-2xl text-gray-500">Contacts Content Area</div>;
+        return <ExpensesContent rentalExpenses={rentalExpenses} />;
       case 'loans':
-        return <div className="p-8 text-center text-2xl text-gray-500">Bank Loans Content Area</div>;
+        return <LoansContent availableLoans={availableLoans} activeLoans={activeLoans} />;
+      case 'orders':
+        return <OrdersContent orders={orders} />;
+      case 'contacts':
+        return <ContactsContent />;
       case 'equipment':
-        return <div className="p-8 text-center text-2xl text-gray-500">Equipment Content Area</div>;
+        return <EquipmentContent
+          myEquipment={myEquipment}
+          onAddClick={() => setShowAddEquipment(true)}
+          onDeleteEquipment={(id) => setDeleteEquipmentConfirm(id)}
+          onRentClick={(eq) => {
+            setRentConfirm(eq);
+            setRentQuantity(1);
+            setRentDays(1);
+          }}
+        />;
       case 'weather':
-        return <div className="p-8 text-center text-2xl text-gray-500">Weather Forecast Content Area</div>;
+        return <WeatherContent />;
       case 'inventory':
-        return <div className="p-8 text-center text-2xl text-gray-500">Inventory Content Area</div>;
+        return <InventoryContent
+          inventory={inventory}
+          onAddClick={() => setShowAddInventory(true)}
+          onEdit={handleEditInventory}
+          onDelete={(id) => setDeleteInventoryConfirm(id)}
+        />;
       case 'chatbot':
-        return <div className="p-8 text-center text-2xl text-gray-500">Chatbot Assistant Area</div>;
+        return <ChatbotContent />;
       case 'settings':
-        return <div className="p-8 text-center text-2xl text-gray-500">Settings & Profile Area</div>;
+        return <SettingsContent />;
       default:
-        return <div className="p-8 text-center text-2xl text-gray-500">Content Not Found</div>;
+        return <DashboardContent onNavigate={handleQuickNavigation} products={products} rentedEquipment={rentedEquipment} sales={sales} orders={orders} rentalIncome={rentalIncome} rentalExpenses={rentalExpenses} />;
     }
   };
 
@@ -140,20 +521,20 @@ export function FarmerDashboard({ onNavigate }) {
 
       {/* Overlay - Click to close sidebar */}
       {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar - Hidden by default on mobile, always accessible via menu */}
+      {/* Sidebar - Hidden by default, shows on menu click */}
       <aside className={`
         fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-green-200
         transform transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="h-full flex flex-col">
-          {/* Logo Details in Sidebar */}
+          {/* Logo */}
           <div className="flex items-center gap-2 p-6 border-b border-green-200">
             <div className="bg-primary rounded-lg p-2">
               <Sprout className="w-6 h-6 text-white" />
@@ -164,15 +545,15 @@ export function FarmerDashboard({ onNavigate }) {
             </div>
           </div>
 
-          {/* Navigation Links */}
+          {/* Navigation */}
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
             <NavButton
               icon="🏠"
-              label="Dashboard"
+              label="dashboard"
               active={activeNav === 'dashboard'}
               onClick={() => {
                 setActiveNav('dashboard');
-                if (window.innerWidth < 1024) setSidebarOpen(false);
+                setSidebarOpen(false);
               }}
             />
             <NavButton
@@ -181,7 +562,7 @@ export function FarmerDashboard({ onNavigate }) {
               active={activeNav === 'products'}
               onClick={() => {
                 setActiveNav('products');
-                if (window.innerWidth < 1024) setSidebarOpen(false);
+                setSidebarOpen(false);
               }}
             />
             <NavButton
@@ -190,7 +571,7 @@ export function FarmerDashboard({ onNavigate }) {
               active={activeNav === 'sales'}
               onClick={() => {
                 setActiveNav('sales');
-                if (window.innerWidth < 1024) setSidebarOpen(false);
+                setSidebarOpen(false);
               }}
             />
             <NavButton
@@ -199,7 +580,7 @@ export function FarmerDashboard({ onNavigate }) {
               active={activeNav === 'expenses'}
               onClick={() => {
                 setActiveNav('expenses');
-                if (window.innerWidth < 1024) setSidebarOpen(false);
+                setSidebarOpen(false);
               }}
             />
             <NavButton
@@ -208,7 +589,7 @@ export function FarmerDashboard({ onNavigate }) {
               active={activeNav === 'orders'}
               onClick={() => {
                 setActiveNav('orders');
-                if (window.innerWidth < 1024) setSidebarOpen(false);
+                setSidebarOpen(false);
               }}
             />
             <NavButton
@@ -217,7 +598,7 @@ export function FarmerDashboard({ onNavigate }) {
               active={activeNav === 'contacts'}
               onClick={() => {
                 setActiveNav('contacts');
-                if (window.innerWidth < 1024) setSidebarOpen(false);
+                setSidebarOpen(false);
               }}
             />
             <NavButton
@@ -226,7 +607,7 @@ export function FarmerDashboard({ onNavigate }) {
               active={activeNav === 'loans'}
               onClick={() => {
                 setActiveNav('loans');
-                if (window.innerWidth < 1024) setSidebarOpen(false);
+                setSidebarOpen(false);
               }}
             />
             <NavButton
@@ -235,16 +616,16 @@ export function FarmerDashboard({ onNavigate }) {
               active={activeNav === 'equipment'}
               onClick={() => {
                 setActiveNav('equipment');
-                if (window.innerWidth < 1024) setSidebarOpen(false);
+                setSidebarOpen(false);
               }}
             />
             <NavButton
-              icon="🌦️"
+              icon="⛅"
               label="Weather"
               active={activeNav === 'weather'}
               onClick={() => {
                 setActiveNav('weather');
-                if (window.innerWidth < 1024) setSidebarOpen(false);
+                setSidebarOpen(false);
               }}
             />
             <NavButton
@@ -253,7 +634,7 @@ export function FarmerDashboard({ onNavigate }) {
               active={activeNav === 'inventory'}
               onClick={() => {
                 setActiveNav('inventory');
-                if (window.innerWidth < 1024) setSidebarOpen(false);
+                setSidebarOpen(false);
               }}
             />
             <NavButton
@@ -262,46 +643,53 @@ export function FarmerDashboard({ onNavigate }) {
               active={activeNav === 'chatbot'}
               onClick={() => {
                 setActiveNav('chatbot');
-                if (window.innerWidth < 1024) setSidebarOpen(false);
+                setSidebarOpen(false);
               }}
             />
           </nav>
 
-          {/* User Info & Logout at bottom of sidebar */}
+          {/* User Info & Logout */}
           <div className="p-4 border-t border-green-200">
-            <div className="w-full bg-green-50 rounded-lg p-3 mb-3 text-left">
-              <p className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <span>👨‍🌾</span>
-                <span>{localStorage.getItem('userName') || 'Farmer'}</span>
-              </p>
-              <p className="text-xs text-muted-foreground truncate">{localStorage.getItem('userEmail') || 'farmer@nagroms.local'}</p>
-              <button 
-                onClick={() => { setActiveNav('settings'); setSidebarOpen(false); }}
-                className="text-xs text-primary mt-1 hover:underline block"
-              >
-                ⚙️ View settings
-              </button>
-            </div>
-            
             <button
-              onClick={() => { logout(); onNavigate('landing'); }}
-              className="w-full flex items-center gap-2 py-2 text-muted-foreground hover:text-primary transition-colors"
+              onClick={() => {
+                setActiveNav('settings');
+                setSidebarOpen(false);
+              }}
+              className="w-full bg-green-50 rounded-xl p-4 mb-3 hover:bg-green-100 transition-all text-left shadow-sm hover:shadow-md border border-green-100"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full border-2 border-primary flex items-center justify-center bg-white">
+                  <img src={peoplesImg} alt="" className="w-8 h-8 object-contain" />
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  <p className="text-sm font-bold text-foreground truncate">Sunil Perera</p>
+                  <p className="text-xs text-muted-foreground truncate">farmer@example.com</p>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center gap-2 text-xs text-primary font-bold bg-white/50 px-2 py-1 rounded-lg">
+                <img src={settingsIcon} alt="" className="w-4 h-4 object-contain" />
+                <span>Settings & Profile</span>
+              </div>
+            </button>
+            <button
+              onClick={() => onNavigate('landing')}
+              className="w-full flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
             >
               <LogOut className="w-4 h-4" />
-              <span className="text-sm font-medium">Logout</span>
+              <span className="text-sm">Logout</span>
             </button>
           </div>
         </div>
       </aside>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <main className="min-h-screen">
         <div className="p-4 lg:p-8">
           {renderContent()}
         </div>
       </main>
 
-      {/* --- NEW IN STEP 3: Modals for Products --- */}
+      {/* Delete Product Confirmation Dialog */}
       {deleteConfirm && (
         <ConfirmDialog
           title="Delete Product?"
@@ -311,6 +699,27 @@ export function FarmerDashboard({ onNavigate }) {
         />
       )}
 
+      {/* Delete Inventory Confirmation Dialog */}
+      {deleteInventoryConfirm && (
+        <ConfirmDialog
+          title="Remove Item?"
+          message="Are you sure you want to remove this item from inventory?"
+          onConfirm={() => handleDeleteInventory(deleteInventoryConfirm)}
+          onCancel={() => setDeleteInventoryConfirm(null)}
+        />
+      )}
+
+      {/* Delete Equipment Confirmation Dialog */}
+      {deleteEquipmentConfirm && (
+        <ConfirmDialog
+          title="Toggle Equipment Status?"
+          message="Do you want to change the availability status of this equipment?"
+          onConfirm={() => handleDeleteEquipment(deleteEquipmentConfirm)}
+          onCancel={() => setDeleteEquipmentConfirm(null)}
+        />
+      )}
+
+      {/* Edit Product Modal */}
       {editingProduct && (
         <EditProductModal
           product={editingProduct}
@@ -320,6 +729,17 @@ export function FarmerDashboard({ onNavigate }) {
         />
       )}
 
+      {/* Edit Inventory Modal */}
+      {editingInventory && (
+        <EditInventoryModal
+          item={editingInventory}
+          onChange={(field, value) => setEditingInventory({ ...editingInventory, [field]: value })}
+          onSave={handleSaveInventory}
+          onCancel={() => setEditingInventory(null)}
+        />
+      )}
+
+      {/* Add Product Modal */}
       {showAddProduct && (
         <AddProductModal
           product={newProduct}
@@ -328,13 +748,43 @@ export function FarmerDashboard({ onNavigate }) {
           onCancel={() => setShowAddProduct(false)}
         />
       )}
-      {/* ------------------------------------------- */}
 
+      {/* Add Equipment Modal */}
+      {showAddEquipment && (
+        <AddEquipmentModal
+          equipment={newEquipment}
+          onChange={(field, value) => setNewEquipment({ ...newEquipment, [field]: value })}
+          onSave={handleAddEquipment}
+          onCancel={() => setShowAddEquipment(false)}
+        />
+      )}
+
+      {/* Add Inventory Modal */}
+      {showAddInventory && (
+        <AddInventoryModal
+          item={newInventoryItem}
+          onChange={(field, value) => setNewInventoryItem({ ...newInventoryItem, [field]: value })}
+          onSave={handleAddInventory}
+          onCancel={() => setShowAddInventory(false)}
+        />
+      )}
+
+      {/* Rent Equipment Modal - NEW */}
+      {rentConfirm && (
+        <RentEquipmentModal
+          equipment={rentConfirm}
+          quantity={rentQuantity}
+          days={rentDays}
+          onQuantityChange={setRentQuantity}
+          onDaysChange={setRentDays}
+          onConfirm={handleRentConfirm}
+          onCancel={() => setRentConfirm(null)}
+        />
+      )}
     </div>
   );
 }
 
-// Navigation Button Component
 function NavButton({ icon, label, active, onClick }) {
   return (
     <button
@@ -342,20 +792,596 @@ function NavButton({ icon, label, active, onClick }) {
       onClick={onClick}
       className={`
         w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
-        ${active 
-          ? 'bg-primary text-white shadow-md' 
-          : 'bg-white text-gray-700 hover:bg-green-50 hover:text-primary border border-gray-100 hover:border-green-200'
+        ${active
+          ? 'bg-primary text-white'
+          : 'bg-white text-gray-700 hover:bg-green-50 hover:text-primary border border-gray-200'
         }
       `}
     >
-      <span className="text-2xl">{icon}</span>
+      <span className="w-8 h-8 flex items-center justify-center">
+        {typeof icon === 'string' && icon.length <= 4 ? (
+          <span className="text-2xl">{icon}</span>
+        ) : (
+          <img src={icon} alt="" className="w-8 h-8 object-contain" />
+        )}
+      </span>
       <span className="text-base font-medium">{label}</span>
     </button>
   );
 }
 
-// --- NEW IN STEP 3: My Products Sub-Components ---
+// Dashboard Content
+function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders, rentalIncome, rentalExpenses }) {
+  const [showMoneyModal, setShowMoneyModal] = useState(null); // 'in', 'out', or null
 
+  // Calculate actual counts
+  const productCount = products.length;
+  const rentedEquipmentCount = rentedEquipment.length;
+  const salesTotal = sales.reduce((total, sale) => total + sale.total, 0);
+  const rentalIncomeTotal = rentalIncome.reduce((total, rental) => total + rental.total, 0);
+  const rentalExpensesTotal = rentalExpenses.reduce((total, expense) => total + expense.total, 0);
+  const totalIncome = salesTotal + rentalIncomeTotal;
+  const netProfit = totalIncome - rentalExpensesTotal;
+  const pendingOrdersCount = orders.filter(order => order.status === 'Pending').length;
+
+  return (
+    <div className="space-y-6">
+      {/* Welcome Banner with Image */}
+      <div className="bg-gradient-to-r from-green-600 to-green-500 rounded-2xl p-8 text-white">
+        <h1 className="text-3xl mb-2 flex items-center gap-3">
+          <img src={riceImg} alt="" className="w-10 h-10 object-contain brightness-0 invert" />
+          Welcome Back, Sunil!
+        </h1>
+        <p className="text-green-100 text-lg">Your farm is growing well today</p>
+      </div>
+
+      {/* Quick Action Cards - Visual */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <QuickActionCard
+          icon={riceImg}
+          title="My Products"
+          subtitle={`${productCount} Items`}
+          color="bg-green-100"
+          onClick={() => onNavigate('products')}
+        />
+        <QuickActionCard
+          icon={hnbImg}
+          title="Total Income"
+          subtitle={`LKR ${totalIncome.toLocaleString()}`}
+          color="bg-blue-100"
+          onClick={() => onNavigate('sales')}
+        />
+        <QuickActionCard
+          icon={dieselImg}
+          title="Expenses"
+          subtitle={`LKR ${rentalExpensesTotal.toLocaleString()}`}
+          color="bg-red-100"
+          onClick={() => onNavigate('expenses')}
+        />
+        <QuickActionCard
+          icon={storageBagImg}
+          title="Orders"
+          subtitle={`${pendingOrdersCount} Pending`}
+          color="bg-purple-100"
+          onClick={() => onNavigate('orders')}
+        />
+      </div>
+
+      {/* Financial Summary - New Section */}
+      <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl p-6 border-2 border-green-200">
+        <div className="flex items-center gap-3 mb-6">
+          <img src={moneyIcon} alt="" className="w-12 h-12 object-contain" />
+          <h2 className="text-2xl text-primary font-bold">Money Summary</h2>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-4">
+          {/* Total Income */}
+          <button
+            onClick={() => setShowMoneyModal('in')}
+            className="bg-white rounded-xl p-5 border-l-4 border-green-500 shadow-md hover:shadow-xl transition-all text-left cursor-pointer hover:scale-105"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <img src={trendingUpIcon || riceImg} alt="" className="w-6 h-6 object-contain" />
+              <h3 className="text-lg text-muted-foreground">Money In</h3>
+            </div>
+            <p className="text-3xl text-green-600 font-bold mb-3">
+              +LKR {totalIncome.toLocaleString()}
+            </p>
+            <div className="space-y-1 border-t border-gray-200 pt-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground flex items-center gap-1">
+                  <img src={riceImg} alt="" className="w-4 h-4 object-contain" /> Product Sales:
+                </span>
+                <span className="text-foreground font-bold">LKR {salesTotal.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground flex items-center gap-1">
+                  <img src={tractorImg} alt="" className="w-4 h-4 object-contain" /> Rental Income:
+                </span>
+                <span className="text-foreground font-bold">LKR {rentalIncomeTotal.toLocaleString()}</span>
+              </div>
+            </div>
+            <p className="text-sm text-green-500 mt-3">👆 Click for details</p>
+          </button>
+
+          {/* Total Expenses */}
+          <button
+            onClick={() => setShowMoneyModal('out')}
+            className="bg-white rounded-xl p-5 border-l-4 border-red-500 shadow-md hover:shadow-xl transition-all text-left cursor-pointer hover:scale-105"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <img src={dieselImg} alt="" className="w-6 h-6 object-contain" />
+              <h3 className="text-lg text-muted-foreground">Money Out</h3>
+            </div>
+            <p className="text-3xl text-red-600 font-bold mb-3">
+              -LKR {rentalExpensesTotal.toLocaleString()}
+            </p>
+            <div className="space-y-1 border-t border-gray-200 pt-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground flex items-center gap-1">
+                  <img src={sprayerImg} alt="" className="w-4 h-4 object-contain" /> Equipment Rental:
+                </span>
+                <span className="text-foreground font-bold">LKR {rentalExpensesTotal.toLocaleString()}</span>
+              </div>
+            </div>
+            <p className="text-sm text-red-500 mt-3">👆 Click for details</p>
+          </button>
+
+          {/* Net Profit */}
+          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-5 shadow-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-3xl">💎</span>
+              <h3 className="text-lg text-white">Net Profit</h3>
+            </div>
+            <p className="text-4xl text-white font-bold mb-3">
+              LKR {netProfit.toLocaleString()}
+            </p>
+            <div className="bg-white/20 rounded-lg px-3 py-2">
+              <p className="text-white text-sm">
+                {netProfit > 0 ? '✅ Profit!' : '⚠️ Loss'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Real-time Product Overview & Recent Activity */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* My Products Overview - Real-time */}
+        <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <span className="text-4xl">🌾</span>
+            <h2 className="text-2xl text-primary">My Products Overview</h2>
+          </div>
+
+          {/* Low Stock Alerts */}
+          {products.filter(p => parseInt(p.quantity) <= 150).length > 0 && (
+            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg mb-4">
+              <p className="text-yellow-900 text-lg font-bold mb-2">
+                ⚠️ Low Stock Alert!
+              </p>
+              {products.filter(p => parseInt(p.quantity) <= 150).map(p => (
+                <p key={p.id} className="text-yellow-800 text-md">
+                  {p.emoji} {p.name}: Only {p.quantity} kg left (Need {150 - parseInt(p.quantity)} kg more)
+                </p>
+              ))}
+            </div>
+          )}
+
+          {/* Product Summary */}
+          <div className="space-y-3">
+            {products.slice(0, 4).map(product => {
+              const qty = parseInt(product.quantity) || 0;
+              const stockStatus = qty > 150 ? 'In Stock' : 'Low Stock';
+
+              return (
+                <div key={product.id} className="flex items-center justify-between bg-green-50 rounded-lg p-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">{product.emoji}</span>
+                    <div>
+                      <p className="text-lg text-foreground">{product.name}</p>
+                      <span className={`text-xs px-2 py-1 rounded-full ${stockStatus === 'Low Stock'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-green-100 text-green-800'
+                        }`}>
+                        {stockStatus}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg text-foreground font-bold">{product.quantity} kg</p>
+                    <p className="text-sm text-primary">LKR {product.price}/kg</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {products.length > 4 && (
+            <button
+              onClick={() => onNavigate('products')}
+              className="mt-4 w-full py-2 text-primary hover:bg-green-50 rounded-lg transition-colors"
+            >
+              View All {products.length} Products →
+            </button>
+          )}
+        </div>
+
+        {/* Recent Sales & Orders - Real-time */}
+        <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <img src={moneyIcon} alt="" className="w-10 h-10 object-contain" />
+            <h2 className="text-2xl text-primary font-bold">Recent Activity</h2>
+          </div>
+
+          {/* Recent Sales */}
+          <div className="mb-6">
+            <h3 className="text-lg text-foreground font-bold mb-3">Latest Sales</h3>
+            <div className="space-y-2">
+              {sales.slice(0, 3).map(sale => (
+                <div key={sale.id} className="flex items-center justify-between bg-blue-50 rounded-lg p-3">
+                  <div className="flex items-center gap-2">
+                    <img src={sale.image} alt="" className="w-10 h-10 object-contain" />
+                    <div>
+                      <p className="text-sm text-foreground">{sale.product}</p>
+                      <p className="text-xs text-muted-foreground">{sale.customer}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-primary font-bold">+LKR {sale.total.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">{sale.date}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Pending Orders */}
+          <div>
+            <h3 className="text-lg text-foreground font-bold mb-3">Pending Orders</h3>
+            <div className="space-y-2">
+              {orders.filter(o => o.status === 'Pending').slice(0, 3).map(order => (
+                <div key={order.id} className="flex items-center justify-between bg-purple-50 rounded-lg p-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{order.product.split(' ')[0]}</span>
+                    <div>
+                      <p className="text-sm text-foreground">{order.quantity}</p>
+                      <p className="text-xs text-muted-foreground">{order.customer}</p>
+                    </div>
+                  </div>
+                  <a
+                    href={`tel:${order.phone}`}
+                    className="px-3 py-1 bg-primary text-white rounded-lg text-xs hover:bg-green-700 transition-colors"
+                  >
+                    📞 Call
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Weather & Crop Suggestions */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Weather - Big Visual */}
+        <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <img src={weatherIcon} alt="" className="w-10 h-10 object-contain" />
+            <h2 className="text-2xl text-primary font-bold">Today's Weather</h2>
+          </div>
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 mb-4">
+            <div className="flex items-center gap-4 mb-4">
+              <Sun className="w-16 h-16 text-yellow-500" />
+              <div>
+                <p className="text-4xl text-foreground">28°C</p>
+                <p className="text-lg text-muted-foreground">Partly Cloudy</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center bg-white rounded-lg p-3">
+                <Droplets className="w-6 h-6 text-blue-500 mx-auto" />
+                <p className="text-lg mt-1 font-bold">75%</p>
+              </div>
+              <div className="text-center bg-white rounded-lg p-3">
+                <Wind className="w-6 h-6 text-gray-500 mx-auto" />
+                <p className="text-lg mt-1 font-bold">12 km/h</p>
+              </div>
+              <div className="text-center bg-white rounded-lg p-3">
+                <CloudRain className="w-6 h-6 text-blue-400 mx-auto" />
+                <p className="text-lg mt-1 font-bold">20%</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg">
+            <p className="text-yellow-900 text-lg">
+              ⚠️ Rain tomorrow - harvest ready crops!
+            </p>
+          </div>
+        </div>
+
+        {/* Crop Suggestions - Visual */}
+        <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <img src={riceImg} alt="" className="w-10 h-10 object-contain" />
+            <h2 className="text-2xl text-primary font-bold">Best Crops Now</h2>
+          </div>
+          <div className="space-y-4">
+            <div className="bg-green-50 rounded-xl p-4 border-l-4 border-green-500">
+              <div className="flex items-center gap-3 mb-2">
+                <img src={riceImg} alt="" className="w-8 h-8 object-contain" />
+                <p className="text-xl text-foreground font-bold">Paddy Rice</p>
+              </div>
+              <p className="text-lg text-muted-foreground ml-12">📅 Best: Feb-Apr</p>
+              <span className="inline-block mt-2 ml-12 px-3 py-1 bg-green-200 text-green-800 rounded-full text-sm">
+                ✅ Recommended
+              </span>
+            </div>
+            <div className="bg-green-50 rounded-xl p-4 border-l-4 border-green-500">
+              <div className="flex items-center gap-3 mb-2">
+                <img src={carrotsImg} alt="" className="w-8 h-8 object-contain" />
+                <p className="text-xl text-foreground font-bold">Vegetables</p>
+              </div>
+              <p className="text-lg text-muted-foreground ml-12">📅 Good now</p>
+              <span className="inline-block mt-2 ml-12 px-3 py-1 bg-green-200 text-green-800 rounded-full text-sm">
+                ✅ Good Season
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Money Detail Modal */}
+      {showMoneyModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setShowMoneyModal(null)}>
+          <div className="bg-white rounded-2xl p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            {/* Money In Details */}
+            {showMoneyModal === 'in' && (
+              <>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <span className="text-6xl">📈</span>
+                    <div>
+                      <h2 className="text-3xl text-primary font-bold">Money In - Detailed Calculation</h2>
+                      <p className="text-muted-foreground">All the money you earned</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowMoneyModal(null)}
+                    className="text-3xl text-muted-foreground hover:text-red-500"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Product Sales Details */}
+                <div className="mb-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-5xl">🌾</span>
+                    <h3 className="text-2xl text-foreground font-bold">Product Sales</h3>
+                  </div>
+
+                  <div className="space-y-3">
+                    {sales.map((sale) => (
+                      <div key={sale.id} className="bg-green-50 rounded-xl p-5 border-l-4 border-green-500">
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <p className="text-xl text-foreground font-bold">{sale.product}</p>
+                            <p className="text-sm text-muted-foreground">Sold to: {sale.customer}</p>
+                          </div>
+                          <p className="text-2xl text-green-600 font-bold">LKR {sale.total.toLocaleString()}</p>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 mt-3 bg-white rounded-lg p-3">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Quantity</p>
+                            <p className="text-lg text-foreground font-bold">{sale.quantity}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Price Each</p>
+                            <p className="text-lg text-foreground font-bold">LKR {sale.price.toLocaleString()}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Date</p>
+                            <p className="text-lg text-foreground font-bold">{sale.date}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="bg-green-100 rounded-xl p-4 mt-4">
+                    <div className="flex justify-between items-center">
+                      <p className="text-lg text-foreground font-bold">Total Product Sales:</p>
+                      <p className="text-2xl text-green-600 font-bold">LKR {salesTotal.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Rental Income Details */}
+                <div className="mb-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <img src={tractorImg} alt="" className="w-12 h-12 object-contain" />
+                    <h3 className="text-2xl text-foreground font-bold">Equipment Rental Income</h3>
+                  </div>
+
+                  <div className="space-y-3">
+                    {rentalIncome.map((rental) => (
+                      <div key={rental.id} className="bg-blue-50 rounded-xl p-5 border-l-4 border-blue-500">
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <p className="text-xl text-foreground font-bold">{rental.equipment}</p>
+                            <p className="text-sm text-muted-foreground">Rented to: {rental.rentedTo}</p>
+                          </div>
+                          <p className="text-2xl text-blue-600 font-bold">LKR {rental.total.toLocaleString()}</p>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 mt-3 bg-white rounded-lg p-3">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Days</p>
+                            <p className="text-lg text-foreground font-bold">{rental.days}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Rate/Day</p>
+                            <p className="text-lg text-foreground font-bold">LKR {rental.pricePerDay.toLocaleString()}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Date</p>
+                            <p className="text-lg text-foreground font-bold">{rental.date}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="bg-blue-100 rounded-xl p-4 mt-4">
+                    <div className="flex justify-between items-center">
+                      <p className="text-lg text-foreground font-bold">Total Rental Income:</p>
+                      <p className="text-2xl text-blue-600 font-bold">LKR {rentalIncomeTotal.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Final Calculation */}
+                <div className="bg-gradient-to-br from-green-100 to-blue-100 rounded-xl p-6 border-2 border-green-500">
+                  <div className="text-center">
+                    <p className="text-2xl text-foreground font-bold mb-4 flex items-center justify-center gap-2">
+                      <TrendingUp className="w-8 h-8 text-green-500" />
+                      Total Money In Calculation
+                    </p>
+                    <div className="space-y-2 mb-4">
+                      <p className="text-xl text-foreground flex items-center justify-center gap-2">
+                        <img src={riceImg} alt="" className="w-6 h-6 object-contain" /> Product Sales = LKR {salesTotal.toLocaleString()}
+                      </p>
+                      <p className="text-xl text-foreground flex items-center justify-center gap-2">
+                        <img src={tractorImg} alt="" className="w-6 h-6 object-contain" /> Rental Income = LKR {rentalIncomeTotal.toLocaleString()}
+                      </p>
+                      <div className="border-t-2 border-green-500 pt-3 mt-3">
+                        <p className="text-3xl text-green-600 font-bold">
+                          Total Money In = LKR {totalIncome.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-lg p-4">
+                      <p className="text-lg text-foreground">
+                        🎉 Great work! You earned a total of <span className="font-bold text-green-600">LKR {totalIncome.toLocaleString()}</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Money Out Details */}
+            {showMoneyModal === 'out' && (
+              <>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <img src={trendingUpIcon} alt="" className="w-12 h-12 object-contain rotate-180 brightness-75 grayscale" />
+                    <div>
+                      <h2 className="text-3xl text-primary font-bold">Money Out - Detailed Calculation</h2>
+                      <p className="text-muted-foreground">All your expenses</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowMoneyModal(null)}
+                    className="text-3xl text-muted-foreground hover:text-red-500"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Expenses Details */}
+                <div className="mb-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <img src={sprayerImg} alt="" className="w-12 h-12 object-contain" />
+                    <h3 className="text-2xl text-foreground font-bold">Equipment Rental Expenses</h3>
+                  </div>
+
+                  <div className="space-y-3">
+                    {rentalExpenses.map((expense) => (
+                      <div key={expense.id} className="bg-red-50 rounded-xl p-5 border-l-4 border-red-500">
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <p className="text-xl text-foreground font-bold">{expense.equipment}</p>
+                            <p className="text-sm text-muted-foreground">Rented from: {expense.rentedFrom}</p>
+                          </div>
+                          <p className="text-2xl text-red-600 font-bold">-LKR {expense.total.toLocaleString()}</p>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 mt-3 bg-white rounded-lg p-3">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Days</p>
+                            <p className="text-lg text-foreground font-bold">{expense.days}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Rate/Day</p>
+                            <p className="text-lg text-foreground font-bold">LKR {expense.pricePerDay.toLocaleString()}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Date</p>
+                            <p className="text-lg text-foreground font-bold">{expense.date}</p>
+                          </div>
+                        </div>
+                        <div className="mt-3 bg-white rounded-lg p-3">
+                          <p className="text-sm text-muted-foreground mb-1">Calculation:</p>
+                          <p className="text-lg text-foreground">
+                            {expense.days} days × LKR {expense.pricePerDay.toLocaleString()} =
+                            <span className="font-bold text-red-600"> LKR {expense.total.toLocaleString()}</span>
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="bg-red-100 rounded-xl p-4 mt-4">
+                    <div className="flex justify-between items-center">
+                      <p className="text-lg text-foreground font-bold">Total Expenses:</p>
+                      <p className="text-2xl text-red-600 font-bold">LKR {rentalExpensesTotal.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Final Calculation */}
+                <div className="bg-gradient-to-br from-red-100 to-orange-100 rounded-xl p-6 border-2 border-red-500">
+                  <div className="text-center">
+                    <p className="text-2xl text-foreground font-bold mb-4">📝 Total Money Out Calculation</p>
+                    <div className="space-y-2 mb-4">
+                      {rentalExpenses.map((expense) => (
+                        <div key={expense.id} className="bg-white rounded-lg p-3">
+                          <p className="text-lg text-foreground">
+                            {expense.equipment}: {expense.days} days × LKR {expense.pricePerDay.toLocaleString()} =
+                            <span className="font-bold text-red-600"> LKR {expense.total.toLocaleString()}</span>
+                          </p>
+                        </div>
+                      ))}
+                      <div className="border-t-2 border-red-500 pt-3 mt-3">
+                        <p className="text-3xl text-red-600 font-bold">
+                          Total Money Out = LKR {rentalExpensesTotal.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-lg p-4">
+                      <p className="text-lg text-foreground">
+                        💰 You spent <span className="font-bold text-red-600">LKR {rentalExpensesTotal.toLocaleString()}</span> on equipment rentals
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            <button
+              onClick={() => setShowMoneyModal(null)}
+              className="w-full mt-6 bg-primary text-white rounded-xl py-4 text-xl font-bold hover:bg-green-700 transition-colors"
+            >
+              Close ✓
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// My Products Content - Visual with Images
 function MyProductsContent({ products, onAddClick, onEdit, onDelete }) {
   return (
     <div className="space-y-6">
@@ -375,7 +1401,7 @@ function MyProductsContent({ products, onAddClick, onEdit, onDelete }) {
           const qty = parseInt(product.quantity) || 0;
           const stockStatus = qty > 150 ? 'In Stock' : 'Low Stock';
           const statusColor = stockStatus === 'Low Stock' ? 'yellow' : 'green';
-          
+
           return (
             <ProductCard
               key={product.id}
@@ -395,6 +1421,1928 @@ function MyProductsContent({ products, onAddClick, onEdit, onDelete }) {
   );
 }
 
+// Sales Content
+function SalesContent({ sales, rentalIncome }) {
+  const totalSales = sales.reduce((total, sale) => total + sale.total, 0);
+  const totalRentalIncome = rentalIncome.reduce((total, rental) => total + rental.total, 0);
+  const grandTotal = totalSales + totalRentalIncome;
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl p-8 text-white">
+        <h1 className="text-3xl mb-2 flex items-center gap-3">
+          <img src={moneyIcon} alt="" className="w-10 h-10 object-contain brightness-0 invert" />
+          Income & Sales
+        </h1>
+        <p className="text-blue-100 text-lg">Track all your earnings</p>
+      </div>
+
+      {/* Total Income Summary */}
+      <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl p-6 border-2 border-green-200">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-5xl">💵</span>
+          <h2 className="text-2xl text-primary font-bold">Total Income</h2>
+        </div>
+        <div className="grid md:grid-cols-3 gap-4">
+          <div className="bg-white rounded-xl p-4 border-l-4 border-green-500">
+            <p className="text-muted-foreground mb-1">🌾 Product Sales</p>
+            <p className="text-2xl text-green-600 font-bold">LKR {totalSales.toLocaleString()}</p>
+          </div>
+          <div className="bg-white rounded-xl p-4 border-l-4 border-blue-500">
+            <p className="text-muted-foreground mb-1">🚜 Rental Income</p>
+            <p className="text-2xl text-blue-600 font-bold">LKR {totalRentalIncome.toLocaleString()}</p>
+          </div>
+          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4">
+            <p className="text-white mb-1">💎 Grand Total</p>
+            <p className="text-3xl text-white font-bold">LKR {grandTotal.toLocaleString()}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Product Sales Calculation */}
+      <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
+        <h2 className="text-2xl text-primary mb-6">🌾 Product Sales Calculation</h2>
+        <div className="space-y-3">
+          {sales.map((sale, index) => (
+            <div key={sale.id} className="flex items-center justify-between py-3 border-b border-green-100">
+              <div className="flex items-center gap-3">
+                <img src={sale.image} alt="" className="w-12 h-12 object-contain" />
+                <div>
+                  <p className="text-lg text-foreground">{sale.product}</p>
+                  <p className="text-sm text-muted-foreground">{sale.customer} • {sale.date}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-lg text-muted-foreground">
+                  {sale.quantity} × LKR {sale.price}
+                </p>
+                <p className="text-xl text-primary font-bold">= LKR {sale.total.toLocaleString()}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-6 pt-6 border-t-2 border-green-500">
+          <div className="flex items-center justify-between">
+            <p className="text-2xl text-foreground font-bold">Total Product Sales:</p>
+            <p className="text-3xl text-primary font-bold">LKR {totalSales.toLocaleString()}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Equipment Rental Income */}
+      <div className="bg-white rounded-2xl shadow-lg border border-blue-100 p-6">
+        <h2 className="text-2xl text-primary mb-6">🚜 Equipment Rental Income</h2>
+        <div className="space-y-3">
+          {rentalIncome.map((rental) => (
+            <div key={rental.id} className="flex items-center justify-between py-3 border-b border-blue-100">
+              <div className="flex items-center gap-3">
+                <img src={rental.image || tractorImg} alt="" className="w-12 h-12 object-contain" />
+                <div>
+                  <p className="text-lg text-foreground">{rental.equipment}</p>
+                  <p className="text-sm text-muted-foreground">{rental.renter} • {rental.date}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-lg text-muted-foreground">
+                  {rental.days} days × LKR {rental.pricePerDay.toLocaleString()}/day
+                </p>
+                <p className="text-xl text-blue-600 font-bold">= LKR {rental.total.toLocaleString()}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-6 pt-6 border-t-2 border-blue-500">
+          <div className="flex items-center justify-between">
+            <p className="text-2xl text-foreground font-bold">Total Rental Income:</p>
+            <p className="text-3xl text-blue-600 font-bold">LKR {totalRentalIncome.toLocaleString()}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Sales Details */}
+      <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
+        <h2 className="text-2xl text-primary mb-6">📋 Recent Sales Details</h2>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {sales.map(sale => (
+            <SaleCard
+              key={sale.id}
+              product={sale.product}
+              quantity={sale.quantity}
+              price={`LKR ${sale.price}/kg`}
+              total={`LKR ${sale.total.toLocaleString()}`}
+              date={sale.date}
+              customer={sale.customer}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Orders Content
+function OrdersContent({ orders }) {
+  return (
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-purple-600 to-purple-500 rounded-2xl p-8 text-white">
+        <h1 className="text-3xl mb-2">📦 Orders</h1>
+        <p className="text-purple-100 text-lg">Manage your orders</p>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
+        <h2 className="text-2xl text-primary mb-6">Pending Orders</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {orders.map(order => (
+            <OrderCard
+              key={order.id}
+              product={order.product}
+              quantity={order.quantity}
+              customer={order.customer}
+              phone={order.phone}
+              status={order.status}
+              date={order.date}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Expenses Content
+function ExpensesContent({ rentalExpenses }) {
+  const totalExpenses = rentalExpenses.reduce((total, expense) => total + expense.total, 0);
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-red-600 to-red-500 rounded-2xl p-8 text-white">
+        <h1 className="text-3xl mb-2 flex items-center gap-3">
+          <img src={dieselImg} alt="" className="w-10 h-10 object-contain brightness-0 invert" />
+          Farm Expenses
+        </h1>
+        <p className="text-red-100 text-lg">Track all your spending</p>
+      </div>
+
+      {/* Total Expenses Summary */}
+      <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl p-6 border-2 border-red-200">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-5xl">💸</span>
+          <div>
+            <h2 className="text-2xl text-primary font-bold">Total Expenses</h2>
+            <p className="text-muted-foreground">Money spent this month</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl p-6 border-l-4 border-red-500">
+          <p className="text-4xl text-red-600 font-bold">-LKR {totalExpenses.toLocaleString()}</p>
+        </div>
+      </div>
+
+      {/* Equipment Rental Expenses - Detailed */}
+      <div className="bg-white rounded-2xl shadow-lg border border-red-100 p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <span className="text-4xl">🔧</span>
+          <h2 className="text-2xl text-primary">Equipment Rental Expenses</h2>
+        </div>
+
+        {rentalExpenses.length > 0 ? (
+          <>
+            <div className="space-y-4">
+              {rentalExpenses.map((expense) => (
+                <div key={expense.id} className="bg-red-50 rounded-xl p-6 border-l-4 border-red-500 hover:shadow-lg transition-shadow">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-4">
+                      <img src={expense.image || harvestorImg} alt="" className="w-16 h-16 object-contain" />
+                      <div>
+                        <p className="text-2xl text-foreground font-bold mb-1">{expense.equipment}</p>
+                        <p className="text-lg text-muted-foreground">Rented from: {expense.owner}</p>
+                        <p className="text-md text-muted-foreground">📅 Date: {expense.date}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-3xl text-red-600 font-bold mb-1">-LKR {expense.total.toLocaleString()}</p>
+                      <div className="bg-red-100 rounded-lg px-3 py-1">
+                        <p className="text-sm text-red-800">💸 Paid</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Calculation Breakdown */}
+                  <div className="bg-white rounded-lg p-4 border border-red-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl">📊</span>
+                        <span className="text-lg text-muted-foreground">Calculation:</span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg text-foreground">
+                          <span className="font-bold">{expense.days} days</span> × <span className="font-bold">LKR {expense.pricePerDay.toLocaleString()}</span>/day
+                        </p>
+                        <p className="text-xl text-red-600 font-bold">= LKR {expense.total.toLocaleString()}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Total Summary */}
+            <div className="mt-6 pt-6 border-t-2 border-red-500">
+              <div className="flex items-center justify-between bg-red-50 rounded-xl p-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-4xl">💰</span>
+                  <p className="text-2xl text-foreground font-bold">Total Spent on Equipment Rental:</p>
+                </div>
+                <p className="text-4xl text-red-600 font-bold">-LKR {totalExpenses.toLocaleString()}</p>
+              </div>
+            </div>
+
+            {/* Expense Breakdown by Item */}
+            <div className="mt-6 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-6">
+              <h3 className="text-xl text-primary font-bold mb-4">📊 Expense Breakdown</h3>
+              <div className="space-y-3">
+                {rentalExpenses.map((expense) => (
+                  <div key={expense.id} className="flex items-center justify-between bg-white rounded-lg p-3 border border-orange-200">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">{expense.equipment.split(' ')[0]}</span>
+                      <span className="text-lg text-foreground">{expense.equipment}</span>
+                    </div>
+                    <span className="text-lg text-red-600 font-bold">LKR {expense.total.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-12">
+            <span className="text-8xl">🎉</span>
+            <p className="text-2xl text-foreground mt-4">No expenses yet!</p>
+            <p className="text-lg text-muted-foreground">You haven't spent money on equipment rentals</p>
+          </div>
+        )}
+      </div>
+
+      {/* Tips for Farmers */}
+      <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl p-6 border-2 border-green-200">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-4xl">💡</span>
+          <h3 className="text-xl text-primary font-bold">Money Saving Tips</h3>
+        </div>
+        <div className="space-y-2">
+          <div className="flex items-start gap-3 bg-white rounded-lg p-4">
+            <span className="text-2xl">✅</span>
+            <p className="text-lg text-foreground">Buy your own equipment if you rent it often - saves money!</p>
+          </div>
+          <div className="flex items-start gap-3 bg-white rounded-lg p-4">
+            <span className="text-2xl">✅</span>
+            <p className="text-lg text-foreground">Share equipment costs with nearby farmers</p>
+          </div>
+          <div className="flex items-start gap-3 bg-white rounded-lg p-4">
+            <span className="text-2xl">✅</span>
+            <p className="text-lg text-foreground">Rent equipment during off-season for better prices</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Loans Content
+function LoansContent({ availableLoans, activeLoans }) {
+  const [showDetailModal, setShowDetailModal] = useState(null); // 'borrowed', 'paid', 'remaining', or null
+
+  const totalBorrowed = activeLoans.reduce((total, loan) => total + loan.borrowed, 0);
+  const totalPaid = activeLoans.reduce((total, loan) => total + loan.paid, 0);
+  const totalRemaining = activeLoans.reduce((total, loan) => total + loan.remaining, 0);
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl p-8 text-white">
+        <h1 className="text-3xl mb-2">💳 Bank Loans</h1>
+        <p className="text-blue-100 text-lg">Find loans & manage repayments</p>
+      </div>
+
+      {/* Active Loans Summary */}
+      {activeLoans.length > 0 && (
+        <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 border-2 border-blue-200">
+          <div className="flex items-center gap-3 mb-6">
+            <span className="text-5xl">💰</span>
+            <div>
+              <h2 className="text-2xl text-primary font-bold">My Active Loans</h2>
+              <p className="text-muted-foreground">Click on cards to see detailed calculations</p>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-4 mb-6">
+            <button
+              onClick={() => setShowDetailModal('borrowed')}
+              className="bg-white rounded-xl p-5 border-l-4 border-blue-500 shadow-md hover:shadow-xl transition-all text-left cursor-pointer hover:scale-105"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-3xl">📊</span>
+                <h3 className="text-lg text-muted-foreground">Total Borrowed</h3>
+              </div>
+              <p className="text-3xl text-blue-600 font-bold">LKR {totalBorrowed.toLocaleString()}</p>
+              <p className="text-sm text-blue-500 mt-2">👆 Click for details</p>
+            </button>
+
+            <button
+              onClick={() => setShowDetailModal('paid')}
+              className="bg-white rounded-xl p-5 border-l-4 border-green-500 shadow-md hover:shadow-xl transition-all text-left cursor-pointer hover:scale-105"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-3xl">✅</span>
+                <h3 className="text-lg text-muted-foreground">Total Paid</h3>
+              </div>
+              <p className="text-3xl text-green-600 font-bold">LKR {totalPaid.toLocaleString()}</p>
+              <p className="text-sm text-green-500 mt-2">👆 Click for details</p>
+            </button>
+
+            <button
+              onClick={() => setShowDetailModal('remaining')}
+              className="bg-white rounded-xl p-5 border-l-4 border-red-500 shadow-md hover:shadow-xl transition-all text-left cursor-pointer hover:scale-105"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-3xl">⏰</span>
+                <h3 className="text-lg text-muted-foreground">Remaining</h3>
+              </div>
+              <p className="text-3xl text-red-600 font-bold">LKR {totalRemaining.toLocaleString()}</p>
+              <p className="text-sm text-red-500 mt-2">👆 Click for details</p>
+            </button>
+          </div>
+
+          {/* Detail Calculation Modal */}
+          {showDetailModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setShowDetailModal(null)}>
+              <div className="bg-white rounded-2xl p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                {/* Borrowed Details */}
+                {showDetailModal === 'borrowed' && (
+                  <>
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <span className="text-6xl">📊</span>
+                        <div>
+                          <h2 className="text-3xl text-primary font-bold">Total Borrowed Calculation</h2>
+                          <p className="text-muted-foreground">Money you received from banks</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setShowDetailModal(null)}
+                        className="text-3xl text-muted-foreground hover:text-red-500"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <div className="space-y-4 mb-6">
+                      {activeLoans.map((loan, index) => (
+                        <div key={loan.id} className="bg-blue-50 rounded-xl p-6 border-l-4 border-blue-500">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-3">
+                              <span className="text-4xl">{loan.bankLogo}</span>
+                              <div>
+                                <p className="text-xl text-foreground font-bold">{loan.loanType}</p>
+                                <p className="text-md text-muted-foreground">{loan.bankName}</p>
+                              </div>
+                            </div>
+                            <p className="text-2xl text-blue-600 font-bold">LKR {loan.borrowed.toLocaleString()}</p>
+                          </div>
+                          <p className="text-sm text-muted-foreground">Started: {loan.startDate}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl p-6 border-2 border-blue-500">
+                      <div className="text-center mb-4">
+                        <p className="text-2xl text-foreground font-bold mb-3">📝 Calculation</p>
+                        <div className="space-y-2">
+                          {activeLoans.map((loan, index) => (
+                            <p key={loan.id} className="text-xl text-foreground">
+                              {loan.loanType} = LKR {loan.borrowed.toLocaleString()}
+                            </p>
+                          ))}
+                          <div className="border-t-2 border-blue-500 pt-3 mt-3">
+                            <p className="text-3xl text-blue-600 font-bold">
+                              Total = LKR {totalBorrowed.toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Paid Details */}
+                {showDetailModal === 'paid' && (
+                  <>
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <span className="text-6xl">✅</span>
+                        <div>
+                          <h2 className="text-3xl text-primary font-bold">Total Paid Calculation</h2>
+                          <p className="text-muted-foreground">Money you paid back to banks</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setShowDetailModal(null)}
+                        className="text-3xl text-muted-foreground hover:text-red-500"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <div className="space-y-4 mb-6">
+                      {activeLoans.map((loan) => {
+                        const paidPercentage = (loan.paid / loan.borrowed) * 100;
+                        return (
+                          <div key={loan.id} className="bg-green-50 rounded-xl p-6 border-l-4 border-green-500">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-3">
+                                <span className="text-4xl">{loan.bankLogo}</span>
+                                <div>
+                                  <p className="text-xl text-foreground font-bold">{loan.loanType}</p>
+                                  <p className="text-md text-muted-foreground">{loan.bankName}</p>
+                                </div>
+                              </div>
+                              <p className="text-2xl text-green-600 font-bold">LKR {loan.paid.toLocaleString()}</p>
+                            </div>
+                            <div className="mb-2">
+                              <div className="flex justify-between text-sm mb-1">
+                                <span>Progress</span>
+                                <span className="font-bold text-green-600">{paidPercentage.toFixed(1)}%</span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-3">
+                                <div
+                                  className="bg-green-500 h-3 rounded-full"
+                                  style={{ width: `${paidPercentage}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              Out of LKR {loan.borrowed.toLocaleString()} borrowed
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="bg-gradient-to-br from-green-100 to-blue-100 rounded-xl p-6 border-2 border-green-500">
+                      <div className="text-center mb-4">
+                        <p className="text-2xl text-foreground font-bold mb-3">📝 Calculation</p>
+                        <div className="space-y-2">
+                          {activeLoans.map((loan) => (
+                            <p key={loan.id} className="text-xl text-foreground">
+                              {loan.loanType} = LKR {loan.paid.toLocaleString()}
+                            </p>
+                          ))}
+                          <div className="border-t-2 border-green-500 pt-3 mt-3">
+                            <p className="text-3xl text-green-600 font-bold">
+                              Total Paid = LKR {totalPaid.toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-lg p-4 mt-4">
+                        <p className="text-center text-lg text-foreground">
+                          🎉 Great job! You've paid <span className="font-bold text-green-600">
+                            {((totalPaid / totalBorrowed) * 100).toFixed(1)}%
+                          </span> of your total loans!
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Remaining Details */}
+                {showDetailModal === 'remaining' && (
+                  <>
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <span className="text-6xl">⏰</span>
+                        <div>
+                          <h2 className="text-3xl text-primary font-bold">Remaining Amount Calculation</h2>
+                          <p className="text-muted-foreground">Money you still need to pay</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setShowDetailModal(null)}
+                        className="text-3xl text-muted-foreground hover:text-red-500"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <div className="space-y-4 mb-6">
+                      {activeLoans.map((loan) => {
+                        const remainingPercentage = (loan.remaining / loan.borrowed) * 100;
+                        return (
+                          <div key={loan.id} className="bg-red-50 rounded-xl p-6 border-l-4 border-red-500">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-3">
+                                <span className="text-4xl">{loan.bankLogo}</span>
+                                <div>
+                                  <p className="text-xl text-foreground font-bold">{loan.loanType}</p>
+                                  <p className="text-md text-muted-foreground">{loan.bankName}</p>
+                                </div>
+                              </div>
+                              <p className="text-2xl text-red-600 font-bold">LKR {loan.remaining.toLocaleString()}</p>
+                            </div>
+
+                            <div className="bg-white rounded-lg p-4 mb-3">
+                              <p className="text-lg text-foreground mb-2">
+                                <span className="font-bold">LKR {loan.borrowed.toLocaleString()}</span> (borrowed) -
+                                <span className="font-bold text-green-600"> LKR {loan.paid.toLocaleString()}</span> (paid) =
+                                <span className="font-bold text-red-600"> LKR {loan.remaining.toLocaleString()}</span>
+                              </p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="bg-white rounded-lg p-3">
+                                <p className="text-sm text-muted-foreground">Monthly Payment</p>
+                                <p className="text-lg text-purple-600 font-bold">LKR {loan.monthlyPayment.toLocaleString()}</p>
+                              </div>
+                              <div className="bg-white rounded-lg p-3">
+                                <p className="text-sm text-muted-foreground">Next Payment</p>
+                                <p className="text-lg text-orange-600 font-bold">{loan.nextPayment}</p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="bg-gradient-to-br from-red-100 to-orange-100 rounded-xl p-6 border-2 border-red-500">
+                      <div className="text-center mb-4">
+                        <p className="text-2xl text-foreground font-bold mb-3">📝 Calculation</p>
+                        <div className="space-y-2">
+                          {activeLoans.map((loan) => (
+                            <div key={loan.id} className="bg-white rounded-lg p-3">
+                              <p className="text-lg text-foreground">
+                                {loan.loanType}: LKR {loan.borrowed.toLocaleString()} - LKR {loan.paid.toLocaleString()} =
+                                <span className="font-bold text-red-600"> LKR {loan.remaining.toLocaleString()}</span>
+                              </p>
+                            </div>
+                          ))}
+                          <div className="border-t-2 border-red-500 pt-3 mt-3">
+                            <p className="text-3xl text-red-600 font-bold">
+                              Total Remaining = LKR {totalRemaining.toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-lg p-4 mt-4">
+                        <p className="text-center text-lg text-foreground">
+                          💪 Keep paying! You still need to pay <span className="font-bold text-red-600">
+                            {((totalRemaining / totalBorrowed) * 100).toFixed(1)}%
+                          </span> of your total loans
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <button
+                  onClick={() => setShowDetailModal(null)}
+                  className="w-full mt-6 bg-primary text-white rounded-xl py-4 text-xl font-bold hover:bg-green-700 transition-colors"
+                >
+                  Close ✓
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Active Loan Details */}
+          <div className="space-y-4">
+            {activeLoans.map((loan) => {
+              const paidPercentage = (loan.paid / loan.borrowed) * 100;
+              return (
+                <div key={loan.id} className="bg-white rounded-xl p-6 border-2 border-blue-200 shadow-lg">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-4">
+                      <span className="text-6xl">{loan.bankLogo}</span>
+                      <div>
+                        <p className="text-2xl text-foreground font-bold mb-1">{loan.loanType}</p>
+                        <p className="text-lg text-muted-foreground">{loan.bankName}</p>
+                        <p className="text-md text-muted-foreground">Interest: {loan.interestRate}</p>
+                      </div>
+                    </div>
+                    <div className="bg-green-100 rounded-lg px-4 py-2">
+                      <p className="text-sm text-green-800 font-bold">{loan.status}</p>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="mb-4">
+                    <div className="flex justify-between mb-2">
+                      <span className="text-sm text-muted-foreground">Payment Progress</span>
+                      <span className="text-sm text-primary font-bold">{paidPercentage.toFixed(1)}% Paid</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-4">
+                      <div
+                        className="bg-gradient-to-r from-green-500 to-green-600 h-4 rounded-full transition-all"
+                        style={{ width: `${paidPercentage}%` }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  {/* Loan Details Grid */}
+                  <div className="grid md:grid-cols-2 gap-4 mb-4">
+                    <div className="bg-blue-50 rounded-lg p-4">
+                      <p className="text-sm text-muted-foreground mb-1">💵 Borrowed Amount</p>
+                      <p className="text-xl text-foreground font-bold">LKR {loan.borrowed.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-4">
+                      <p className="text-sm text-muted-foreground mb-1">✅ Amount Paid</p>
+                      <p className="text-xl text-green-600 font-bold">LKR {loan.paid.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-red-50 rounded-lg p-4">
+                      <p className="text-sm text-muted-foreground mb-1">⏰ Remaining</p>
+                      <p className="text-xl text-red-600 font-bold">LKR {loan.remaining.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-purple-50 rounded-lg p-4">
+                      <p className="text-sm text-muted-foreground mb-1">📅 Monthly Payment</p>
+                      <p className="text-xl text-purple-600 font-bold">LKR {loan.monthlyPayment.toLocaleString()}</p>
+                    </div>
+                  </div>
+                  {/* Payment Schedule */}
+                  <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-lg p-4 border-l-4 border-orange-500">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">🔔 Next Payment Due</p>
+                        <p className="text-xl text-foreground font-bold">{loan.nextPayment}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-muted-foreground mb-1">📆 Loan Period</p>
+                        <p className="text-md text-foreground">{loan.startDate} to {loan.endDate}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Available Loans from Banks */}
+      <div className="bg-white rounded-2xl shadow-lg border border-blue-100 p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <span className="text-4xl">🏦</span>
+          <div>
+            <h2 className="text-2xl text-primary">Available Bank Loans</h2>
+            <p className="text-muted-foreground">Choose the best loan for your farm</p>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          {availableLoans.map((loan) => (
+            <div key={loan.id} className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl p-6 border-2 border-green-200 hover:shadow-xl transition-shadow">
+              <div className="flex items-start gap-4 mb-4">
+                <span className="text-6xl">{loan.bankLogo}</span>
+                <div>
+                  <p className="text-2xl text-primary font-bold mb-1">{loan.loanType}</p>
+                  <p className="text-lg text-foreground font-bold">{loan.bankName}</p>
+                  <p className="text-md text-muted-foreground mt-2">{loan.description}</p>
+                </div>
+              </div>
+
+              {/* Loan Details */}
+              <div className="space-y-3 mb-4">
+                <div className="bg-white rounded-lg p-4 border-l-4 border-blue-500">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">💰</span>
+                      <span className="text-sm text-muted-foreground">Loan Amount</span>
+                    </div>
+                    <p className="text-lg text-foreground font-bold">LKR {loan.amount}</p>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg p-4 border-l-4 border-green-500">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">📊</span>
+                      <span className="text-sm text-muted-foreground">Interest Rate</span>
+                    </div>
+                    <p className="text-lg text-green-600 font-bold">{loan.interestRate} per year</p>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg p-4 border-l-4 border-purple-500">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">📅</span>
+                      <span className="text-sm text-muted-foreground">Duration</span>
+                    </div>
+                    <p className="text-lg text-purple-600 font-bold">{loan.duration}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Requirements */}
+              <div className="bg-white rounded-lg p-4 mb-4">
+                <p className="text-sm text-muted-foreground font-bold mb-2">📋 What You Need:</p>
+                <ul className="space-y-1">
+                  {loan.requirements.map((req, index) => (
+                    <li key={index} className="flex items-center gap-2">
+                      <span className="text-green-600">✓</span>
+                      <span className="text-sm text-foreground">{req}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Contact Bank */}
+              <a
+                href={`tel:${loan.phone}`}
+                className="w-full flex items-center justify-center gap-2 bg-primary text-white rounded-lg py-3 hover:bg-green-700 transition-colors"
+              >
+                <span className="text-xl">📞</span>
+                <span className="text-lg font-bold">Call {loan.bankName}</span>
+              </a>
+              <p className="text-center text-sm text-muted-foreground mt-2">{loan.phone}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Loan Tips */}
+      <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl p-6 border-2 border-yellow-200">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-4xl">💡</span>
+          <h3 className="text-xl text-primary font-bold">Loan Tips for Farmers</h3>
+        </div>
+        <div className="space-y-2">
+          <div className="flex items-start gap-3 bg-white rounded-lg p-4">
+            <span className="text-2xl">✅</span>
+            <p className="text-lg text-foreground">Compare interest rates from different banks before choosing</p>
+          </div>
+          <div className="flex items-start gap-3 bg-white rounded-lg p-4">
+            <span className="text-2xl">✅</span>
+            <p className="text-lg text-foreground">Only borrow what you can repay - plan your budget carefully</p>
+          </div>
+          <div className="flex items-start gap-3 bg-white rounded-lg p-4">
+            <span className="text-2xl">✅</span>
+            <p className="text-lg text-foreground">Keep all documents ready: NIC, land papers, income proof</p>
+          </div>
+          <div className="flex items-start gap-3 bg-white rounded-lg p-4">
+            <span className="text-2xl">✅</span>
+            <p className="text-lg text-foreground">Pay on time to maintain good credit and get better rates next time</p>
+          </div>
+          <div className="flex items-start gap-3 bg-white rounded-lg p-4">
+            <span className="text-2xl">✅</span>
+            <p className="text-lg text-foreground">Ask bank about government subsidies for farmers - you may get lower rates!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Contacts Content - Service Providers, Customers, Experts
+function ContactsContent() {
+  return (
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-green-600 to-green-500 rounded-2xl p-8 text-white">
+        <h1 className="text-3xl mb-2">📞 My Contacts</h1>
+        <p className="text-green-100 text-lg">Connect with Service Providers, Customers & Experts</p>
+      </div>
+
+      {/* Service Providers */}
+      <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="bg-green-100 p-3 rounded-xl text-primary">
+            <Tractor className="w-8 h-8" />
+          </div>
+          <h2 className="text-2xl text-primary font-bold">Service Providers</h2>
+        </div>
+        <div className="grid md:grid-cols-2 gap-4">
+          <ContactCard
+            emoji="🚜"
+            name="Rajith Equipment"
+            role="Tractor Rental"
+            phone="077-123-4567"
+            location="Anuradhapura"
+          />
+          <ContactCard
+            emoji="🌱"
+            name="Silva Seeds Co."
+            role="Seed Supplier"
+            phone="071-234-5678"
+            location="Kurunegala"
+          />
+          <ContactCard
+            emoji="📦"
+            name="Agro Chemicals Ltd"
+            role="Pesticides"
+            phone="076-345-6789"
+            location="Colombo"
+          />
+          <ContactCard
+            emoji="🛠️"
+            name="Farm Tools Lanka"
+            role="Equipment Repair"
+            phone="077-456-7890"
+            location="Anuradhapura"
+          />
+        </div>
+      </div>
+
+      {/* Customers */}
+      <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="bg-blue-100 p-3 rounded-xl text-blue-600">
+            <ShoppingBag className="w-8 h-8" />
+          </div>
+          <h2 className="text-2xl text-primary font-bold">Customers</h2>
+        </div>
+        <div className="grid md:grid-cols-2 gap-4">
+          <ContactCard
+            emoji="🛒"
+            name="Perera Stores"
+            role="Wholesale Buyer"
+            phone="077-567-8901"
+            location="Colombo"
+          />
+          <ContactCard
+            emoji="🏪"
+            name="Green Market"
+            role="Retail Shop"
+            phone="071-678-9012"
+            location="Kandy"
+          />
+          <ContactCard
+            emoji="🚛"
+            name="Fresh Foods Pvt"
+            role="Distributor"
+            phone="076-789-0123"
+            location="Gampaha"
+          />
+          <ContactCard
+            emoji="🥗"
+            name="Organic Mart"
+            role="Organic Store"
+            phone="077-890-1234"
+            location="Colombo"
+          />
+        </div>
+      </div>
+
+      {/* Agricultural Experts */}
+      <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="bg-purple-100 p-3 rounded-xl text-purple-600">
+            <UserCheck className="w-8 h-8" />
+          </div>
+          <h2 className="text-2xl text-primary font-bold">Agricultural Experts</h2>
+        </div>
+        <div className="grid md:grid-cols-2 gap-4">
+          <ContactCard
+            emoji="👨‍🔬"
+            name="Dr. Kumara"
+            role="Crop Specialist"
+            phone="077-111-2222"
+            location="Agriculture Dept"
+          />
+          <ContactCard
+            emoji="👩‍🔬"
+            name="Ms. Nishani"
+            role="Soil Expert"
+            phone="071-222-3333"
+            location="Research Center"
+          />
+          <ContactCard
+            emoji="👨‍🏫"
+            name="Mr. Fernando"
+            role="Rice Consultant"
+            phone="076-333-4444"
+            location="Paddy Institute"
+          />
+          <ContactCard
+            emoji="📋"
+            name="Dr. Silva"
+            role="Farm Advisor"
+            phone="077-444-5555"
+            location="Extension Office"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+// Equipment Content
+function EquipmentContent({ myEquipment, onAddClick, onDeleteEquipment, onRentClick }) {
+  return (
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-green-600 to-green-500 rounded-2xl p-8 text-white">
+        <h1 className="text-3xl mb-2 flex items-center gap-3">
+          <span className="text-4xl">🚜</span>
+          My Equipment for Rent
+        </h1>
+        <p className="text-green-100 text-lg">
+          List your equipment to earn extra income
+        </p>
+      </div>
+
+      <button
+        className="w-full lg:w-auto px-8 py-4 bg-primary text-white rounded-xl hover:bg-green-700 transition-colors shadow-lg text-lg flex items-center gap-3"
+        onClick={onAddClick}
+      >
+        <Plus className="w-6 h-6" /> Add My Equipment
+      </button>
+
+      <div>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="bg-green-100 p-2 rounded-lg text-primary">
+            <Tractor className="w-6 h-6" />
+          </div>
+          <h2 className="text-2xl text-primary font-bold">
+            My Equipment List
+          </h2>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {myEquipment.map(eq => (
+            <EquipmentCard
+              key={eq.id}
+              image={eq.image}
+              name={eq.name}
+              price={`LKR ${eq.price}/day`}
+              available={eq.available}
+              onDelete={() => onDeleteEquipment(eq.id)}
+              cover={true}   // image will use bigger height
+            />
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="bg-green-100 p-2 rounded-lg text-primary">
+            <LayoutDashboard className="w-6 h-6" />
+          </div>
+          <h2 className="text-2xl text-primary font-bold">
+            Browse Other Equipment
+          </h2>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <EquipmentCard
+            image={harvestorImg}
+            name="Harvester"
+            price="LKR 8,000/day"
+            available={true}
+            cover={true}
+            owner={{
+              name: "Rajith Equipment",
+              location: "Anuradhapura",
+              phone: "077-123-4567"
+            }}
+            onRent={() =>
+              onRentClick({
+                name: "Harvester",
+                image: harvestorImg,
+                price: 8000,
+                owner: { name: "Rajith Equipment", phone: "077-123-4567" }
+              })
+            }
+          />
+
+          <EquipmentCard
+            image={cultivatorImg}
+            name="Cultivator"
+            price="LKR 3,500/day"
+            available={true}
+            cover={true}
+            owner={{
+              name: "Silva Agro",
+              location: "Kurunegala",
+              phone: "071-234-5678"
+            }}
+            onRent={() =>
+              onRentClick({
+                name: "Cultivator",
+                image: cultivatorImg,
+                price: 3500,
+                owner: { name: "Silva Agro", phone: "071-234-5678" }
+              })
+            }
+          />
+
+          <EquipmentCard
+            image={seederImg}
+            name="Seeder"
+            price="LKR 4,000/day"
+            available={true}
+            cover={true}
+            owner={{
+              name: "Farm Tools Lanka",
+              location: "Anuradhapura",
+              phone: "076-345-6789"
+            }}
+            onRent={() =>
+              onRentClick({
+                name: "Seeder",
+                image: seederImg,
+                price: 4000,
+                owner: { name: "Farm Tools Lanka", phone: "076-345-6789" }
+              })
+            }
+          />
+
+          <EquipmentCard
+            image={irrigationPumpImg}
+            name="Irrigation Pump"
+            price="LKR 2,000/day"
+            available={true}
+            owner={{
+              name: "Gampaha Agri",
+              location: "Gampaha",
+              phone: "077-456-7890"
+            }}
+            onRent={() =>
+              onRentClick({
+                name: "Irrigation Pump",
+                image: irrigationPumpImg,
+                price: 2000,
+                owner: { name: "Gampaha Agri", phone: "077-456-7890" }
+              })
+            }
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+// Weather Content
+function WeatherContent() {
+  return (
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl p-8 text-white">
+        <h1 className="text-3xl mb-2 flex items-center gap-3">
+          <img src={weatherIcon} alt="" className="w-10 h-10 object-contain brightness-0 invert" />
+          Weather Forecast
+        </h1>
+        <p className="text-blue-100 text-lg">7-day weather forecast for your farm</p>
+      </div>
+
+      {/* Current Weather - Large */}
+      <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-8">
+        <h2 className="text-2xl text-primary mb-6">Today - Anuradhapura</h2>
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-8">
+          <div className="flex items-center gap-6 mb-6">
+            <span className="text-8xl">☀️</span>
+            <div>
+              <p className="text-6xl text-foreground">28°C</p>
+              <p className="text-2xl text-muted-foreground">Partly Cloudy</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center bg-white rounded-lg p-4">
+              <Droplets className="w-10 h-10 text-blue-500 mx-auto mb-2" />
+              <p className="text-xl mt-2">Humidity</p>
+              <p className="text-2xl font-bold">75%</p>
+            </div>
+            <div className="text-center bg-white rounded-lg p-4">
+              <Wind className="w-10 h-10 text-gray-500 mx-auto mb-2" />
+              <p className="text-xl mt-2">Wind</p>
+              <p className="text-2xl font-bold">12 km/h</p>
+            </div>
+            <div className="text-center bg-white rounded-lg p-4">
+              <CloudRain className="w-10 h-10 text-blue-400 mx-auto mb-2" />
+              <p className="text-xl mt-2">Rain</p>
+              <p className="text-2xl font-bold">20%</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Alerts */}
+      <div className="bg-yellow-50 border-l-4 border-yellow-500 rounded-lg p-6">
+        <div className="flex items-center gap-3 mb-2">
+          <span className="text-3xl">⚠️</span>
+          <h3 className="text-2xl text-yellow-900">Weather Alert</h3>
+        </div>
+        <p className="text-xl text-yellow-900 ml-12">
+          Moderate rain expected tomorrow. Consider harvesting ready crops today!
+        </p>
+      </div>
+
+      {/* 7-Day Forecast */}
+      <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
+        <h2 className="text-2xl text-primary mb-6">7-Day Forecast</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+          <WeatherDayCard day="Mon" emoji="☀️" temp="29°C" />
+          <WeatherDayCard day="Tue" emoji="🌧️" temp="26°C" />
+          <WeatherDayCard day="Wed" emoji="⛈️" temp="25°C" />
+          <WeatherDayCard day="Thu" emoji="🌤️" temp="27°C" />
+          <WeatherDayCard day="Fri" emoji="☀️" temp="30°C" />
+          <WeatherDayCard day="Sat" emoji="🌦️" temp="28°C" />
+          <WeatherDayCard day="Sun" emoji="☀️" temp="31°C" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Inventory Content
+function InventoryContent({ inventory, onAddClick, onEdit, onDelete }) {
+  return (
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-purple-600 to-purple-500 rounded-2xl p-8 text-white">
+        <h1 className="text-3xl mb-2 flex items-center gap-3">
+          <img src={storageBagImg} alt="" className="w-10 h-10 object-contain brightness-0 invert" />
+          Farm Inventory
+        </h1>
+        <p className="text-purple-100 text-lg">Track your farm supplies</p>
+      </div>
+
+      <button className="w-full lg:w-auto px-8 py-4 bg-primary text-white rounded-xl hover:bg-green-700 transition-colors shadow-lg text-lg flex items-center gap-3" onClick={onAddClick}>
+        <Plus className="w-6 h-6" />
+        Add New Item
+      </button>
+
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {inventory.map(item => (
+          <InventoryCard
+            key={item.id}
+            emoji={item.emoji}
+            name={item.name}
+            quantity={item.quantity}
+            status={item.status}
+            onEdit={() => onEdit(item)}
+            onDelete={() => onDelete(item.id)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Chatbot Content
+function ChatbotContent() {
+  return (
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-green-600 to-green-500 rounded-2xl p-8 text-white">
+        <h1 className="text-3xl mb-2">💬 Farm Assistant</h1>
+        <p className="text-green-100 text-lg">Ask questions about farming</p>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6 h-96 flex flex-col">
+        <div className="flex-1 space-y-4 overflow-y-auto mb-4">
+          <ChatMessage
+            sender="bot"
+            message="🌾 Hello! How can I help you today?"
+          />
+          <ChatMessage
+            sender="user"
+            message="When is the best time to plant rice?"
+          />
+          <ChatMessage
+            sender="bot"
+            message="📅 The best time to plant rice in Sri Lanka is during Yala season (April-September) and Maha season (October-March). Based on your location in Anuradhapura, I recommend starting in early February for Yala season!"
+          />
+        </div>
+        <div className="flex gap-3">
+          <input
+            type="text"
+            placeholder="Type your question..."
+            className="flex-1 px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+          />
+          <button className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-green-700 transition-colors">
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Settings Content
+function SettingsContent() {
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+
+  // Profile state
+  const [profileData, setProfileData] = useState({
+    name: 'Sunil Perera',
+    email: 'farmer@example.com',
+    phone: '+94 77 123 4567',
+    location: 'Anuradhapura, Sri Lanka',
+    farmSize: '5'
+  });
+  const [profilePicture, setProfilePicture] = useState('👨‍🌾');
+  const [showPicturePicker, setShowPicturePicker] = useState(false);
+
+  // Password change state with verification
+  const [passwordChangeStep, setPasswordChangeStep] = useState(1); // 1: Enter Contact, 2: Enter OTP, 3: New Password
+  const [contactMethod, setContactMethod] = useState('email'); // 'email' or 'phone'
+  const [contactInfo, setContactInfo] = useState('');
+  const [otp, setOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordErrors, setPasswordErrors] = useState([]);
+  const [sentOTP] = useState('123456'); // Simulated OTP (in real app, comes from server)
+
+  // Profile picture options
+  const profilePicOptions = ['👨‍🌾', '👩‍🌾', '🧑‍🌾', '👨', '👩', '🧑', '😊', '🌾', '🌱'];
+
+  const handleDeleteAccount = () => {
+    if (!deletePassword) {
+      alert('⚠️ Please enter your password');
+      return;
+    }
+    // Here you would verify the password and delete the account
+    alert('🗑️ Account deleted successfully');
+    setShowDeleteModal(false);
+    setDeletePassword('');
+    // Redirect to login or home page
+  };
+
+  const handleSaveProfile = () => {
+    // Validate fields
+    if (!profileData.name || !profileData.email || !profileData.phone) {
+      alert('⚠️ Please fill in all required fields');
+      return;
+    }
+
+    // Save profile data (in real app, send to backend)
+    localStorage.setItem('userProfile', JSON.stringify(profileData));
+    localStorage.setItem('profilePicture', profilePicture);
+    alert('✅ Profile updated successfully!');
+  };
+
+  const validatePassword = (password) => {
+    const errors = [];
+
+    if (password.length <= 8) {
+      errors.push('Password must be more than 8 characters');
+    }
+
+    if (!/[a-zA-Z]/.test(password)) {
+      errors.push('Password must contain at least one letter');
+    }
+
+    if (!/[0-9]/.test(password)) {
+      errors.push('Password must contain at least one number');
+    }
+
+    const disallowedChars = /[<>{}[\]|\\^~`]/;
+    if (disallowedChars.test(password)) {
+      errors.push('Password contains disallowed characters');
+    }
+
+    return errors;
+  };
+
+  // Handle Step 1: Send OTP
+  const handleSendOTP = (e) => {
+    e.preventDefault();
+
+    if (!contactInfo) {
+      alert('⚠️ Please enter your contact information');
+      return;
+    }
+
+    // Validate format
+    if (contactMethod === 'email' && !contactInfo.includes('@')) {
+      alert('⚠️ Please enter a valid email address');
+      return;
+    }
+
+    if (contactMethod === 'phone' && contactInfo.length < 10) {
+      alert('⚠️ Please enter a valid phone number');
+      return;
+    }
+
+    // In real app, send OTP to backend
+    alert(`✅ Code sent to your ${contactMethod === 'email' ? 'email' : 'phone'}!\n\nDemo Code: ${sentOTP}`);
+    setPasswordChangeStep(2);
+  };
+
+  // Handle Step 2: Verify OTP
+  const handleVerifyOTP = (e) => {
+    e.preventDefault();
+
+    if (otp.length !== 6) {
+      alert('⚠️ Please enter the complete 6-digit code');
+      return;
+    }
+
+    // Verify OTP (in real app, verify with backend)
+    if (otp === sentOTP) {
+      alert('✅ Code verified successfully!');
+      setPasswordChangeStep(3);
+    } else {
+      alert('❌ Wrong code. Try again.\n\nDemo Code: ' + sentOTP);
+    }
+  };
+
+  // Handle Step 3: Reset Password
+  const handleResetPassword = (e) => {
+    e.preventDefault();
+
+    // Validate password
+    const errors = validatePassword(newPassword);
+    setPasswordErrors(errors);
+
+    if (errors.length > 0) {
+      return;
+    }
+
+    // Check if passwords match
+    if (newPassword !== confirmPassword) {
+      alert('❌ Passwords do not match');
+      return;
+    }
+
+    // In real app, update password in backend
+    alert('✅ Password changed successfully!');
+    // Reset all fields
+    setPasswordChangeStep(1);
+    setContactInfo('');
+    setOtp('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setPasswordErrors([]);
+  };
+
+  // Handle password input change with real-time validation
+  const handlePasswordInputChange = (password) => {
+    setNewPassword(password);
+
+    if (password.length > 0) {
+      const errors = validatePassword(password);
+      setPasswordErrors(errors);
+    } else {
+      setPasswordErrors([]);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-green-600 to-green-500 rounded-2xl p-8 text-white">
+        <h1 className="text-3xl mb-2">⚙️ Settings</h1>
+        <p className="text-green-100 text-lg">Manage your account</p>
+      </div>
+
+      {/* Profile Information */}
+      <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="relative">
+            <span className="text-6xl cursor-pointer" onClick={() => setShowPicturePicker(!showPicturePicker)}>{profilePicture}</span>
+            <button
+              onClick={() => setShowPicturePicker(!showPicturePicker)}
+              className="absolute -bottom-1 -right-1 bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center text-sm hover:bg-green-700 transition-colors"
+              title="Change picture"
+            >
+              ✏️
+            </button>
+          </div>
+          <div>
+            <h2 className="text-2xl text-primary font-bold">Profile Information</h2>
+            <p className="text-muted-foreground">Your personal details</p>
+          </div>
+        </div>
+
+        {/* Profile Picture Picker */}
+        {showPicturePicker && (
+          <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-4">
+            <p className="text-sm text-muted-foreground mb-3 font-semibold">Choose your profile picture:</p>
+            <div className="grid grid-cols-5 gap-3">
+              {profilePicOptions.map((pic, index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    setProfilePicture(pic);
+                    setShowPicturePicker(false);
+                  }}
+                  className={`text-5xl p-3 rounded-lg hover:bg-green-100 transition-colors ${profilePicture === pic ? 'bg-green-200 ring-2 ring-primary' : 'bg-white'
+                    }`}
+                >
+                  {pic}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm text-muted-foreground mb-1 block font-semibold">Full Name</label>
+            <input
+              type="text"
+              value={profileData.name}
+              onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-muted-foreground mb-1 block font-semibold">📧 Email Address</label>
+            <input
+              type="email"
+              value={profileData.email}
+              onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-muted-foreground mb-1 block font-semibold">📱 Phone Number</label>
+            <input
+              type="tel"
+              value={profileData.phone}
+              onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-muted-foreground mb-1 block font-semibold">🏠 Farm Location</label>
+            <input
+              type="text"
+              value={profileData.location}
+              onChange={(e) => setProfileData({ ...profileData, location: e.target.value })}
+              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-muted-foreground mb-1 block font-semibold">🌾 Farm Size (acres)</label>
+            <input
+              type="number"
+              value={profileData.farmSize}
+              onChange={(e) => setProfileData({ ...profileData, farmSize: e.target.value })}
+              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+            />
+          </div>
+
+          <button
+            onClick={handleSaveProfile}
+            className="w-full bg-primary text-white rounded-xl py-4 text-xl font-bold hover:bg-green-700 transition-colors"
+          >
+            Save Changes ✓
+          </button>
+        </div>
+      </div>
+
+      {/* Change Password */}
+      <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
+        <div className="flex items-center gap-4 mb-6">
+          <span className="text-6xl">🔒</span>
+          <div>
+            <h2 className="text-2xl text-primary font-bold">Change Password</h2>
+            <p className="text-muted-foreground">
+              {passwordChangeStep === 1 && 'Verify your identity first'}
+              {passwordChangeStep === 2 && 'Enter the code we sent'}
+              {passwordChangeStep === 3 && 'Create your new password'}
+            </p>
+          </div>
+        </div>
+
+        {/* Progress Indicator */}
+        <div className="flex items-center justify-center gap-2 mb-6">
+          <div className={`w-3 h-3 rounded-full ${passwordChangeStep >= 1 ? 'bg-primary' : 'bg-gray-300'}`}></div>
+          <div className={`w-12 h-1 ${passwordChangeStep >= 2 ? 'bg-primary' : 'bg-gray-300'}`}></div>
+          <div className={`w-3 h-3 rounded-full ${passwordChangeStep >= 2 ? 'bg-primary' : 'bg-gray-300'}`}></div>
+          <div className={`w-12 h-1 ${passwordChangeStep >= 3 ? 'bg-primary' : 'bg-gray-300'}`}></div>
+          <div className={`w-3 h-3 rounded-full ${passwordChangeStep >= 3 ? 'bg-primary' : 'bg-gray-300'}`}></div>
+        </div>
+
+        {/* Step 1: Enter Contact Information */}
+        {passwordChangeStep === 1 && (
+          <form onSubmit={handleSendOTP} className="space-y-4">
+            {/* Contact Method Selection - Same as Login Page */}
+            <div>
+              <label className="block text-sm font-bold text-muted-foreground mb-3">
+                📱 Choose How to Get Code
+              </label>
+              <div className="grid grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setContactMethod('email');
+                    setContactInfo('');
+                  }}
+                  className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${contactMethod === 'email'
+                    ? 'border-green-600 bg-green-50 text-green-700'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-green-300'
+                    }`}
+                >
+                  <Mail className="w-6 h-6 mb-1" />
+                  <span className="text-xs font-medium">Email</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setContactMethod('phone');
+                    setContactInfo('');
+                  }}
+                  className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${contactMethod === 'phone'
+                    ? 'border-green-600 bg-green-50 text-green-700'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-green-300'
+                    }`}
+                >
+                  <Phone className="w-6 h-6 mb-1" />
+                  <span className="text-xs font-medium">Phone</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setContactMethod('nic');
+                    setContactInfo('');
+                  }}
+                  className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${contactMethod === 'nic'
+                    ? 'border-green-600 bg-green-50 text-green-700'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-green-300'
+                    }`}
+                >
+                  <CreditCard className="w-6 h-6 mb-1" />
+                  <span className="text-xs font-medium">NIC</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Contact Info Input */}
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block font-bold">
+                {contactMethod === 'email' ? '📧 Your Email' : contactMethod === 'phone' ? '📱 Your Phone Number' : '🪪 Your NIC Number'}
+              </label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  {contactMethod === 'email' ? (
+                    <Mail className="w-5 h-5" />
+                  ) : contactMethod === 'phone' ? (
+                    <Phone className="w-5 h-5" />
+                  ) : (
+                    <CreditCard className="w-5 h-5" />
+                  )}
+                </div>
+                <input
+                  type="text"
+                  value={contactInfo}
+                  onChange={(e) => setContactInfo(e.target.value)}
+                  placeholder={
+                    contactMethod === 'email'
+                      ? 'farmer@example.com'
+                      : contactMethod === 'phone'
+                        ? '+94 77 123 4567'
+                        : '200012345678'
+                  }
+                  className="w-full pl-10 pr-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Send Code Button */}
+            <button
+              type="submit"
+              className="w-full py-4 bg-primary text-white rounded-xl hover:bg-green-700 transition-colors shadow-md flex items-center justify-center gap-2 text-xl font-bold"
+            >
+              📨 Send Code
+              <ArrowRight className="w-5 h-5" />
+            </button>
+          </form>
+        )}
+
+        {/* Step 2: Enter OTP */}
+        {passwordChangeStep === 2 && (
+          <form onSubmit={handleVerifyOTP} className="space-y-5">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+              <p className="text-sm text-muted-foreground mb-1">
+                We sent a code to:
+              </p>
+              <p className="text-foreground font-bold text-lg">{contactInfo}</p>
+            </div>
+
+            {/* OTP Input */}
+            <div>
+              <label className="block text-sm text-muted-foreground mb-3 text-center font-bold">
+                🔢 Enter 6-Digit Code
+              </label>
+              <div className="flex justify-center">
+                <InputOTP
+                  maxLength={6}
+                  value={otp}
+                  onChange={(value) => setOtp(value)}
+                >
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+            </div>
+
+            {/* Resend Code */}
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => alert('✅ New code sent!\n\nDemo Code: ' + sentOTP)}
+                className="text-primary hover:underline text-sm font-bold"
+              >
+                Didn't get code? Send again
+              </button>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setPasswordChangeStep(1)}
+                className="flex-1 py-4 bg-gray-200 text-foreground rounded-xl hover:bg-gray-300 transition-colors text-lg font-bold"
+              >
+                ← Back
+              </button>
+              <button
+                type="submit"
+                className="flex-1 py-4 bg-primary text-white rounded-xl hover:bg-green-700 transition-colors shadow-md flex items-center justify-center gap-2 text-lg font-bold"
+              >
+                Verify ✓
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Step 3: Set New Password */}
+        {passwordChangeStep === 3 && (
+          <form onSubmit={handleResetPassword} className="space-y-4">
+            {/* Password Requirements Box */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm font-bold text-foreground mb-2">🔒 Password Rules:</p>
+              <div className="space-y-1 text-sm text-muted-foreground">
+                <p>✓ More than 8 characters</p>
+                <p>✓ At least one letter (a-z)</p>
+                <p>✓ At least one number (0-9)</p>
+                <p>✓ Can use: ! @ # $ % & * ( ) - _ = +</p>
+                <p className="font-semibold text-red-600">✗ Cannot use: &lt; &gt; &#123; &#125; [ ] | \ ^ ~ `</p>
+              </div>
+            </div>
+
+            {/* New Password Input */}
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block font-bold">
+                🔑 New Password
+              </label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => handlePasswordInputChange(e.target.value)}
+                placeholder="Enter new password"
+                className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+                required
+              />
+            </div>
+
+            {/* Password Validation Messages */}
+            {passwordErrors.length > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                {passwordErrors.map((error, index) => (
+                  <div key={index} className="flex items-start gap-2 text-sm text-red-600 mb-1">
+                    <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Success Message */}
+            {newPassword.length > 0 && passwordErrors.length === 0 && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                <div className="flex items-center gap-2 text-sm text-green-600">
+                  <CheckCircle className="w-4 h-4" />
+                  <span className="font-semibold">✅ Password is good!</span>
+                </div>
+              </div>
+            )}
+
+            {/* Confirm Password Input */}
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block font-bold">
+                🔑 Type Password Again
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Type new password again"
+                className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+                required
+              />
+            </div>
+
+            {/* Password Match Indicator */}
+            {confirmPassword.length > 0 && (
+              <div className={`rounded-lg p-3 ${newPassword === confirmPassword
+                ? 'bg-green-50 border border-green-200'
+                : 'bg-red-50 border border-red-200'
+                }`}>
+                <div className={`flex items-center gap-2 text-sm font-semibold ${newPassword === confirmPassword ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                  {newPassword === confirmPassword ? (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      <span>✅ Passwords match!</span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="w-4 h-4" />
+                      <span>❌ Passwords do not match</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setPasswordChangeStep(1);
+                  setNewPassword('');
+                  setConfirmPassword('');
+                  setPasswordErrors([]);
+                }}
+                className="flex-1 py-4 bg-gray-200 text-foreground rounded-xl hover:bg-gray-300 transition-colors text-lg font-bold"
+              >
+                ← Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={passwordErrors.length > 0}
+                className={`flex-1 py-4 rounded-xl transition-colors text-lg font-bold ${passwordErrors.length > 0
+                  ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                  : 'bg-primary text-white hover:bg-green-700 shadow-md'
+                  }`}
+              >
+                ✅ Change Password
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+
+      {/* Notifications */}
+      <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
+        <div className="flex items-center gap-4 mb-6">
+          <span className="text-6xl">🔔</span>
+          <div>
+            <h2 className="text-2xl text-primary font-bold">Notifications</h2>
+            <p className="text-muted-foreground">Manage your alerts</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <label className="flex items-center gap-3 p-4 bg-green-50 rounded-lg cursor-pointer hover:bg-green-100 transition-colors">
+            <input type="checkbox" defaultChecked className="w-6 h-6 rounded border-green-300 text-primary focus:ring-primary" />
+            <div>
+              <p className="text-lg text-foreground font-bold">📦 Low Stock Alerts</p>
+              <p className="text-sm text-muted-foreground">Get notified when product stock is low</p>
+            </div>
+          </label>
+
+          <label className="flex items-center gap-3 p-4 bg-green-50 rounded-lg cursor-pointer hover:bg-green-100 transition-colors">
+            <input type="checkbox" defaultChecked className="w-6 h-6 rounded border-green-300 text-primary focus:ring-primary" />
+            <div>
+              <p className="text-lg text-foreground font-bold">📅 Order Notifications</p>
+              <p className="text-sm text-muted-foreground">Get notified about new orders</p>
+            </div>
+          </label>
+
+          <label className="flex items-center gap-3 p-4 bg-green-50 rounded-lg cursor-pointer hover:bg-green-100 transition-colors">
+            <input type="checkbox" defaultChecked className="w-6 h-6 rounded border-green-300 text-primary focus:ring-primary" />
+            <div>
+              <p className="text-lg text-foreground font-bold">🌦️ Weather Alerts</p>
+              <p className="text-sm text-muted-foreground">Get weather warnings for your area</p>
+            </div>
+          </label>
+
+          <label className="flex items-center gap-3 p-4 bg-green-50 rounded-lg cursor-pointer hover:bg-green-100 transition-colors">
+            <input type="checkbox" className="w-6 h-6 rounded border-green-300 text-primary focus:ring-primary" />
+            <div>
+              <p className="text-lg text-foreground font-bold">💰 Payment Reminders</p>
+              <p className="text-sm text-muted-foreground">Reminders for loan payments</p>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      {/* Danger Zone */}
+      <div className="bg-red-50 rounded-2xl shadow-lg border-2 border-red-200 p-6">
+        <div className="flex items-center gap-4 mb-6">
+          <span className="text-6xl">⚠️</span>
+          <div>
+            <h2 className="text-2xl text-red-600 font-bold">Danger Zone</h2>
+            <p className="text-muted-foreground">Irreversible actions</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="bg-white rounded-lg p-4 border-2 border-red-200">
+            <p className="text-lg text-foreground font-bold mb-2">🗑️ Delete Account</p>
+            <p className="text-sm text-muted-foreground mb-3">
+              Once you delete your account, there is no going back. All your data will be permanently removed.
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-bold"
+                onClick={() => setShowDeleteModal(true)}
+              >
+                Delete My Account
+              </button>
+              <p className="text-xs text-muted-foreground text-center">
+                Forgot your password?{' '}
+                <a href="#" className="text-primary hover:underline font-semibold">
+                  Reset it here
+                </a>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-md">
+            <div className="text-center mb-6">
+              <span className="text-6xl block mb-4">⚠️</span>
+              <h2 className="text-2xl text-red-600 font-bold mb-2">Are You Sure?</h2>
+              <p className="text-muted-foreground text-lg">
+                This action cannot be undone. All your data will be permanently deleted.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">
+                  🔒 Enter your password to confirm
+                </label>
+                <input
+                  type="password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  placeholder="Enter your password"
+                  className="w-full px-4 py-3 border border-red-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-lg"
+                />
+              </div>
+
+              <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                <p className="text-sm text-red-900 font-bold mb-1">⚠️ Warning:</p>
+                <ul className="text-sm text-red-800 space-y-1 list-disc list-inside">
+                  <li>All your products will be deleted</li>
+                  <li>Your farm data will be lost</li>
+                  <li>All contacts will be removed</li>
+                  <li>This cannot be undone!</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-bold"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeletePassword('');
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-bold"
+                onClick={handleDeleteAccount}
+              >
+                Yes, Delete Account
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Component Cards
+function QuickActionCard({ icon, title, subtitle, color, onClick }) {
+  return (
+    <div className={`${color} rounded-xl p-6 hover:shadow-lg transition-shadow cursor-pointer ${onClick ? 'cursor-pointer' : ''}`} onClick={onClick}>
+      <span className="w-12 h-12 flex items-center justify-center mb-3">
+        {typeof icon === 'string' && icon.length <= 4 ? (
+          <span className="text-5xl">{icon}</span>
+        ) : (
+          <img src={icon} alt="" className="w-12 h-12 object-contain" />
+        )}
+      </span>
+      <p className="text-2xl text-gray-900 mb-1 font-semibold">{subtitle}</p>
+      <p className="text-lg text-gray-700">{title}</p>
+    </div>
+  );
+}
+
 function ProductCard({ image, name, quantity, price, status, statusColor, onEdit, onDelete }) {
   const statusColors = {
     green: 'bg-green-100 text-green-800',
@@ -405,8 +3353,14 @@ function ProductCard({ image, name, quantity, price, status, statusColor, onEdit
   return (
     <div className="bg-white rounded-xl shadow-lg border border-green-100 overflow-hidden hover:shadow-xl transition-shadow">
       {/* Rectangular Image Header */}
-      <img src={image} alt={name} className="w-full h-48 object-cover" />
-      
+      {image ? (
+        <img src={image} alt={name} className="w-full h-48 object-cover" />
+      ) : (
+        <div className="w-full h-48 bg-green-50 flex items-center justify-center">
+          <Sprout className="w-12 h-12 text-primary opacity-20" />
+        </div>
+      )}
+
       <div className="p-6">
         <div className="mb-4">
           <p className="text-2xl text-foreground mb-2">{name}</p>
@@ -417,52 +3371,249 @@ function ProductCard({ image, name, quantity, price, status, statusColor, onEdit
             <span className="text-lg text-foreground font-bold">{quantity} kg</span>
           </div>
         </div>
-      
-      {/* Stock Visual Bar */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-1">
-          <p className="text-sm text-muted-foreground">Stock Level:</p>
-          <p className="text-sm text-foreground font-bold">{quantity > 150 ? '✅ Good' : '⚠️ Low'}</p>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-3">
-          <div 
-            className={`h-3 rounded-full transition-all ${quantity > 150 ? 'bg-green-500' : 'bg-yellow-500'}`}
-            style={{ width: `${Math.min((quantity / 300) * 100, 100)}%` }}
-          ></div>
-        </div>
-        <p className="text-xs text-muted-foreground mt-1">
-          {quantity > 150 
-            ? `${quantity} kg available` 
-            : `Only ${quantity} kg left - Need ${150 - quantity} kg more`}
-        </p>
-      </div>
 
-      <div className="flex items-center justify-between pt-4 border-t border-green-100 mb-4">
-        <div>
-          <p className="text-lg text-muted-foreground">Price</p>
-          <p className="text-xl text-primary font-bold">{price}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-lg text-muted-foreground">Total Value</p>
-          <p className="text-xl text-green-600 font-bold">
-            LKR {(quantity * parseInt(price.split(' ')[1])).toLocaleString()}
+        {/* Stock Visual Bar */}
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-sm text-muted-foreground">Stock Level:</p>
+            <p className="text-sm text-foreground font-bold">{quantity > 150 ? '✅ Good' : '⚠️ Low'}</p>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-3">
+            <div
+              className={`h-3 rounded-full transition-all ${quantity > 150 ? 'bg-green-500' : 'bg-yellow-500'}`}
+              style={{ width: `${Math.min((quantity / 300) * 100, 100)}%` }}
+            ></div>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            {quantity > 150
+              ? `${quantity} kg available`
+              : `Only ${quantity} kg left - Need ${150 - quantity} kg more`}
           </p>
         </div>
-      </div>
-      <div className="flex gap-2">
-        <button className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2" onClick={onEdit}>
-          <Edit className="w-4 h-4" />
-          Edit
-        </button>
-        <button className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center gap-2" onClick={onDelete}>
-          <Trash2 className="w-5 h-5" />
-        </button>
-      </div>
+
+        <div className="flex items-center justify-between pt-4 border-t border-green-100 mb-4">
+          <div>
+            <p className="text-lg text-muted-foreground">Price</p>
+            <p className="text-xl text-primary font-bold">{price}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-lg text-muted-foreground">Total Value</p>
+            <p className="text-xl text-green-600 font-bold">
+              LKR {(quantity * parseInt(price.split(' ')[1])).toLocaleString()}
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2" onClick={onEdit}>
+            <Edit className="w-4 h-4" />
+            Edit
+          </button>
+          <button className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center gap-2" onClick={onDelete}>
+            <Trash2 className="w-5 h-5" />
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
+function ContactCard({ emoji, name, role, phone, location }) {
+  return (
+    <div className="bg-green-50 rounded-xl p-5 border border-green-200 hover:shadow-lg transition-shadow">
+      <div className="flex items-start gap-4">
+        <span className="text-5xl">{emoji}</span>
+        <div className="flex-1">
+          <p className="text-xl text-foreground mb-1">{name}</p>
+          <p className="text-md text-primary mb-3">{role}</p>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Phone className="w-5 h-5" />
+              <a href={`tel:${phone}`} className="text-lg hover:text-primary">{phone}</a>
+            </div>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <MapPin className="w-5 h-5" />
+              <span className="text-lg">{location}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <a
+        href={`tel:${phone}`}
+        className="mt-4 w-full px-4 py-3 bg-primary text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 text-lg block text-center"
+      >
+        <Phone className="w-5 h-5" />
+        Call Now
+      </a>
+    </div>
+  );
+}
+function EquipmentCard({ image, name, price, available, onDelete, onRent, owner, cover }) {
+  return (
+    <div className="bg-white rounded-xl shadow-lg border border-green-100 p-6 hover:shadow-xl transition-shadow flex flex-col">
+
+      {/* Image */}
+      <div className={`w-full flex items-center justify-center mb-4 rounded-xl overflow-hidden ${cover ? 'h-48' : 'h-48 bg-gray-50'}`}>
+        <img
+          src={image}
+          alt={name}
+          className={cover ? 'w-full h-full object-cover' : 'max-h-full max-w-full object-contain'}
+        />
+      </div>
+
+      {/* Equipment Info */}
+      <div className="flex-1">
+        <p className="text-2xl font-bold text-gray-800 mb-1">{name}</p>
+        <p className="text-xl text-green-700 font-bold mb-3">{price}</p>
+
+        {owner && (
+          <div className="mb-4 bg-gray-50 p-4 rounded-lg border border-gray-100 space-y-1">
+            <p className="text-sm text-muted-foreground flex items-center gap-2">
+              <UserCheck className="w-4 h-4 text-primary" />
+              <span>Owner: <span className="text-foreground font-bold">{owner.name}</span></span>
+            </p>
+            <p className="text-sm text-muted-foreground flex items-center gap-2">
+              <Phone className="w-4 h-4 text-green-600" />
+              <span className="text-foreground">{owner.phone}</span>
+            </p>
+            {owner.location && (
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-red-500" />
+                <span>{owner.location}</span>
+              </p>
+            )}
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 mb-4">
+          <span
+            className={`px-3 py-1 rounded-full text-sm font-semibold ${available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+              }`}
+          >
+            {available ? 'Available' : 'Rented'}
+          </span>
+        </div>
+      </div>
+
+      {/* Buttons */}
+      <div className="mt-auto">
+        {available && onRent && (
+          <button
+            onClick={onRent}
+            className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition font-bold"
+          >
+            Rent Now
+          </button>
+        )}
+
+        {!available && onDelete && (
+          <button
+            onClick={onDelete}
+            className="w-full bg-red-100 text-red-600 py-2 rounded-lg hover:bg-red-200 transition font-bold"
+          >
+            Return
+          </button>
+        )}
+      </div>
+
+    </div>
+  );
+}
+function WeatherDayCard({ day, emoji, temp }) {
+  return (
+    <div className="bg-blue-50 rounded-xl p-4 text-center border border-blue-200">
+      <p className="text-lg text-muted-foreground mb-2">{day}</p>
+      <span className="text-4xl block mb-2">{emoji}</span>
+      <p className="text-xl text-foreground font-bold">{temp}</p>
+    </div>
+  );
+}
+
+function InventoryCard({ emoji, name, quantity, status, onEdit, onDelete }) {
+  const isLowStock = status === 'Low Stock';
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg border border-purple-100 p-6 hover:shadow-xl transition-shadow">
+      <div className="flex items-center gap-4 mb-4">
+        <span className="text-6xl">{emoji}</span>
+        <div className="flex-1">
+          <p className="text-2xl text-foreground mb-1">{name}</p>
+          <span className={`inline-block px-3 py-1 rounded-full text-sm ${isLowStock ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
+            }`}>
+            {status}
+          </span>
+        </div>
+      </div>
+      <p className="text-xl text-muted-foreground">Quantity: <span className="text-foreground font-bold">{quantity}</span></p>
+      <div className="flex gap-2 mt-4">
+        <button className="flex-1 px-4 py-3 bg-blue-50 text-primary rounded-lg hover:bg-blue-100 transition-colors flex items-center justify-center gap-2" onClick={onEdit}>
+          <Edit className="w-5 h-5" />
+          Edit
+        </button>
+        <button className="flex-1 px-4 py-3 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center gap-2" onClick={onDelete}>
+          <Trash2 className="w-5 h-5" />
+          Delete
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ChatMessage({ sender, message }) {
+  const isBot = sender === 'bot';
+
+  return (
+    <div className={`flex ${isBot ? 'justify-start' : 'justify-end'}`}>
+      <div className={`max-w-xs lg:max-w-md rounded-xl p-4 ${isBot ? 'bg-green-100 text-foreground' : 'bg-primary text-white'
+        }`}>
+        <p className="text-lg">{message}</p>
+      </div>
+    </div>
+  );
+}
+
+function SaleCard({ product, quantity, price, total, date, customer }) {
+  // Extract emoji from product string (e.g., "🍅 Tomatoes" -> "🍅")
+  const emoji = product.split(' ')[0];
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg border border-green-100 p-4">
+      <div className="flex items-center gap-4">
+        <span className="text-6xl">{emoji}</span>
+        <div className="flex-1">
+          <p className="text-xl text-foreground mb-1">{product}</p>
+          <p className="text-sm text-muted-foreground">Quantity: {quantity}</p>
+          <p className="text-sm text-muted-foreground">Price: {price}</p>
+          <p className="text-sm text-muted-foreground">Total: {total}</p>
+          <p className="text-sm text-muted-foreground">Date: {date}</p>
+          <p className="text-sm text-muted-foreground">Customer: {customer}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OrderCard({ product, quantity, customer, phone, status, date }) {
+  // Extract emoji from product string (e.g., "🍅 Tomatoes" -> "🍅")
+  const emoji = product.split(' ')[0];
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg border border-green-100 p-4">
+      <div className="flex items-center gap-4">
+        <span className="text-6xl">{emoji}</span>
+        <div className="flex-1">
+          <p className="text-xl text-foreground mb-1">{product}</p>
+          <p className="text-sm text-muted-foreground">Quantity: {quantity}</p>
+          <p className="text-sm text-muted-foreground">Customer: {customer}</p>
+          <p className="text-sm text-muted-foreground">Phone: {phone}</p>
+          <p className="text-sm text-muted-foreground">Status: {status}</p>
+          <p className="text-sm text-muted-foreground">Date: {date}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Confirmation Dialog
 function ConfirmDialog({ title, message, onConfirm, onCancel }) {
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
@@ -482,15 +3633,17 @@ function ConfirmDialog({ title, message, onConfirm, onCancel }) {
   );
 }
 
+// Edit Product Modal
 function EditProductModal({ product, onChange, onSave, onCancel }) {
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
       <div className="bg-white rounded-2xl p-8 w-[500px]">
         <h2 className="text-2xl text-primary mb-6">Edit Product</h2>
         <div className="space-y-4">
+
           <div>
-            <label className="block text-sm text-muted-foreground mb-1">Name</label>
-            <input type="text" value={product.name} onChange={e => onChange('name', e.target.value)} className="w-full p-3 border rounded-lg text-lg" />
+            <label className="block text-sm text-muted-foreground mb-1">Name (Read-only)</label>
+            <input type="text" value={product.name} readOnly className="w-full p-3 border rounded-lg text-lg bg-gray-50 cursor-not-allowed" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -512,6 +3665,59 @@ function EditProductModal({ product, onChange, onSave, onCancel }) {
   );
 }
 
+// Edit Inventory Modal
+function EditInventoryModal({ item, onChange, onSave, onCancel }) {
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-2xl p-8 w-96">
+        <h2 className="text-2xl text-primary mb-6">✏️ Edit Inventory Item</h2>
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <span className="text-6xl">{item.emoji}</span>
+            <input
+              type="text"
+              placeholder="Item Name"
+              value={item.name}
+              onChange={(e) => onChange('name', e.target.value)}
+              className="flex-1 px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+            />
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-6xl">📦</span>
+            <input
+              type="text"
+              placeholder="Quantity (e.g., 500 kg)"
+              value={item.quantity}
+              onChange={(e) => onChange('quantity', e.target.value)}
+              className="flex-1 px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+            />
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-6xl">📊</span>
+            <select
+              value={item.status}
+              onChange={(e) => onChange('status', e.target.value)}
+              className="flex-1 px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+            >
+              <option value="In Stock">✅ In Stock</option>
+              <option value="Low Stock">⚠️ Low Stock</option>
+            </select>
+          </div>
+        </div>
+        <div className="flex justify-end gap-3 mt-6">
+          <button className="px-6 py-3 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors text-lg" onClick={onCancel}>
+            Cancel
+          </button>
+          <button className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-green-700 transition-colors text-lg" onClick={onSave}>
+            💾 Save
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Add Product Modal
 function AddProductModal({ product, onChange, onSave, onCancel }) {
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
@@ -519,25 +3725,7 @@ function AddProductModal({ product, onChange, onSave, onCancel }) {
         <h2 className="text-2xl text-primary mb-6">Add New Product</h2>
         <div className="space-y-4">
 
-          {/* Image Upload */}
-          <div>
-            <label className="block text-sm text-muted-foreground mb-1">Product Image</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={e => {
-                const file = e.target.files[0];
-                if (file) {
-                  const imageUrl = URL.createObjectURL(file); // convert to local preview
-                  onChange('image', imageUrl);
-                }
-              }}
-              className="w-full p-3 border rounded-lg text-sm"
-            />
-            {product.image && (
-              <img src={product.image} alt="Preview" className="mt-2 w-32 h-32 object-cover rounded-lg" />
-            )}
-          </div>
+
 
           {/* Name */}
           <div>
@@ -591,6 +3779,216 @@ function AddProductModal({ product, onChange, onSave, onCancel }) {
           >
             Add Product
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Add Equipment Modal
+function AddEquipmentModal({ equipment, onChange, onSave, onCancel }) {
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-2xl p-8 w-96 shadow-2xl">
+        <h2 className="text-2xl text-primary font-bold mb-6">Add My Equipment</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-muted-foreground mb-2">
+              Equipment Name
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Tractor, Sprayer..."
+              value={equipment.name}
+              onChange={(e) => onChange('name', e.target.value)}
+              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-muted-foreground mb-2">
+              Rent Price (LKR/day)
+            </label>
+            <input
+              type="number"
+              placeholder="e.g. 5000"
+              value={equipment.price}
+              onChange={(e) => onChange('price', e.target.value)}
+              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+            />
+          </div>
+        </div>
+        <div className="flex gap-3 mt-8">
+          <button
+            className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors font-semibold"
+            onClick={onCancel}
+          >
+            Cancel
+          </button>
+          <button
+            className="flex-1 py-3 bg-primary text-white rounded-xl hover:bg-green-700 transition-colors font-semibold"
+            onClick={onSave}
+          >
+            Add Equipment
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// Add Inventory Modal
+function AddInventoryModal({ item, onChange, onSave, onCancel }) {
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-2xl p-8 w-96">
+        <h2 className="text-xl text-primary mb-4">Add New Inventory Item</h2>
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <img src={item.image || storageBagImg} alt="" className="w-16 h-16 object-contain" />
+            <input
+              type="text"
+              placeholder="Item Name"
+              value={item.name}
+              onChange={(e) => onChange('name', e.target.value)}
+              className="flex-1 px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+            />
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-16 h-16 bg-purple-50 rounded-lg flex items-center justify-center">
+              <Plus className="w-8 h-8 text-purple-600" />
+            </div>
+            <input
+              type="text"
+              placeholder="Quantity (e.g. 100 kg)"
+              value={item.quantity}
+              onChange={(e) => onChange('quantity', e.target.value)}
+              className="flex-1 px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+            />
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-16 h-16 bg-blue-50 rounded-lg flex items-center justify-center">
+              <Plus className="w-8 h-8 text-blue-600" />
+            </div>
+            <input
+              type="text"
+              placeholder="Status"
+              value={item.status}
+              onChange={(e) => onChange('status', e.target.value)}
+              className="flex-1 px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+            />
+          </div>
+        </div>
+        <div className="flex justify-end gap-3 mt-6">
+          <button className="px-4 py-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors" onClick={onCancel}>
+            Cancel
+          </button>
+          <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-green-700 transition-colors" onClick={onSave}>
+            Add
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Rent Equipment Modal
+function RentEquipmentModal({ equipment, quantity, days, onQuantityChange, onDaysChange, onConfirm, onCancel }) {
+  if (!equipment) return null;
+  const totalPrice = equipment.price * quantity * days;
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div className="bg-white rounded-[2rem] p-8 w-[380px] h-[580px] shadow-2xl border border-green-100 animate-in fade-in zoom-in duration-200 flex flex-col relative overflow-hidden">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+            <Calendar className="w-5 h-5" />
+            Rent {equipment.name}
+          </h2>
+          <button onClick={onCancel} className="p-1.5 hover:bg-gray-100 rounded-full transition-colors">
+            <X className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
+
+        <div className="bg-green-50/50 p-5 rounded-2xl mb-6 space-y-3 text-base border border-green-100/50">
+          <div className="flex items-center justify-between">
+            <p className="text-gray-500 font-medium">Provider:</p>
+            <p className="font-bold text-foreground">{equipment.owner?.name}</p>
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-gray-500 font-medium">Contact:</p>
+            <p className="font-bold text-green-600 flex items-center gap-1">
+              <Phone className="w-4 h-4" /> {equipment.owner?.phone}
+            </p>
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-gray-500 font-medium">Price/Day:</p>
+            <p className="font-bold text-primary">LKR {equipment.price.toLocaleString()}</p>
+          </div>
+        </div>
+
+        <div className="space-y-6 flex-1">
+          <div>
+            <label className="block text-xs font-black text-gray-400 mb-3 uppercase tracking-[0.15em]">Quantity</label>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => onQuantityChange(Math.max(1, quantity - 1))}
+                className="w-12 h-12 rounded-2xl border-2 border-green-100 flex items-center justify-center hover:bg-green-50 hover:border-primary transition-all text-2xl font-bold active:scale-95"
+              >-</button>
+              <input
+                type="number"
+                value={quantity}
+                onChange={(e) => onQuantityChange(Math.max(1, parseInt(e.target.value) || 1))}
+                className="flex-1 text-center py-2 border-b-2 border-green-100 font-black text-2xl focus:border-primary outline-none bg-transparent"
+              />
+              <button
+                onClick={() => onQuantityChange(quantity + 1)}
+                className="w-12 h-12 rounded-2xl border-2 border-green-100 flex items-center justify-center hover:bg-green-50 hover:border-primary transition-all text-2xl font-bold active:scale-95"
+              >+</button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-black text-gray-400 mb-3 uppercase tracking-[0.15em]">Rental Duration (Days)</label>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => onDaysChange(Math.max(1, days - 1))}
+                className="w-12 h-12 rounded-2xl border-2 border-green-100 flex items-center justify-center hover:bg-green-50 hover:border-primary transition-all text-2xl font-bold active:scale-95"
+              >-</button>
+              <input
+                type="number"
+                value={days}
+                onChange={(e) => onDaysChange(Math.max(1, parseInt(e.target.value) || 1))}
+                className="flex-1 text-center py-2 border-b-2 border-green-100 font-black text-2xl focus:border-primary outline-none bg-transparent"
+              />
+              <button
+                onClick={() => onDaysChange(days + 1)}
+                className="w-12 h-12 rounded-2xl border-2 border-green-100 flex items-center justify-center hover:bg-green-50 hover:border-primary transition-all text-2xl font-bold active:scale-95"
+              >+</button>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 space-y-4">
+          <div className="bg-primary/5 p-5 rounded-2xl border-2 border-primary/10 flex items-center justify-between">
+            <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Total Amount</p>
+            <p className="text-3xl font-black text-primary">LKR {totalPrice.toLocaleString()}</p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={onConfirm}
+              className="w-full py-4 bg-primary text-white rounded-2xl font-black hover:bg-green-700 transition-all shadow-xl shadow-green-200/50 flex items-center justify-center gap-2 text-lg active:scale-[0.98]"
+            >
+              Confirm Rental
+            </button>
+            <button
+              onClick={onCancel}
+              className="w-full py-3 text-gray-400 font-bold hover:text-gray-600 transition-colors text-sm"
+            >
+              Maybe Later
+            </button>
+          </div>
         </div>
       </div>
     </div>
