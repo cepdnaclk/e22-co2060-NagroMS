@@ -55,6 +55,9 @@ import irrigationPumpImg from "./images/products/irrigation pump.png";
 import hnbImg from "./images/products/HNB.png";
 import bocImg from "./images/products/boc.png";
 import peoplesImg from "./images/products/peoples.png";
+import commercialImg from "./images/products/commercial.png";
+import sampathImg from "./images/products/sampath.png";
+import nsbImg from "./images/products/nsb.png";
 
 import dashboardIcon from "./images/products/dashboard.png";
 import moneyIcon from "./images/products/money.png";
@@ -157,7 +160,7 @@ export function FarmerDashboard({ onNavigate }) {
     {
       id: 3,
       bankName: 'Sampath Bank',
-      bankLogo: bocImg,
+      bankLogo: sampathImg,
       loanType: 'Equipment Purchase Loan',
       amount: '1,000,000 - 10,000,000',
       interestRate: '9.0%',
@@ -169,7 +172,7 @@ export function FarmerDashboard({ onNavigate }) {
     {
       id: 4,
       bankName: 'Commercial Bank',
-      bankLogo: bocImg,
+      bankLogo: commercialImg,
       loanType: 'Agro Micro Finance',
       amount: '50,000 - 500,000',
       interestRate: '10.0%',
@@ -193,7 +196,7 @@ export function FarmerDashboard({ onNavigate }) {
     {
       id: 6,
       bankName: 'National Savings Bank',
-      bankLogo: hnbImg,
+      bankLogo: nsbImg,
       loanType: 'Organic Farming Loan',
       amount: '200,000 - 1,500,000',
       interestRate: '7.0%',
@@ -845,7 +848,7 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
           onClick={() => onNavigate('products')}
         />
         <QuickActionCard
-          icon={hnbImg}
+          icon="💰"
           title="Total Income"
           subtitle={`LKR ${totalIncome.toLocaleString()}`}
           color="bg-blue-100"
@@ -870,7 +873,7 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
       {/* Financial Summary - New Section */}
       <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl p-6 border-2 border-green-200">
         <div className="flex items-center gap-3 mb-6">
-          <img src={moneyIcon} alt="" className="w-12 h-12 object-contain" />
+          <span className="text-4xl">💰</span>
           <h2 className="text-2xl text-primary font-bold">Money Summary</h2>
         </div>
 
@@ -1421,120 +1424,177 @@ function MyProductsContent({ products, onAddClick, onEdit, onDelete }) {
   );
 }
 
-// Sales Content
 function SalesContent({ sales, rentalIncome }) {
   const totalSales = sales.reduce((total, sale) => total + sale.total, 0);
   const totalRentalIncome = rentalIncome.reduce((total, rental) => total + rental.total, 0);
   const grandTotal = totalSales + totalRentalIncome;
 
+  // Group sales by customer
+  const groupedSales = sales.reduce((acc, sale) => {
+    const customer = sale.customer || "Walk-in Customer";
+
+    if (!acc[customer]) {
+      acc[customer] = {
+        customer,
+        items: [],
+        total: 0
+      };
+    }
+
+    acc[customer].items.push(sale);
+    acc[customer].total += sale.total;
+
+    return acc;
+  }, {});
+
+  const customerSales = Object.values(groupedSales);
+
+  // Group rental income
+  const groupedRentals = rentalIncome.reduce((acc, rental) => {
+    const renter = rental.renter || "Private Renter";
+
+    if (!acc[renter]) {
+      acc[renter] = {
+        renter,
+        rentals: [],
+        total: 0
+      };
+    }
+
+    acc[renter].rentals.push(rental);
+    acc[renter].total += rental.total;
+
+    return acc;
+  }, {});
+
+  const renterSummary = Object.values(groupedRentals);
+
   return (
     <div className="space-y-6">
+
+      {/* HEADER */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl p-8 text-white">
         <h1 className="text-3xl mb-2 flex items-center gap-3">
-          <img src={moneyIcon} alt="" className="w-10 h-10 object-contain brightness-0 invert" />
-          Income & Sales
+          💰 Income & Sales
         </h1>
         <p className="text-blue-100 text-lg">Track all your earnings</p>
       </div>
 
-      {/* Total Income Summary */}
+      {/* TOTAL SUMMARY */}
       <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl p-6 border-2 border-green-200">
         <div className="flex items-center gap-3 mb-4">
           <span className="text-5xl">💵</span>
-          <h2 className="text-2xl text-primary font-bold">Total Income</h2>
+          <h2 className="text-2xl font-bold">Total Income</h2>
         </div>
+
         <div className="grid md:grid-cols-3 gap-4">
           <div className="bg-white rounded-xl p-4 border-l-4 border-green-500">
-            <p className="text-muted-foreground mb-1">🌾 Product Sales</p>
-            <p className="text-2xl text-green-600 font-bold">LKR {totalSales.toLocaleString()}</p>
+            <p className="text-gray-500 mb-1">🌾 Product Sales</p>
+            <p className="text-2xl text-green-600 font-bold">
+              LKR {totalSales.toLocaleString()}
+            </p>
           </div>
+
           <div className="bg-white rounded-xl p-4 border-l-4 border-blue-500">
-            <p className="text-muted-foreground mb-1">🚜 Rental Income</p>
-            <p className="text-2xl text-blue-600 font-bold">LKR {totalRentalIncome.toLocaleString()}</p>
+            <p className="text-gray-500 mb-1">🚜 Rental Income</p>
+            <p className="text-2xl text-blue-600 font-bold">
+              LKR {totalRentalIncome.toLocaleString()}
+            </p>
           </div>
+
           <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4">
             <p className="text-white mb-1">💎 Grand Total</p>
-            <p className="text-3xl text-white font-bold">LKR {grandTotal.toLocaleString()}</p>
+            <p className="text-3xl text-white font-bold">
+              LKR {grandTotal.toLocaleString()}
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Product Sales Calculation */}
+      {/* PRODUCT SALES */}
       <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
-        <h2 className="text-2xl text-primary mb-6">🌾 Product Sales Calculation</h2>
-        <div className="space-y-3">
-          {sales.map((sale, index) => (
-            <div key={sale.id} className="flex items-center justify-between py-3 border-b border-green-100">
-              <div className="flex items-center gap-3">
-                <img src={sale.image} alt="" className="w-12 h-12 object-contain" />
-                <div>
-                  <p className="text-lg text-foreground">{sale.product}</p>
-                  <p className="text-sm text-muted-foreground">{sale.customer} • {sale.date}</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-lg text-muted-foreground">
-                  {sale.quantity} × LKR {sale.price}
-                </p>
-                <p className="text-xl text-primary font-bold">= LKR {sale.total.toLocaleString()}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="mt-6 pt-6 border-t-2 border-green-500">
-          <div className="flex items-center justify-between">
-            <p className="text-2xl text-foreground font-bold">Total Product Sales:</p>
-            <p className="text-3xl text-primary font-bold">LKR {totalSales.toLocaleString()}</p>
-          </div>
-        </div>
-      </div>
 
-      {/* Equipment Rental Income */}
-      <div className="bg-white rounded-2xl shadow-lg border border-blue-100 p-6">
-        <h2 className="text-2xl text-primary mb-6">🚜 Equipment Rental Income</h2>
-        <div className="space-y-3">
-          {rentalIncome.map((rental) => (
-            <div key={rental.id} className="flex items-center justify-between py-3 border-b border-blue-100">
-              <div className="flex items-center gap-3">
-                <img src={rental.image || tractorImg} alt="" className="w-12 h-12 object-contain" />
-                <div>
-                  <p className="text-lg text-foreground">{rental.equipment}</p>
-                  <p className="text-sm text-muted-foreground">{rental.renter} • {rental.date}</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-lg text-muted-foreground">
-                  {rental.days} days × LKR {rental.pricePerDay.toLocaleString()}/day
-                </p>
-                <p className="text-xl text-blue-600 font-bold">= LKR {rental.total.toLocaleString()}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="mt-6 pt-6 border-t-2 border-blue-500">
-          <div className="flex items-center justify-between">
-            <p className="text-2xl text-foreground font-bold">Total Rental Income:</p>
-            <p className="text-3xl text-blue-600 font-bold">LKR {totalRentalIncome.toLocaleString()}</p>
-          </div>
-        </div>
-      </div>
+        <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+          🌾 Product Sales Calculation
+        </h2>
 
-      {/* Recent Sales Details */}
-      <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
-        <h2 className="text-2xl text-primary mb-6">📋 Recent Sales Details</h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {sales.map(sale => (
-            <SaleCard
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+
+          {sales.map((sale) => (
+
+            <div
               key={sale.id}
-              product={sale.product}
-              quantity={sale.quantity}
-              price={`LKR ${sale.price}/kg`}
-              total={`LKR ${sale.total.toLocaleString()}`}
-              date={sale.date}
-              customer={sale.customer}
-            />
+              className="bg-gray-50 rounded-xl p-4 border flex flex-col hover:bg-white hover:shadow-md transition"
+            >
+
+              {/* MEDIUM IMAGE */}
+              <div className="w-24 h-24 bg-white rounded-lg flex items-center justify-center border mx-auto mb-3 overflow-hidden">
+
+                <img
+                  src={sale.image}
+                  alt={sale.product}
+                  className="w-full h-full object-cover hover:scale-110 transition duration-300"
+                />
+
+              </div>
+
+              {/* PRODUCT TITLE */}
+              <div className="text-center mb-3">
+                <p className="text-lg font-bold">{sale.product}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {sale.date}
+                </p>
+              </div>
+
+              {/* DETAILS */}
+              <div className="flex-1 space-y-2 bg-white p-3 rounded-lg border">
+
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Customer</span>
+                  <span className="font-bold">{sale.customer}</span>
+                </div>
+
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Quantity</span>
+                  <span className="font-bold">{sale.quantity}</span>
+                </div>
+
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Unit Price</span>
+                  <span className="font-bold text-green-600">
+                    LKR {sale.price}
+                  </span>
+                </div>
+
+              </div>
+
+              {/* TOTAL */}
+              <div className="mt-3 pt-3 flex justify-between border-t border-dashed">
+
+                <span className="text-xs text-gray-500 font-bold uppercase">
+                  Total Bill
+                </span>
+
+                <span className="text-xl font-bold text-green-600">
+                  LKR {sale.total.toLocaleString()}
+                </span>
+
+              </div>
+
+            </div>
+
           ))}
+
         </div>
+
+        {/* TOTAL */}
+        <div className="mt-8 pt-6 border-t-2 border-green-500 flex justify-between">
+          <p className="text-2xl font-bold">Total Product Sales:</p>
+          <p className="text-3xl text-green-600 font-bold">
+            LKR {totalSales.toLocaleString()}
+          </p>
+        </div>
+
       </div>
     </div>
   );
@@ -1706,9 +1766,10 @@ function ExpensesContent({ rentalExpenses }) {
   );
 }
 
-// Loans Content
+
+
 function LoansContent({ availableLoans, activeLoans }) {
-  const [showDetailModal, setShowDetailModal] = useState(null); // 'borrowed', 'paid', 'remaining', or null
+  const [showDetailModal, setShowDetailModal] = useState(null);
 
   const totalBorrowed = activeLoans.reduce((total, loan) => total + loan.borrowed, 0);
   const totalPaid = activeLoans.reduce((total, loan) => total + loan.paid, 0);
@@ -1716,374 +1777,93 @@ function LoansContent({ availableLoans, activeLoans }) {
 
   return (
     <div className="space-y-6">
+
+      {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl p-8 text-white">
         <h1 className="text-3xl mb-2">💳 Bank Loans</h1>
         <p className="text-blue-100 text-lg">Find loans & manage repayments</p>
       </div>
 
-      {/* Active Loans Summary */}
+      {/* Active Loans */}
       {activeLoans.length > 0 && (
-        <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 border-2 border-blue-200">
+        <div className="mb-8">
           <div className="flex items-center gap-3 mb-6">
-            <span className="text-5xl">💰</span>
+            <span className="text-4xl">💳</span>
             <div>
               <h2 className="text-2xl text-primary font-bold">My Active Loans</h2>
-              <p className="text-muted-foreground">Click on cards to see detailed calculations</p>
+              <p className="text-muted-foreground">Manage your current repayments and progress</p>
             </div>
           </div>
-
-          <div className="grid md:grid-cols-3 gap-4 mb-6">
-            <button
-              onClick={() => setShowDetailModal('borrowed')}
-              className="bg-white rounded-xl p-5 border-l-4 border-blue-500 shadow-md hover:shadow-xl transition-all text-left cursor-pointer hover:scale-105"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-3xl">📊</span>
-                <h3 className="text-lg text-muted-foreground">Total Borrowed</h3>
-              </div>
-              <p className="text-3xl text-blue-600 font-bold">LKR {totalBorrowed.toLocaleString()}</p>
-              <p className="text-sm text-blue-500 mt-2">👆 Click for details</p>
-            </button>
-
-            <button
-              onClick={() => setShowDetailModal('paid')}
-              className="bg-white rounded-xl p-5 border-l-4 border-green-500 shadow-md hover:shadow-xl transition-all text-left cursor-pointer hover:scale-105"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-3xl">✅</span>
-                <h3 className="text-lg text-muted-foreground">Total Paid</h3>
-              </div>
-              <p className="text-3xl text-green-600 font-bold">LKR {totalPaid.toLocaleString()}</p>
-              <p className="text-sm text-green-500 mt-2">👆 Click for details</p>
-            </button>
-
-            <button
-              onClick={() => setShowDetailModal('remaining')}
-              className="bg-white rounded-xl p-5 border-l-4 border-red-500 shadow-md hover:shadow-xl transition-all text-left cursor-pointer hover:scale-105"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-3xl">⏰</span>
-                <h3 className="text-lg text-muted-foreground">Remaining</h3>
-              </div>
-              <p className="text-3xl text-red-600 font-bold">LKR {totalRemaining.toLocaleString()}</p>
-              <p className="text-sm text-red-500 mt-2">👆 Click for details</p>
-            </button>
-          </div>
-
-          {/* Detail Calculation Modal */}
-          {showDetailModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setShowDetailModal(null)}>
-              <div className="bg-white rounded-2xl p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-                {/* Borrowed Details */}
-                {showDetailModal === 'borrowed' && (
-                  <>
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-3">
-                        <span className="text-6xl">📊</span>
-                        <div>
-                          <h2 className="text-3xl text-primary font-bold">Total Borrowed Calculation</h2>
-                          <p className="text-muted-foreground">Money you received from banks</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => setShowDetailModal(null)}
-                        className="text-3xl text-muted-foreground hover:text-red-500"
-                      >
-                        ✕
-                      </button>
-                    </div>
-
-                    <div className="space-y-4 mb-6">
-                      {activeLoans.map((loan, index) => (
-                        <div key={loan.id} className="bg-blue-50 rounded-xl p-6 border-l-4 border-blue-500">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-3">
-                              <span className="text-4xl">{loan.bankLogo}</span>
-                              <div>
-                                <p className="text-xl text-foreground font-bold">{loan.loanType}</p>
-                                <p className="text-md text-muted-foreground">{loan.bankName}</p>
-                              </div>
-                            </div>
-                            <p className="text-2xl text-blue-600 font-bold">LKR {loan.borrowed.toLocaleString()}</p>
-                          </div>
-                          <p className="text-sm text-muted-foreground">Started: {loan.startDate}</p>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl p-6 border-2 border-blue-500">
-                      <div className="text-center mb-4">
-                        <p className="text-2xl text-foreground font-bold mb-3">📝 Calculation</p>
-                        <div className="space-y-2">
-                          {activeLoans.map((loan, index) => (
-                            <p key={loan.id} className="text-xl text-foreground">
-                              {loan.loanType} = LKR {loan.borrowed.toLocaleString()}
-                            </p>
-                          ))}
-                          <div className="border-t-2 border-blue-500 pt-3 mt-3">
-                            <p className="text-3xl text-blue-600 font-bold">
-                              Total = LKR {totalBorrowed.toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* Paid Details */}
-                {showDetailModal === 'paid' && (
-                  <>
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-3">
-                        <span className="text-6xl">✅</span>
-                        <div>
-                          <h2 className="text-3xl text-primary font-bold">Total Paid Calculation</h2>
-                          <p className="text-muted-foreground">Money you paid back to banks</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => setShowDetailModal(null)}
-                        className="text-3xl text-muted-foreground hover:text-red-500"
-                      >
-                        ✕
-                      </button>
-                    </div>
-
-                    <div className="space-y-4 mb-6">
-                      {activeLoans.map((loan) => {
-                        const paidPercentage = (loan.paid / loan.borrowed) * 100;
-                        return (
-                          <div key={loan.id} className="bg-green-50 rounded-xl p-6 border-l-4 border-green-500">
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-3">
-                                <span className="text-4xl">{loan.bankLogo}</span>
-                                <div>
-                                  <p className="text-xl text-foreground font-bold">{loan.loanType}</p>
-                                  <p className="text-md text-muted-foreground">{loan.bankName}</p>
-                                </div>
-                              </div>
-                              <p className="text-2xl text-green-600 font-bold">LKR {loan.paid.toLocaleString()}</p>
-                            </div>
-                            <div className="mb-2">
-                              <div className="flex justify-between text-sm mb-1">
-                                <span>Progress</span>
-                                <span className="font-bold text-green-600">{paidPercentage.toFixed(1)}%</span>
-                              </div>
-                              <div className="w-full bg-gray-200 rounded-full h-3">
-                                <div
-                                  className="bg-green-500 h-3 rounded-full"
-                                  style={{ width: `${paidPercentage}%` }}
-                                ></div>
-                              </div>
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              Out of LKR {loan.borrowed.toLocaleString()} borrowed
-                            </p>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    <div className="bg-gradient-to-br from-green-100 to-blue-100 rounded-xl p-6 border-2 border-green-500">
-                      <div className="text-center mb-4">
-                        <p className="text-2xl text-foreground font-bold mb-3">📝 Calculation</p>
-                        <div className="space-y-2">
-                          {activeLoans.map((loan) => (
-                            <p key={loan.id} className="text-xl text-foreground">
-                              {loan.loanType} = LKR {loan.paid.toLocaleString()}
-                            </p>
-                          ))}
-                          <div className="border-t-2 border-green-500 pt-3 mt-3">
-                            <p className="text-3xl text-green-600 font-bold">
-                              Total Paid = LKR {totalPaid.toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="bg-white rounded-lg p-4 mt-4">
-                        <p className="text-center text-lg text-foreground">
-                          🎉 Great job! You've paid <span className="font-bold text-green-600">
-                            {((totalPaid / totalBorrowed) * 100).toFixed(1)}%
-                          </span> of your total loans!
-                        </p>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* Remaining Details */}
-                {showDetailModal === 'remaining' && (
-                  <>
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-3">
-                        <span className="text-6xl">⏰</span>
-                        <div>
-                          <h2 className="text-3xl text-primary font-bold">Remaining Amount Calculation</h2>
-                          <p className="text-muted-foreground">Money you still need to pay</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => setShowDetailModal(null)}
-                        className="text-3xl text-muted-foreground hover:text-red-500"
-                      >
-                        ✕
-                      </button>
-                    </div>
-
-                    <div className="space-y-4 mb-6">
-                      {activeLoans.map((loan) => {
-                        const remainingPercentage = (loan.remaining / loan.borrowed) * 100;
-                        return (
-                          <div key={loan.id} className="bg-red-50 rounded-xl p-6 border-l-4 border-red-500">
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-3">
-                                <span className="text-4xl">{loan.bankLogo}</span>
-                                <div>
-                                  <p className="text-xl text-foreground font-bold">{loan.loanType}</p>
-                                  <p className="text-md text-muted-foreground">{loan.bankName}</p>
-                                </div>
-                              </div>
-                              <p className="text-2xl text-red-600 font-bold">LKR {loan.remaining.toLocaleString()}</p>
-                            </div>
-
-                            <div className="bg-white rounded-lg p-4 mb-3">
-                              <p className="text-lg text-foreground mb-2">
-                                <span className="font-bold">LKR {loan.borrowed.toLocaleString()}</span> (borrowed) -
-                                <span className="font-bold text-green-600"> LKR {loan.paid.toLocaleString()}</span> (paid) =
-                                <span className="font-bold text-red-600"> LKR {loan.remaining.toLocaleString()}</span>
-                              </p>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                              <div className="bg-white rounded-lg p-3">
-                                <p className="text-sm text-muted-foreground">Monthly Payment</p>
-                                <p className="text-lg text-purple-600 font-bold">LKR {loan.monthlyPayment.toLocaleString()}</p>
-                              </div>
-                              <div className="bg-white rounded-lg p-3">
-                                <p className="text-sm text-muted-foreground">Next Payment</p>
-                                <p className="text-lg text-orange-600 font-bold">{loan.nextPayment}</p>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    <div className="bg-gradient-to-br from-red-100 to-orange-100 rounded-xl p-6 border-2 border-red-500">
-                      <div className="text-center mb-4">
-                        <p className="text-2xl text-foreground font-bold mb-3">📝 Calculation</p>
-                        <div className="space-y-2">
-                          {activeLoans.map((loan) => (
-                            <div key={loan.id} className="bg-white rounded-lg p-3">
-                              <p className="text-lg text-foreground">
-                                {loan.loanType}: LKR {loan.borrowed.toLocaleString()} - LKR {loan.paid.toLocaleString()} =
-                                <span className="font-bold text-red-600"> LKR {loan.remaining.toLocaleString()}</span>
-                              </p>
-                            </div>
-                          ))}
-                          <div className="border-t-2 border-red-500 pt-3 mt-3">
-                            <p className="text-3xl text-red-600 font-bold">
-                              Total Remaining = LKR {totalRemaining.toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="bg-white rounded-lg p-4 mt-4">
-                        <p className="text-center text-lg text-foreground">
-                          💪 Keep paying! You still need to pay <span className="font-bold text-red-600">
-                            {((totalRemaining / totalBorrowed) * 100).toFixed(1)}%
-                          </span> of your total loans
-                        </p>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                <button
-                  onClick={() => setShowDetailModal(null)}
-                  className="w-full mt-6 bg-primary text-white rounded-xl py-4 text-xl font-bold hover:bg-green-700 transition-colors"
-                >
-                  Close ✓
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Active Loan Details */}
-          <div className="space-y-4">
-            {activeLoans.map((loan) => {
-              const paidPercentage = (loan.paid / loan.borrowed) * 100;
-              return (
-                <div key={loan.id} className="bg-white rounded-xl p-6 border-2 border-blue-200 shadow-lg">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-4">
-                      <span className="text-6xl">{loan.bankLogo}</span>
-                      <div>
-                        <p className="text-2xl text-foreground font-bold mb-1">{loan.loanType}</p>
-                        <p className="text-lg text-muted-foreground">{loan.bankName}</p>
-                        <p className="text-md text-muted-foreground">Interest: {loan.interestRate}</p>
-                      </div>
-                    </div>
-                    <div className="bg-green-100 rounded-lg px-4 py-2">
-                      <p className="text-sm text-green-800 font-bold">{loan.status}</p>
-                    </div>
+          
+          <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {activeLoans.map((loan) => {
+            const paidPercentage = (loan.paid / loan.borrowed) * 100;
+            return (
+              <div key={loan.id} className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex flex-col items-center">
+                {/* Header Row: Logo & Basic Info Side-by-Side */}
+                <div className="flex items-center gap-4 w-full mb-4">
+                  {/* Loan Image */}
+                  <div className="w-24 h-20 bg-gray-50 rounded-xl p-2 flex items-center justify-center border border-gray-200 shrink-0">
+                    <img src={loan.bankLogo} alt={loan.bankName} className="w-full h-full object-contain" />
                   </div>
 
-                  {/* Progress Bar */}
-                  <div className="mb-4">
-                    <div className="flex justify-between mb-2">
-                      <span className="text-sm text-muted-foreground">Payment Progress</span>
-                      <span className="text-sm text-primary font-bold">{paidPercentage.toFixed(1)}% Paid</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-4">
-                      <div
-                        className="bg-gradient-to-r from-green-500 to-green-600 h-4 rounded-full transition-all"
-                        style={{ width: `${paidPercentage}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  {/* Loan Details Grid */}
-                  <div className="grid md:grid-cols-2 gap-4 mb-4">
-                    <div className="bg-blue-50 rounded-lg p-4">
-                      <p className="text-sm text-muted-foreground mb-1">💵 Borrowed Amount</p>
-                      <p className="text-xl text-foreground font-bold">LKR {loan.borrowed.toLocaleString()}</p>
-                    </div>
-                    <div className="bg-green-50 rounded-lg p-4">
-                      <p className="text-sm text-muted-foreground mb-1">✅ Amount Paid</p>
-                      <p className="text-xl text-green-600 font-bold">LKR {loan.paid.toLocaleString()}</p>
-                    </div>
-                    <div className="bg-red-50 rounded-lg p-4">
-                      <p className="text-sm text-muted-foreground mb-1">⏰ Remaining</p>
-                      <p className="text-xl text-red-600 font-bold">LKR {loan.remaining.toLocaleString()}</p>
-                    </div>
-                    <div className="bg-purple-50 rounded-lg p-4">
-                      <p className="text-sm text-muted-foreground mb-1">📅 Monthly Payment</p>
-                      <p className="text-xl text-purple-600 font-bold">LKR {loan.monthlyPayment.toLocaleString()}</p>
-                    </div>
-                  </div>
-                  {/* Payment Schedule */}
-                  <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-lg p-4 border-l-4 border-orange-500">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">🔔 Next Payment Due</p>
-                        <p className="text-xl text-foreground font-bold">{loan.nextPayment}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-muted-foreground mb-1">📆 Loan Period</p>
-                        <p className="text-md text-foreground">{loan.startDate} to {loan.endDate}</p>
-                      </div>
+                  {/* Loan Details Text */}
+                  <div className="flex-1 text-left">
+                    <p className="text-lg text-primary font-bold leading-tight">{loan.loanType}</p>
+                    <p className="text-sm text-foreground font-semibold">{loan.bankName}</p>
+                    <p className="text-sm text-muted-foreground mt-0.5">Interest: {loan.interestRate}</p>
+                    <div className="inline-flex mt-1.5 px-2.5 py-0.5 bg-green-100 text-green-700 text-[10px] font-black uppercase rounded-full border border-green-200">
+                      {loan.status}
                     </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
-      {/* Available Loans from Banks */}
+                {/* Payment Progress */}
+                <div className="w-full mb-2">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span>Payment Progress</span>
+                    <span className="font-bold text-green-600">{paidPercentage.toFixed(1)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div
+                      className="bg-green-500 h-3 rounded-full transition-all"
+                      style={{ width: `${paidPercentage}%` }}
+                    ></div>
+                  </div>
+                </div>
+
+                {/* Amount Details */}
+                <div className="grid grid-cols-2 gap-2 w-full text-sm text-foreground">
+                  <div className="bg-gray-50 rounded-lg p-2 text-center">
+                    💵 Borrowed<br />
+                    <span className="font-bold">LKR {loan.borrowed.toLocaleString()}</span>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-2 text-center">
+                    ✅ Paid<br />
+                    <span className="font-bold text-green-600">LKR {loan.paid.toLocaleString()}</span>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-2 text-center">
+                    ⏰ Remaining<br />
+                    <span className="font-bold text-red-600">LKR {loan.remaining.toLocaleString()}</span>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-2 text-center">
+                    📅 Monthly<br />
+                    <span className="font-bold text-purple-600">LKR {loan.monthlyPayment.toLocaleString()}</span>
+                  </div>
+                </div>
+
+                {/* Next Payment */}
+                <div className="mt-2 w-full bg-orange-50 rounded-lg p-2 text-center text-sm border-l-4 border-orange-500">
+                  🔔 Next Payment: {loan.nextPayment}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    )}
+
+      {/* Available Loans */}
       <div className="bg-white rounded-2xl shadow-lg border border-blue-100 p-6">
         <div className="flex items-center gap-3 mb-6">
           <span className="text-4xl">🏦</span>
@@ -2093,110 +1873,67 @@ function LoansContent({ availableLoans, activeLoans }) {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {availableLoans.map((loan) => (
-            <div key={loan.id} className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl p-6 border-2 border-green-200 hover:shadow-xl transition-shadow">
-              <div className="flex items-start gap-4 mb-4">
-                <span className="text-6xl">{loan.bankLogo}</span>
-                <div>
-                  <p className="text-2xl text-primary font-bold mb-1">{loan.loanType}</p>
-                  <p className="text-lg text-foreground font-bold">{loan.bankName}</p>
-                  <p className="text-md text-muted-foreground mt-2">{loan.description}</p>
+            <div key={loan.id} className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex flex-col items-center h-full">
+              
+              {/* Standardized Image Container */}
+              <div className="h-32 flex items-center justify-center mb-1 w-full">
+                <div className="w-38 h-24 bg-gray-50 rounded-xl p-2 flex items-center justify-center border border-gray-200 transition-all">
+                  <img src={loan.image || loan.bankLogo} alt={loan.bankName} className="w-full h-full object-contain" />
                 </div>
               </div>
 
-              {/* Loan Details */}
-              <div className="space-y-3 mb-4">
-                <div className="bg-white rounded-lg p-4 border-l-4 border-blue-500">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">💰</span>
-                      <span className="text-sm text-muted-foreground">Loan Amount</span>
-                    </div>
-                    <p className="text-lg text-foreground font-bold">LKR {loan.amount}</p>
-                  </div>
-                </div>
+              {/* Standardized Title Area */}
+              <div className="text-center h-16 flex flex-col justify-center mb-4">
+                <p className="text-lg text-primary font-bold">{loan.loanType}</p>
+                <p className="text-sm text-foreground font-semibold">{loan.bankName}</p>
+              </div>
 
-                <div className="bg-white rounded-lg p-4 border-l-4 border-green-500">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">📊</span>
-                      <span className="text-sm text-muted-foreground">Interest Rate</span>
-                    </div>
-                    <p className="text-lg text-green-600 font-bold">{loan.interestRate} per year</p>
-                  </div>
+              {/* Loan Details - All aligned vertically */}
+              <div className="w-full space-y-2 mb-4 text-sm">
+                <div className="flex justify-between bg-gray-50 p-2 rounded-lg border-l-4 border-blue-500 h-10 items-center overflow-hidden">
+                  <span className="whitespace-nowrap">💰 Amount</span>
+                  <span className="font-bold text-xs x-sm:text-sm">LKR {loan.amount.toLocaleString()}</span>
                 </div>
-
-                <div className="bg-white rounded-lg p-4 border-l-4 border-purple-500">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">📅</span>
-                      <span className="text-sm text-muted-foreground">Duration</span>
-                    </div>
-                    <p className="text-lg text-purple-600 font-bold">{loan.duration}</p>
-                  </div>
+                <div className="flex justify-between bg-gray-50 p-2 rounded-lg border-l-4 border-green-500 h-10 items-center">
+                  <span>📊 Interest</span>
+                  <span className="font-bold">{loan.interestRate} %</span>
+                </div>
+                <div className="flex justify-between bg-gray-50 p-2 rounded-lg border-l-4 border-purple-500 h-10 items-center">
+                  <span>📅 Duration</span>
+                  <span className="font-bold">{loan.duration}</span>
                 </div>
               </div>
 
-              {/* Requirements */}
-              <div className="bg-white rounded-lg p-4 mb-4">
-                <p className="text-sm text-muted-foreground font-bold mb-2">📋 What You Need:</p>
-                <ul className="space-y-1">
-                  {loan.requirements.map((req, index) => (
-                    <li key={index} className="flex items-center gap-2">
-                      <span className="text-green-600">✓</span>
-                      <span className="text-sm text-foreground">{req}</span>
-                    </li>
+              {/* Requirements Area with fixed min-height for alignment */}
+              <div className="w-full bg-gray-50 p-3 rounded-lg mb-4 text-xs flex-1 min-h-[100px]">
+                <p className="font-bold mb-1">📋 Requirements:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  {loan.requirements.map((req, idx) => (
+                    <li key={idx} className="">{req}</li>
                   ))}
                 </ul>
               </div>
 
-              {/* Contact Bank */}
+              {/* Call Button - Pushed to bottom */}
               <a
                 href={`tel:${loan.phone}`}
-                className="w-full flex items-center justify-center gap-2 bg-primary text-white rounded-lg py-3 hover:bg-green-700 transition-colors"
+                className="w-full flex items-center justify-center gap-2 bg-primary text-white rounded-lg py-3 text-sm font-bold hover:bg-green-700 transition-colors shadow-sm"
               >
-                <span className="text-xl">📞</span>
-                <span className="text-lg font-bold">Call {loan.bankName}</span>
+                📞 Call Now
               </a>
-              <p className="text-center text-sm text-muted-foreground mt-2">{loan.phone}</p>
             </div>
           ))}
-        </div>
-      </div>
-
-      {/* Loan Tips */}
-      <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl p-6 border-2 border-yellow-200">
-        <div className="flex items-center gap-3 mb-4">
-          <span className="text-4xl">💡</span>
-          <h3 className="text-xl text-primary font-bold">Loan Tips for Farmers</h3>
-        </div>
-        <div className="space-y-2">
-          <div className="flex items-start gap-3 bg-white rounded-lg p-4">
-            <span className="text-2xl">✅</span>
-            <p className="text-lg text-foreground">Compare interest rates from different banks before choosing</p>
-          </div>
-          <div className="flex items-start gap-3 bg-white rounded-lg p-4">
-            <span className="text-2xl">✅</span>
-            <p className="text-lg text-foreground">Only borrow what you can repay - plan your budget carefully</p>
-          </div>
-          <div className="flex items-start gap-3 bg-white rounded-lg p-4">
-            <span className="text-2xl">✅</span>
-            <p className="text-lg text-foreground">Keep all documents ready: NIC, land papers, income proof</p>
-          </div>
-          <div className="flex items-start gap-3 bg-white rounded-lg p-4">
-            <span className="text-2xl">✅</span>
-            <p className="text-lg text-foreground">Pay on time to maintain good credit and get better rates next time</p>
-          </div>
-          <div className="flex items-start gap-3 bg-white rounded-lg p-4">
-            <span className="text-2xl">✅</span>
-            <p className="text-lg text-foreground">Ask bank about government subsidies for farmers - you may get lower rates!</p>
-          </div>
         </div>
       </div>
     </div>
   );
 }
+
+
+
+
 
 // Contacts Content - Service Providers, Customers, Experts
 function ContactsContent() {
@@ -2329,10 +2066,12 @@ function ContactsContent() {
     </div>
   );
 }
-// Equipment Content
+
 function EquipmentContent({ myEquipment, onAddClick, onDeleteEquipment, onRentClick }) {
   return (
     <div className="space-y-6">
+
+      {/* Header */}
       <div className="bg-gradient-to-r from-green-600 to-green-500 rounded-2xl p-8 text-white">
         <h1 className="text-3xl mb-2 flex items-center gap-3">
           <span className="text-4xl">🚜</span>
@@ -2343,13 +2082,16 @@ function EquipmentContent({ myEquipment, onAddClick, onDeleteEquipment, onRentCl
         </p>
       </div>
 
+      {/* Add Equipment Button */}
       <button
         className="w-full lg:w-auto px-8 py-4 bg-primary text-white rounded-xl hover:bg-green-700 transition-colors shadow-lg text-lg flex items-center gap-3"
         onClick={onAddClick}
       >
-        <Plus className="w-6 h-6" /> Add My Equipment
+        <Plus className="w-6 h-6" />
+        Add My Equipment
       </button>
 
+      {/* My Equipment */}
       <div>
         <div className="flex items-center gap-3 mb-6">
           <div className="bg-green-100 p-2 rounded-lg text-primary">
@@ -2369,12 +2111,12 @@ function EquipmentContent({ myEquipment, onAddClick, onDeleteEquipment, onRentCl
               price={`LKR ${eq.price}/day`}
               available={eq.available}
               onDelete={() => onDeleteEquipment(eq.id)}
-              cover={true}   // image will use bigger height
             />
           ))}
         </div>
       </div>
 
+      {/* Browse Equipment */}
       <div>
         <div className="flex items-center gap-3 mb-6">
           <div className="bg-green-100 p-2 rounded-lg text-primary">
@@ -2386,12 +2128,12 @@ function EquipmentContent({ myEquipment, onAddClick, onDeleteEquipment, onRentCl
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+
           <EquipmentCard
             image={harvestorImg}
             name="Harvester"
             price="LKR 8,000/day"
             available={true}
-            cover={true}
             owner={{
               name: "Rajith Equipment",
               location: "Anuradhapura",
@@ -2412,7 +2154,6 @@ function EquipmentContent({ myEquipment, onAddClick, onDeleteEquipment, onRentCl
             name="Cultivator"
             price="LKR 3,500/day"
             available={true}
-            cover={true}
             owner={{
               name: "Silva Agro",
               location: "Kurunegala",
@@ -2433,7 +2174,6 @@ function EquipmentContent({ myEquipment, onAddClick, onDeleteEquipment, onRentCl
             name="Seeder"
             price="LKR 4,000/day"
             available={true}
-            cover={true}
             owner={{
               name: "Farm Tools Lanka",
               location: "Anuradhapura",
@@ -2468,8 +2208,10 @@ function EquipmentContent({ myEquipment, onAddClick, onDeleteEquipment, onRentCl
               })
             }
           />
+
         </div>
       </div>
+
     </div>
   );
 }
@@ -2613,7 +2355,7 @@ function ChatbotContent() {
     // Simulated reply
     setTimeout(() => {
       let botReply = "That's a great question! I'm here to help with your farm management. Anything else specifically about crops or equipment?";
-      
+
       const lower = userText.toLowerCase();
       if (lower.includes('price') || lower.includes('sale')) {
         botReply = "You can manage your sales and see current market prices in the 'Sales & Income' section.";
@@ -3495,74 +3237,66 @@ function ContactCard({ emoji, name, role, phone, location }) {
     </div>
   );
 }
-function EquipmentCard({ image, name, price, available, onDelete, onRent, owner, cover }) {
+function EquipmentCard({ image, name, price, available, onDelete, onRent, owner }) {
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-green-100 p-6 hover:shadow-xl transition-shadow flex flex-col">
+    <div className="bg-white rounded-xl shadow-lg border border-green-100 overflow-hidden hover:shadow-xl transition-shadow flex flex-col">
 
-      {/* Image */}
-      <div className={`w-full flex items-center justify-center mb-4 rounded-xl overflow-hidden ${cover ? 'h-48' : 'h-48 bg-gray-50'}`}>
+      {/* Image same size as product */}
+      <div className="h-48 w-full bg-gray-50 flex items-center justify-center">
         <img
           src={image}
           alt={name}
-          className={cover ? 'w-full h-full object-cover' : 'max-h-full max-w-full object-contain'}
+          className="h-full w-full object-cover"
         />
       </div>
 
-      {/* Equipment Info */}
-      <div className="flex-1">
-        <p className="text-2xl font-bold text-gray-800 mb-1">{name}</p>
-        <p className="text-xl text-green-700 font-bold mb-3">{price}</p>
+      {/* Content */}
+      <div className="p-5 flex flex-col gap-3">
+
+        <h3 className="text-xl font-semibold text-primary">{name}</h3>
+
+        <p className="text-lg font-bold text-green-700">{price}</p>
+
+        <span
+          className={`px-3 py-1 text-sm rounded-full w-fit ${available
+            ? "bg-green-100 text-green-700"
+            : "bg-red-100 text-red-700"
+            }`}
+        >
+          {available ? "Available" : "Not Available"}
+        </span>
 
         {owner && (
-          <div className="mb-4 bg-gray-50 p-4 rounded-lg border border-gray-100 space-y-1">
-            <p className="text-sm text-muted-foreground flex items-center gap-2">
-              <UserCheck className="w-4 h-4 text-primary" />
-              <span>Owner: <span className="text-foreground font-bold">{owner.name}</span></span>
-            </p>
-            <p className="text-sm text-muted-foreground flex items-center gap-2">
-              <Phone className="w-4 h-4 text-green-600" />
-              <span className="text-foreground">{owner.phone}</span>
-            </p>
-            {owner.location && (
-              <p className="text-sm text-muted-foreground flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-red-500" />
-                <span>{owner.location}</span>
-              </p>
-            )}
+          <div className="text-sm text-gray-500">
+            <p>{owner.name}</p>
+            <p>{owner.location}</p>
+            <p>{owner.phone}</p>
           </div>
         )}
 
-        <div className="flex items-center gap-2 mb-4">
-          <span
-            className={`px-3 py-1 rounded-full text-sm font-semibold ${available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
-              }`}
-          >
-            {available ? 'Available' : 'Rented'}
-          </span>
+        <div className="flex gap-3 mt-2">
+
+          {onRent && (
+            <button
+              onClick={onRent}
+              className="flex-1 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            >
+              Rent
+            </button>
+          )}
+
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              className="flex-1 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+            >
+              Delete
+            </button>
+          )}
+
         </div>
+
       </div>
-
-      {/* Buttons */}
-      <div className="mt-auto">
-        {available && onRent && (
-          <button
-            onClick={onRent}
-            className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition font-bold"
-          >
-            Rent Now
-          </button>
-        )}
-
-        {!available && onDelete && (
-          <button
-            onClick={onDelete}
-            className="w-full bg-red-100 text-red-600 py-2 rounded-lg hover:bg-red-200 transition font-bold"
-          >
-            Return
-          </button>
-        )}
-      </div>
-
     </div>
   );
 }
@@ -3649,6 +3383,92 @@ function SaleCard({ product, quantity, price, total, date, customer }) {
           <p className="text-sm text-muted-foreground">Total: {total}</p>
           <p className="text-sm text-muted-foreground">Date: {date}</p>
           <p className="text-sm text-muted-foreground">Customer: {customer}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CustomerPurchaseCard({ customer, items, total }) {
+  return (
+    <div className="bg-white rounded-xl shadow-lg border border-green-100 p-6 flex flex-col hover:shadow-xl transition-shadow">
+      <div className="flex items-center gap-4 mb-5 pb-4 border-b border-green-50">
+        <div className="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center">
+          <Users className="w-8 h-8 text-primary" />
+        </div>
+        <div>
+          <h3 className="text-xl font-bold text-gray-800 leading-tight">{customer}</h3>
+          <p className="text-sm text-muted-foreground font-semibold">🛍️ {items.length} Sale{items.length > 1 ? 's' : ''}</p>
+        </div>
+      </div>
+
+      <div className="flex-1 space-y-3 mb-6">
+        {items.map((item, idx) => (
+          <div key={idx} className="bg-gray-50/50 p-3 rounded-xl border border-gray-100">
+            <div className="flex justify-between items-start mb-1">
+              <span className="text-gray-800 font-bold">{item.product}</span>
+              <span className="text-primary font-bold">LKR {item.total.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>{item.quantity} × LKR {item.price}/kg</span>
+              <span>{item.date}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="pt-4 border-t-2 border-dashed border-green-200">
+        <div className="flex justify-between items-end">
+          <div>
+            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mb-1">Total Bill</p>
+            <p className="text-2xl text-primary font-black">LKR {total.toLocaleString()}</p>
+          </div>
+          <div className="bg-green-100 text-green-700 px-3 py-1 rounded-lg text-xs font-black uppercase">
+            Paid ✓
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RenterRentalCard({ renter, rentals, total }) {
+  return (
+    <div className="bg-white rounded-xl shadow-lg border border-blue-100 p-6 flex flex-col hover:shadow-xl transition-shadow">
+      <div className="flex items-center gap-4 mb-5 pb-4 border-b border-blue-50">
+        <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center">
+          <Users className="w-8 h-8 text-blue-600" />
+        </div>
+        <div>
+          <h3 className="text-xl font-bold text-gray-800 leading-tight">{renter}</h3>
+          <p className="text-sm text-muted-foreground font-semibold">🚜 {rentals.length} Rental{rentals.length > 1 ? 's' : ''}</p>
+        </div>
+      </div>
+
+      <div className="flex-1 space-y-3 mb-6">
+        {rentals.map((rental, idx) => (
+          <div key={idx} className="bg-blue-50/30 p-3 rounded-xl border border-blue-50">
+            <div className="flex justify-between items-start mb-1">
+              <span className="text-gray-800 font-bold">{rental.equipment}</span>
+              <span className="text-blue-600 font-bold">LKR {rental.total.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>{rental.days} days × LKR {rental.pricePerDay.toLocaleString()}/day</span>
+              <span>{rental.date}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="pt-4 border-t-2 border-dashed border-blue-200">
+        <div className="flex justify-between items-end">
+          <div>
+            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mb-1">Total Due</p>
+            <p className="text-2xl text-blue-600 font-black">LKR {total.toLocaleString()}</p>
+          </div>
+          <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg text-xs font-black uppercase">
+            Paid ✓
+          </div>
         </div>
       </div>
     </div>
