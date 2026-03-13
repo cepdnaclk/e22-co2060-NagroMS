@@ -32,7 +32,10 @@ import {
 } from 'lucide-react';
 import { RoleSwitcher } from "../RoleSwitcher.jsx";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "./InputOTP";
-import { farmerDashbord } from './farmerDashboard.css'
+import './farmerDashboard.css';
+
+
+
 
 import tomatoImg from "./images/products/tomato.png";
 import riceImg from "./images/products/rice.png";
@@ -102,7 +105,6 @@ export function FarmerDashboard({ onNavigate }) {
     { id: 2, equipment: 'Power Cultivator', image: cultivatorImg, days: 1, pricePerDay: 3500, total: 3500, date: '2026-02-19', owner: 'Agro Rentals' },
   ]);
 
-  // State for sales
   const [sales, setSales] = useState([
     { id: 1, product: 'Fresh Tomatoes', image: tomatoImg, quantity: '50 kg', price: 150, total: 7500, date: '2026-02-20', customer: 'Perera Stores' },
     { id: 2, product: 'Organic Rice', image: riceImg, quantity: '100 kg', price: 180, total: 18000, date: '2026-02-19', customer: 'Green Market' },
@@ -110,6 +112,55 @@ export function FarmerDashboard({ onNavigate }) {
     { id: 4, product: 'Sweet Corn', image: cornImg, quantity: '40 kg', price: 90, total: 3600, date: '2026-02-17', customer: 'Organic Mart' },
     { id: 5, product: 'Green Beans', image: beansImg, quantity: '20 kg', price: 120, total: 2400, date: '2026-02-16', customer: 'Perera Stores' },
     { id: 6, product: 'Fresh Tomatoes', image: tomatoImg, quantity: '70 kg', price: 150, total: 10500, date: '2026-02-15', customer: 'Green Market' },
+  ]);
+
+  // Sample data for NEW SalesContent structure
+  const [customerPurchases] = useState([
+    {
+      id: 1,
+      customerName: "Perera Stores",
+      location: "Colombo 07",
+      phone: "077-1234567",
+      icon: "🏪",
+      products: [
+        { productName: "Fresh Tomatoes", quantity: 120, pricePerUnit: 150, productImage: tomatoImg, date: '2026-03-10' },
+        { productName: "Organic Rice", quantity: 50, pricePerUnit: 180, productImage: riceImg, date: '2026-03-05' }
+      ]
+    },
+    {
+      id: 2,
+      customerName: "Green Market",
+      location: "Kandy Central",
+      phone: "071-9876543",
+      icon: "🥬",
+      products: [
+        { productName: "Carrots", quantity: 80, pricePerUnit: 120, productImage: carrotsImg, date: '2026-02-15' },
+        { productName: "Sweet Corn", quantity: 100, pricePerUnit: 95, productImage: cornImg, date: '2026-02-10' }
+      ]
+    }
+  ]);
+
+  const [equipmentRentals] = useState([
+    {
+      id: 1,
+      customerName: "Silva Agro",
+      location: "Gampaha",
+      phone: "011-2345678",
+      icon: "👨‍🌾",
+      rentals: [
+        { equipmentName: "Modern Tractor", days: 3, costPerDay: 5000, totalCost: 15000, equipmentImage: tractorImg, date: '2026-03-12' }
+      ]
+    },
+    {
+      id: 2,
+      customerName: "Rajith Farm",
+      location: "Matara",
+      phone: "041-5566778",
+      icon: "🚜",
+      rentals: [
+        { equipmentName: "Crop Sprayer", days: 2, costPerDay: 2500, totalCost: 5000, equipmentImage: sprayerImg, date: '2026-01-20' }
+      ]
+    }
   ]);
 
   // State for orders
@@ -461,7 +512,7 @@ export function FarmerDashboard({ onNavigate }) {
           onDelete={(id) => setDeleteConfirm(id)}
         />;
       case 'sales':
-        return <SalesContent sales={sales} rentalIncome={rentalIncome} />;
+        return <SalesContent customerPurchases={customerPurchases} equipmentRentals={equipmentRentals} />;
       case 'expenses':
         return <ExpensesContent rentalExpenses={rentalExpenses} />;
       case 'loans':
@@ -1213,7 +1264,7 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
                         <div className="flex items-center justify-between mb-2">
                           <div>
                             <p className="text-xl text-foreground font-bold">{rental.equipment}</p>
-                            <p className="text-sm text-muted-foreground">Rented to: {rental.rentedTo}</p>
+                            <p className="text-sm text-muted-foreground">Rented to: {rental.renter || rental.rentedTo}</p>
                           </div>
                           <p className="text-2xl text-blue-600 font-bold">LKR {rental.total.toLocaleString()}</p>
                         </div>
@@ -1305,7 +1356,7 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
                         <div className="flex items-center justify-between mb-2">
                           <div>
                             <p className="text-xl text-foreground font-bold">{expense.equipment}</p>
-                            <p className="text-sm text-muted-foreground">Rented from: {expense.rentedFrom}</p>
+                            <p className="text-sm text-muted-foreground">Rented from: {expense.owner || expense.rentedFrom}</p>
                           </div>
                           <p className="text-2xl text-red-600 font-bold">-LKR {expense.total.toLocaleString()}</p>
                         </div>
@@ -1424,177 +1475,465 @@ function MyProductsContent({ products, onAddClick, onEdit, onDelete }) {
   );
 }
 
-function SalesContent({ sales, rentalIncome }) {
-  const totalSales = sales.reduce((total, sale) => total + sale.total, 0);
-  const totalRentalIncome = rentalIncome.reduce((total, rental) => total + rental.total, 0);
-  const grandTotal = totalSales + totalRentalIncome;
 
-  // Group sales by customer
-  const groupedSales = sales.reduce((acc, sale) => {
-    const customer = sale.customer || "Walk-in Customer";
 
-    if (!acc[customer]) {
-      acc[customer] = {
-        customer,
-        items: [],
-        total: 0
-      };
-    }
 
-    acc[customer].items.push(sale);
-    acc[customer].total += sale.total;
+// Sales Content - Customer-based Product & Equipment Sales
+export function SalesContent({ customerPurchases = [], equipmentRentals = [] }) {
+  const [timeFilter, setTimeFilter] = useState('all');
+  const [selectedProductCustomer, setSelectedProductCustomer] = useState(null);
+  const [selectedRentalCustomer, setSelectedRentalCustomer] = useState(null);
+  const [showProductSummaryModal, setShowProductSummaryModal] = useState(false);
+  const [showRentalSummaryModal, setShowRentalSummaryModal] = useState(false);
 
-    return acc;
-  }, {});
+  // Today's date for reference
+  const today = new Date('2026-03-13');
 
-  const customerSales = Object.values(groupedSales);
+  // Filter Helper
+  const isWithinTimeRange = (dateStr) => {
+    if (timeFilter === 'all') return true;
+    const transDate = new Date(dateStr);
+    const diffDays = (today - transDate) / (1000 * 60 * 60 * 24);
+    if (timeFilter === '1month') return diffDays <= 30;
+    if (timeFilter === '3months') return diffDays <= 90;
+    return true;
+  };
 
-  // Group rental income
-  const groupedRentals = rentalIncome.reduce((acc, rental) => {
-    const renter = rental.renter || "Private Renter";
+  // Filter Data
+  const filteredPurchases = customerPurchases.map(customer => {
+    const products = (customer.products || []).filter(p => isWithinTimeRange(p.date));
+    return { ...customer, products };
+  }).filter(c => c.products.length > 0);
 
-    if (!acc[renter]) {
-      acc[renter] = {
-        renter,
-        rentals: [],
-        total: 0
-      };
-    }
+  const filteredRentals = equipmentRentals.map(customer => {
+    const rentals = (customer.rentals || []).filter(r => isWithinTimeRange(r.date));
+    return { ...customer, rentals };
+  }).filter(c => c.rentals.length > 0);
 
-    acc[renter].rentals.push(rental);
-    acc[renter].total += rental.total;
+  // Calculate Totals based on Filtered data
+  const totalProductRevenue = filteredPurchases.reduce((sum, customer) => {
+    const customerTotal = customer.products.reduce((customerSum, product) =>
+      customerSum + (product.quantity * product.pricePerUnit), 0);
+    return sum + customerTotal;
+  }, 0);
 
-    return acc;
-  }, {});
+  const totalEquipmentRevenue = filteredRentals.reduce((sum, customer) => {
+    const customerTotal = customer.rentals.reduce((customerSum, rental) =>
+      customerSum + rental.totalCost, 0);
+    return sum + customerTotal;
+  }, 0);
 
-  const renterSummary = Object.values(groupedRentals);
+  const grandTotalRevenue = totalProductRevenue + totalEquipmentRevenue;
 
   return (
-    <div className="space-y-6">
-
-      {/* HEADER */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl p-8 text-white">
-        <h1 className="text-3xl mb-2 flex items-center gap-3">
-          💰 Income & Sales
-        </h1>
-        <p className="text-blue-100 text-lg">Track all your earnings</p>
-      </div>
-
-      {/* TOTAL SUMMARY */}
-      <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl p-6 border-2 border-green-200">
-        <div className="flex items-center gap-3 mb-4">
-          <span className="text-5xl">💵</span>
-          <h2 className="text-2xl font-bold">Total Income</h2>
+    <div className="space-y-10 max-w-5xl mx-auto px-4 pb-12">
+      {/* Header & Filter Row */}
+      <div className="bg-gradient-to-r from-green-600 to-green-500 rounded-2xl p-6 text-white flex flex-col md:flex-row justify-between items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            💰 Income & Sales
+          </h1>
+          <p className="text-green-100 italic">Detailed calculations by customer</p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-4">
-          <div className="bg-white rounded-xl p-4 border-l-4 border-green-500">
-            <p className="text-gray-500 mb-1">🌾 Product Sales</p>
-            <p className="text-2xl text-green-600 font-bold">
-              LKR {totalSales.toLocaleString()}
-            </p>
-          </div>
-
-          <div className="bg-white rounded-xl p-4 border-l-4 border-blue-500">
-            <p className="text-gray-500 mb-1">🚜 Rental Income</p>
-            <p className="text-2xl text-blue-600 font-bold">
-              LKR {totalRentalIncome.toLocaleString()}
-            </p>
-          </div>
-
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4">
-            <p className="text-white mb-1">💎 Grand Total</p>
-            <p className="text-3xl text-white font-bold">
-              LKR {grandTotal.toLocaleString()}
-            </p>
-          </div>
+        <div className="bg-white/20 p-2 rounded-xl flex items-center gap-3 backdrop-blur-md border border-white/30">
+          <span className="text-sm font-bold">Filter By:</span>
+          <select
+            value={timeFilter}
+            onChange={(e) => setTimeFilter(e.target.value)}
+            className="bg-white text-gray-800 rounded-lg px-3 py-2 border-none ring-2 ring-transparent focus:ring-green-300 outline-none font-bold"
+          >
+            <option value="all">📅 All Time (All Records)</option>
+            <option value="1month">📅 Last 30 Days (Recent)</option>
+            <option value="3months">📅 Last 3 Months (Quarterly)</option>
+          </select>
         </div>
       </div>
 
-      {/* PRODUCT SALES */}
-      <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
+      {/* Grand Total Summary Section */}
+      <div className="bg-white rounded-2xl shadow-xl border-t-8 border-green-500 p-8">
+        <div className="text-center">
+          <p className="text-lg text-muted-foreground font-bold mb-2 uppercase tracking-widest">
+            {timeFilter === 'all' ? 'Total Lifetime Income' : timeFilter === '1month' ? 'Total Last 30 Days Income' : 'Total Last 3 Months Income'}
+          </p>
+          <p className="text-6xl text-green-600 font-extrabold mb-6 flex items-center justify-center gap-3">
+            <span className="text-4xl text-gray-400">LKR</span> {grandTotalRevenue.toLocaleString()}
+          </p>
 
-        <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-          🌾 Product Sales Calculation
-        </h2>
-
-        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-
-          {sales.map((sale) => (
-
+          <div className="grid md:grid-cols-2 gap-6">
             <div
-              key={sale.id}
-              className="bg-gray-50 rounded-xl p-4 border flex flex-col hover:bg-white hover:shadow-md transition"
+              onClick={() => setShowProductSummaryModal(true)}
+              className="bg-green-50 rounded-2xl p-6 border-2 border-green-100 cursor-pointer hover:scale-[1.02] transition-transform hover:shadow-lg"
             >
-
-              {/* MEDIUM IMAGE */}
-              <div className="w-24 h-24 bg-white rounded-lg flex items-center justify-center border mx-auto mb-3 overflow-hidden">
-
-                <img
-                  src={sale.image}
-                  alt={sale.product}
-                  className="w-full h-full object-cover hover:scale-110 transition duration-300"
-                />
-
+              <div className="flex items-center gap-3 mb-2 justify-center">
+                <span className="text-3xl">🌾</span>
+                <p className="text-muted-foreground font-bold">Product Revenue</p>
               </div>
-
-              {/* PRODUCT TITLE */}
-              <div className="text-center mb-3">
-                <p className="text-lg font-bold">{sale.product}</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {sale.date}
-                </p>
+              <p className="text-3xl text-green-700 font-bold">LKR {totalProductRevenue.toLocaleString()}</p>
+            </div>
+            <div
+              onClick={() => setShowRentalSummaryModal(true)}
+              className="bg-blue-50 rounded-2xl p-6 border-2 border-blue-100 cursor-pointer hover:scale-[1.02] transition-transform hover:shadow-lg"
+            >
+              <div className="flex items-center gap-3 mb-2 justify-center">
+                <span className="text-3xl">🚜</span>
+                <p className="text-muted-foreground font-bold">Equipment Rental Revenue</p>
               </div>
+              <p className="text-3xl text-blue-700 font-bold">LKR {totalEquipmentRevenue.toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-              {/* DETAILS */}
-              <div className="flex-1 space-y-2 bg-white p-3 rounded-lg border">
+      {/* Product Sales Breakdown */}
+      <div className="space-y-4 mt-24 pt-4">
+        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3 ml-2">
+          🌾 Product Sales Summary
+        </h2>
+        {filteredPurchases.length === 0 ? (
+          <div className="bg-gray-50 rounded-2xl p-10 text-center border-2 border-dashed border-gray-200">
+            <p className="text-gray-500 italic">No product sales found for this period.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredPurchases.map((customer) => {
+              const customerTotal = customer.products.reduce((sum, p) => sum + (p.quantity * p.pricePerUnit), 0);
+              return (
+                <div
+                  key={customer.id}
+                  onClick={() => setSelectedProductCustomer(customer)}
+                  className="bg-white rounded-2xl shadow-md border border-green-100 overflow-hidden flex flex-col cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all group"
+                >
+                  <div className="bg-green-600 text-white p-5 flex items-center justify-between group-hover:bg-green-700 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <span className="text-3xl bg-white/20 p-2 rounded-xl backdrop-blur-sm">{customer.icon}</span>
+                      <div>
+                        <p className="font-bold text-xl leading-tight">{customer.customerName}</p>
+                        <p className="text-sm text-green-100">{customer.location}</p>
+                      </div>
+                    </div>
+                  </div>
 
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Customer</span>
-                  <span className="font-bold">{sale.customer}</span>
+                  <div className="p-6 space-y-4">
+                    <div className="flex justify-between items-center text-gray-600">
+                      <p className="text-sm font-bold flex items-center gap-2">
+                        📦 Products Count
+                      </p>
+                      <p className="text-lg font-black text-gray-800">{customer.products.length}</p>
+                    </div>
+
+                    <div className="bg-green-50 rounded-xl p-4 border border-green-100">
+                      <p className="text-xs text-green-600 font-bold uppercase tracking-widest mb-1">Total Revenue</p>
+                      <p className="text-2xl font-black text-green-700">LKR {customerTotal.toLocaleString()}</p>
+                    </div>
+
+                    <button className="w-full bg-green-600 group-hover:bg-green-700 text-white font-bold py-3 rounded-xl flex items-center justify-center transition-all shadow-lg active:scale-95">
+                      View Details
+                    </button>
+                  </div>
                 </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Quantity</span>
-                  <span className="font-bold">{sale.quantity}</span>
+      {/* Equipment Rental Breakdown */}
+      <div className="space-y-4 mt-24 pt-4">
+        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3 ml-2">
+          🚜 Equipment Rental Summary
+        </h2>
+        {filteredRentals.length === 0 ? (
+          <div className="bg-gray-50 rounded-2xl p-10 text-center border-2 border-dashed border-gray-200">
+            <p className="text-gray-500 italic">No equipment rentals found for this period.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredRentals.map((customer) => {
+              const customerTotal = customer.rentals.reduce((sum, r) => sum + r.totalCost, 0);
+              return (
+                <div
+                  key={customer.id}
+                  onClick={() => setSelectedRentalCustomer(customer)}
+                  className="bg-white rounded-2xl shadow-md border border-orange-100 overflow-hidden flex flex-col cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all group"
+                >
+                  <div className="bg-orange-600 text-white p-5 flex items-center justify-between group-hover:bg-orange-700 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <span className="text-3xl bg-white/20 p-2 rounded-xl backdrop-blur-sm">{customer.icon}</span>
+                      <div>
+                        <p className="font-bold text-xl leading-tight">{customer.customerName}</p>
+                        <p className="text-sm text-orange-100">{customer.location}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-6 space-y-4">
+                    <div className="flex justify-between items-center text-gray-600">
+                      <p className="text-sm font-bold flex items-center gap-2">
+                        🚜 Rentals Count
+                      </p>
+                      <p className="text-lg font-black text-gray-800">{customer.rentals.length}</p>
+                    </div>
+
+                    <div className="bg-orange-50 rounded-xl p-4 border border-orange-100">
+                      <p className="text-xs text-orange-600 font-bold uppercase tracking-widest mb-1">Total Revenue</p>
+                      <p className="text-2xl font-black text-orange-700">LKR {customerTotal.toLocaleString()}</p>
+                    </div>
+
+                    <button className="w-full bg-green-600 group-hover:bg-green-700 text-white font-bold py-3 rounded-xl flex items-center justify-center transition-all shadow-lg active:scale-95">
+                      View Details
+                    </button>
+                  </div>
                 </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Unit Price</span>
-                  <span className="font-bold text-green-600">
-                    LKR {sale.price}
-                  </span>
+      {/* Product Details Modal */}
+      {selectedProductCustomer && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-[2rem] w-fit max-px-4 max-w-4xl max-h-[85vh] overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in duration-300">
+            <div className="bg-green-600 p-5 text-white flex justify-between items-center shrink-0">
+              <div className="flex items-center gap-4">
+                <span className="text-3xl bg-white/20 p-2 rounded-xl backdrop-blur-sm">{selectedProductCustomer.icon}</span>
+                <div>
+                  <h2 className="text-xl font-black">{selectedProductCustomer.customerName}</h2>
+                  <p className="text-green-100 text-xs mt-0.5">{selectedProductCustomer.location} • {selectedProductCustomer.phone}</p>
                 </div>
-
               </div>
-
-              {/* TOTAL */}
-              <div className="mt-3 pt-3 flex justify-between border-t border-dashed">
-
-                <span className="text-xs text-gray-500 font-bold uppercase">
-                  Total Bill
-                </span>
-
-                <span className="text-xl font-bold text-green-600">
-                  LKR {sale.total.toLocaleString()}
-                </span>
-
-              </div>
-
+              <button
+                onClick={() => setSelectedProductCustomer(null)}
+                className="bg-white hover:bg-green-50 p-2 rounded-full transition-all shadow-md group"
+              >
+                <span className="text-xl font-bold text-green-600">✕</span>
+              </button>
             </div>
 
-          ))}
+            <div className="p-6 overflow-y-auto flex justify-center">
+              <div className="flex flex-wrap justify-center gap-6">
+                {selectedProductCustomer.products.map((product, idx) => {
+                  const itemTotal = product.quantity * product.pricePerUnit;
+                  return (
+                    <div key={idx} className="bg-gray-50 rounded-2xl p-5 border-2 border-gray-100 hover:border-green-200 hover:bg-white hover:shadow-2xl transition-all flex flex-col items-center text-center w-64">
+                      <div className="w-36 h-36 bg-white rounded-2xl p-2 mb-3 flex items-center justify-center border-4 border-green-50 shadow-inner group transition-transform hover:scale-105">
+                        {product.productImage ? (
+                          <img src={product.productImage} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-4xl">🌾</span>
+                        )}
+                      </div>
 
+                      <div className="mb-3">
+                        <p className="font-black text-gray-800 text-base leading-tight">{product.productName}</p>
+                        <p className="text-[10px] font-bold text-muted-foreground mt-1 bg-gray-200/50 px-2 py-0.5 rounded-full">{product.date}</p>
+                      </div>
+
+                      <div className="w-full pt-3 border-t-2 border-dashed border-gray-200">
+                        <p className="text-[9px] text-green-600 font-extrabold mb-1.5 uppercase tracking-[0.2em]">Calculation</p>
+                        <div className="flex flex-col gap-1">
+                          <p className="text-sm text-gray-600 font-medium">
+                            <span className="font-black text-gray-900">{product.quantity} kg</span> × LKR {product.pricePerUnit.toLocaleString()}
+                          </p>
+                          <div className="bg-green-600 text-white rounded-xl py-2 px-3 mt-1 inline-block shadow-lg shadow-green-100">
+                            <p className="text-[10px] opacity-80 font-bold uppercase tracking-wider">Total Price</p>
+                            <p className="text-lg font-black">LKR {itemTotal.toLocaleString()}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="bg-green-50 p-6 border-t-2 border-green-100 shrink-0">
+              <div className="flex flex-row justify-between items-center gap-4">
+                <p className="text-green-800 font-black text-lg">
+                  📊 Transaction Grand Total
+                </p>
+                <p className="text-xl font-black text-green-600 bg-white px-6 py-2 rounded-xl shadow-sm border-2 border-green-100">
+                  LKR {selectedProductCustomer.products.reduce((sum, p) => sum + (p.quantity * p.pricePerUnit), 0).toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
+      )}
 
-        {/* TOTAL */}
-        <div className="mt-8 pt-6 border-t-2 border-green-500 flex justify-between">
-          <p className="text-2xl font-bold">Total Product Sales:</p>
-          <p className="text-3xl text-green-600 font-bold">
-            LKR {totalSales.toLocaleString()}
-          </p>
+      {/* Rental Details Modal */}
+      {selectedRentalCustomer && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-[2rem] w-fit max-w-4xl max-h-[85vh] overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in duration-300">
+            <div className="bg-orange-600 p-5 text-white flex justify-between items-center shrink-0">
+              <div className="flex items-center gap-4">
+                <span className="text-3xl bg-white/20 p-2 rounded-xl backdrop-blur-sm">{selectedRentalCustomer.icon}</span>
+                <div>
+                  <h2 className="text-xl font-black">{selectedRentalCustomer.customerName}</h2>
+                  <p className="text-orange-100 text-xs mt-0.5">{selectedRentalCustomer.location} • {selectedRentalCustomer.phone}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedRentalCustomer(null)}
+                className="bg-white hover:bg-green-50 p-2 rounded-full transition-all shadow-md group"
+              >
+                <span className="text-xl font-bold text-green-600">✕</span>
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto flex justify-center">
+              <div className="flex flex-wrap justify-center gap-6">
+                {selectedRentalCustomer.rentals.map((rental, idx) => {
+                  return (
+                    <div key={idx} className="bg-orange-50/20 rounded-2xl p-5 border-2 border-orange-100 hover:border-orange-300 hover:bg-white hover:shadow-2xl transition-all flex flex-col items-center text-center w-64">
+                      <div className="w-36 h-36 bg-white rounded-2xl p-2 mb-3 flex items-center justify-center border-4 border-orange-50 shadow-inner group transition-transform hover:scale-105">
+                        {rental.equipmentImage ? (
+                          <img src={rental.equipmentImage} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-4xl">🚜</span>
+                        )}
+                      </div>
+
+                      <div className="mb-3">
+                        <p className="font-black text-gray-800 text-base leading-tight">{rental.equipmentName}</p>
+                        <p className="text-[10px] font-bold text-muted-foreground mt-1 bg-orange-100/50 px-2 py-0.5 rounded-full">{rental.date}</p>
+                      </div>
+
+                      <div className="w-full pt-3 border-t-2 border-dashed border-orange-200">
+                        <p className="text-[9px] text-orange-600 font-extrabold mb-1.5 uppercase tracking-[0.2em]">Rental Breakdown</p>
+                        <div className="flex flex-col gap-1">
+                          <p className="text-sm text-gray-600 font-medium">
+                            <span className="font-black text-gray-900">{rental.days} days</span> × LKR {rental.costPerDay.toLocaleString()}
+                          </p>
+                          <div className="bg-orange-600 text-white rounded-xl py-2 px-3 mt-1 inline-block shadow-lg shadow-orange-100">
+                            <p className="text-[10px] opacity-80 font-bold uppercase tracking-wider">Total Fee</p>
+                            <p className="text-lg font-black">LKR {rental.totalCost.toLocaleString()}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="bg-orange-50 p-6 border-t-2 border-orange-100 shrink-0">
+              <div className="flex flex-row justify-between items-center gap-4">
+                <p className="text-orange-800 font-black text-lg">
+                  📊 Rental Grand Total
+                </p>
+                <p className="text-xl font-black text-orange-600 bg-white px-6 py-2 rounded-xl shadow-sm border-2 border-orange-100">
+                  LKR {selectedRentalCustomer.rentals.reduce((sum, r) => sum + r.totalCost, 0).toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
+      )}
 
+      {/* Product Revenue Summary Modal */}
+      {showProductSummaryModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2rem] w-fit min-w-[320px] max-w-md overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in duration-300">
+            <div className="bg-green-600 p-5 text-white flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl bg-white/20 p-2 rounded-xl">🌾</span>
+                <h2 className="font-black text-lg">Product Revenue Breakdown</h2>
+              </div>
+              <button
+                onClick={() => setShowProductSummaryModal(false)}
+                className="bg-white p-2 rounded-full shadow-md group border-none"
+              >
+                <span className="text-green-600 font-bold">✕</span>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+              {filteredPurchases.map((customer, idx) => {
+                const customerTotal = customer.products.reduce((sum, p) => sum + (p.quantity * p.pricePerUnit), 0);
+                return (
+                  <div key={idx} className="flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <span className="font-bold text-gray-700">{customer.customerName}</span>
+                    <span className="font-black text-green-600 ml-8">LKR {customerTotal.toLocaleString()}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="bg-green-50 p-6 border-t-2 border-green-100">
+              <div className="flex justify-between items-center text-green-800">
+                <span className="font-black">GRAND TOTAL</span>
+                <span className="text-2xl font-black ml-8">LKR {totalProductRevenue.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Equipment Revenue Summary Modal */}
+      {showRentalSummaryModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2rem] w-fit min-w-[320px] max-w-md overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in duration-300">
+            <div className="bg-blue-600 p-5 text-white flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl bg-white/20 p-2 rounded-xl">🚜</span>
+                <h2 className="font-black text-lg">Rental Revenue Breakdown</h2>
+              </div>
+              <button
+                onClick={() => setShowRentalSummaryModal(false)}
+                className="bg-white p-2 rounded-full shadow-md group border-none"
+              >
+                <span className="text-blue-600 font-bold">✕</span>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+              {filteredRentals.map((customer, idx) => {
+                const customerTotal = customer.rentals.reduce((sum, r) => sum + r.totalCost, 0);
+                return (
+                  <div key={idx} className="flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <span className="font-bold text-gray-700">{customer.customerName}</span>
+                    <span className="font-black text-blue-600 ml-8">LKR {customerTotal.toLocaleString()}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="bg-blue-50 p-6 border-t-2 border-blue-100">
+              <div className="flex justify-between items-center text-blue-800">
+                <span className="font-black">GRAND TOTAL</span>
+                <span className="text-2xl font-black ml-8">LKR {totalEquipmentRevenue.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Income Tips */}
+      <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl p-6 border-2 border-yellow-200">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-4xl">💡</span>
+          <h3 className="text-xl text-primary font-bold">Income Tips for Farmers</h3>
+        </div>
+        <div className="space-y-2">
+          <div className="flex items-start gap-3 bg-white rounded-lg p-4">
+            <span className="text-2xl">✅</span>
+            <p className="text-lg text-foreground">Keep records of every sale - helps you understand your earnings</p>
+          </div>
+          <div className="flex items-start gap-3 bg-white rounded-lg p-4">
+            <span className="text-2xl">✅</span>
+            <p className="text-lg text-foreground">Build good relationships with regular customers for steady income</p>
+          </div>
+          <div className="flex items-start gap-3 bg-white rounded-lg p-4">
+            <span className="text-2xl">✅</span>
+            <p className="text-lg text-foreground">Diversify income - sell products AND rent equipment when not in use</p>
+          </div>
+          <div className="flex items-start gap-3 bg-white rounded-lg p-4">
+            <span className="text-2xl">✅</span>
+            <p className="text-lg text-foreground">Check market prices regularly to set fair and competitive rates</p>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -1628,6 +1967,7 @@ function OrdersContent({ orders }) {
     </div>
   );
 }
+
 
 // Expenses Content
 function ExpensesContent({ rentalExpenses }) {
@@ -1794,74 +2134,74 @@ function LoansContent({ availableLoans, activeLoans }) {
               <p className="text-muted-foreground">Manage your current repayments and progress</p>
             </div>
           </div>
-          
-          <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {activeLoans.map((loan) => {
-            const paidPercentage = (loan.paid / loan.borrowed) * 100;
-            return (
-              <div key={loan.id} className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex flex-col items-center">
-                {/* Header Row: Logo & Basic Info Side-by-Side */}
-                <div className="flex items-center gap-4 w-full mb-4">
-                  {/* Loan Image */}
-                  <div className="w-24 h-20 bg-gray-50 rounded-xl p-2 flex items-center justify-center border border-gray-200 shrink-0">
-                    <img src={loan.bankLogo} alt={loan.bankName} className="w-full h-full object-contain" />
-                  </div>
 
-                  {/* Loan Details Text */}
-                  <div className="flex-1 text-left">
-                    <p className="text-lg text-primary font-bold leading-tight">{loan.loanType}</p>
-                    <p className="text-sm text-foreground font-semibold">{loan.bankName}</p>
-                    <p className="text-sm text-muted-foreground mt-0.5">Interest: {loan.interestRate}</p>
-                    <div className="inline-flex mt-1.5 px-2.5 py-0.5 bg-green-100 text-green-700 text-[10px] font-black uppercase rounded-full border border-green-200">
-                      {loan.status}
+          <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {activeLoans.map((loan) => {
+              const paidPercentage = (loan.paid / loan.borrowed) * 100;
+              return (
+                <div key={loan.id} className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex flex-col items-center">
+                  {/* Header Row: Logo & Basic Info Side-by-Side */}
+                  <div className="flex items-center gap-4 w-full mb-4">
+                    {/* Loan Image */}
+                    <div className="w-24 h-20 bg-gray-50 rounded-xl p-2 flex items-center justify-center border border-gray-200 shrink-0">
+                      <img src={loan.bankLogo} alt={loan.bankName} className="w-full h-full object-contain" />
+                    </div>
+
+                    {/* Loan Details Text */}
+                    <div className="flex-1 text-left">
+                      <p className="text-lg text-primary font-bold leading-tight">{loan.loanType}</p>
+                      <p className="text-sm text-foreground font-semibold">{loan.bankName}</p>
+                      <p className="text-sm text-muted-foreground mt-0.5">Interest: {loan.interestRate}</p>
+                      <div className="inline-flex mt-1.5 px-2.5 py-0.5 bg-green-100 text-green-700 text-[10px] font-black uppercase rounded-full border border-green-200">
+                        {loan.status}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Payment Progress */}
-                <div className="w-full mb-2">
-                  <div className="flex justify-between text-xs mb-1">
-                    <span>Payment Progress</span>
-                    <span className="font-bold text-green-600">{paidPercentage.toFixed(1)}%</span>
+                  {/* Payment Progress */}
+                  <div className="w-full mb-2">
+                    <div className="flex justify-between text-xs mb-1">
+                      <span>Payment Progress</span>
+                      <span className="font-bold text-green-600">{paidPercentage.toFixed(1)}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div
+                        className="bg-green-500 h-3 rounded-full transition-all"
+                        style={{ width: `${paidPercentage}%` }}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div
-                      className="bg-green-500 h-3 rounded-full transition-all"
-                      style={{ width: `${paidPercentage}%` }}
-                    ></div>
-                  </div>
-                </div>
 
-                {/* Amount Details */}
-                <div className="grid grid-cols-2 gap-2 w-full text-sm text-foreground">
-                  <div className="bg-gray-50 rounded-lg p-2 text-center">
-                    💵 Borrowed<br />
-                    <span className="font-bold">LKR {loan.borrowed.toLocaleString()}</span>
+                  {/* Amount Details */}
+                  <div className="grid grid-cols-2 gap-2 w-full text-sm text-foreground">
+                    <div className="bg-gray-50 rounded-lg p-2 text-center">
+                      💵 Borrowed<br />
+                      <span className="font-bold">LKR {loan.borrowed.toLocaleString()}</span>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-2 text-center">
+                      ✅ Paid<br />
+                      <span className="font-bold text-green-600">LKR {loan.paid.toLocaleString()}</span>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-2 text-center">
+                      ⏰ Remaining<br />
+                      <span className="font-bold text-red-600">LKR {loan.remaining.toLocaleString()}</span>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-2 text-center">
+                      📅 Monthly<br />
+                      <span className="font-bold text-purple-600">LKR {loan.monthlyPayment.toLocaleString()}</span>
+                    </div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-2 text-center">
-                    ✅ Paid<br />
-                    <span className="font-bold text-green-600">LKR {loan.paid.toLocaleString()}</span>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-2 text-center">
-                    ⏰ Remaining<br />
-                    <span className="font-bold text-red-600">LKR {loan.remaining.toLocaleString()}</span>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-2 text-center">
-                    📅 Monthly<br />
-                    <span className="font-bold text-purple-600">LKR {loan.monthlyPayment.toLocaleString()}</span>
-                  </div>
-                </div>
 
-                {/* Next Payment */}
-                <div className="mt-2 w-full bg-orange-50 rounded-lg p-2 text-center text-sm border-l-4 border-orange-500">
-                  🔔 Next Payment: {loan.nextPayment}
+                  {/* Next Payment */}
+                  <div className="mt-2 w-full bg-orange-50 rounded-lg p-2 text-center text-sm border-l-4 border-orange-500">
+                    🔔 Next Payment: {loan.nextPayment}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
-    )}
+      )}
 
       {/* Available Loans */}
       <div className="bg-white rounded-2xl shadow-lg border border-blue-100 p-6">
@@ -1876,7 +2216,7 @@ function LoansContent({ availableLoans, activeLoans }) {
         <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {availableLoans.map((loan) => (
             <div key={loan.id} className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex flex-col items-center h-full">
-              
+
               {/* Standardized Image Container */}
               <div className="h-32 flex items-center justify-center mb-1 w-full">
                 <div className="w-38 h-24 bg-gray-50 rounded-xl p-2 flex items-center justify-center border border-gray-200 transition-all">
@@ -3367,7 +3707,6 @@ function ChatMessage({ sender, message }) {
     </div>
   );
 }
-
 function SaleCard({ product, quantity, price, total, date, customer }) {
   // Extract emoji from product string (e.g., "🍅 Tomatoes" -> "🍅")
   const emoji = product.split(' ')[0];
