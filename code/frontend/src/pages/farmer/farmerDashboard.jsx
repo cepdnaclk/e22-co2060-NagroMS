@@ -121,10 +121,10 @@ export function FarmerDashboard({ onNavigate }) {
   // State for inventory
   const [inventory, setInventory] = useState([
     { id: 1, image: riceSeedsImg, name: 'Rice Seeds', quantity: '500 kg', status: 'In Stock' },
-    { id: 2, image: fertilizerImg, name: 'Fertilizer', quantity: '200 kg', status: 'Low Stock' },
-    { id: 3, image: pesticideImg, name: 'Pesticide', quantity: '50 L', status: 'In Stock' },
-    { id: 4, image: handtoolImg, name: 'Hand Tools', quantity: '15 pcs', status: 'In Stock' },
-    { id: 5, image: dieselImg, name: 'Diesel', quantity: '100 L', status: 'Low Stock' },
+    { id: 2, image: fertilizerImg, name: 'Fertilizer', quantity: '80 kg', status: 'Low Stock' },
+    { id: 3, image: pesticideImg, name: 'Pesticide', quantity: '40 L', status: 'Low Stock' },
+    { id: 4, image: handtoolImg, name: 'Hand Tools', quantity: '15 pcs', status: 'Low Stock' },
+    { id: 5, image: dieselImg, name: 'Diesel', quantity: '120 L', status: 'In Stock' },
     { id: 6, image: storageBagImg, name: 'Storage Bags', quantity: '200 pcs', status: 'In Stock' },
   ]);
 
@@ -2532,9 +2532,9 @@ function WeatherContent() {
         <h2 className="text-2xl text-primary mb-6">7-Day Forecast</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
           <WeatherDayCard day="Mon" emoji="☀️" temp="29°C" />
-          <WeatherDayCard day="Tue" emoji="☀️" temp="26°C" />
+          <WeatherDayCard day="Tue" emoji="☁️" temp="26°C" />
           <WeatherDayCard day="Wed" emoji="⛈️" temp="25°C" />
-          <WeatherDayCard day="Thu" emoji="🌞️" temp="27°C" />
+          <WeatherDayCard day="Thu" emoji="⛅" temp="27°C" />
           <WeatherDayCard day="Fri" emoji="☀️" temp="30°C" />
           <WeatherDayCard day="Sat" emoji="☀️" temp="28°C" />
           <WeatherDayCard day="Sun" emoji="🔥" temp="31°C" />
@@ -2546,6 +2546,21 @@ function WeatherContent() {
 
 // Inventory Content
 function InventoryContent({ inventory, onAddClick, onEdit, onDelete }) {
+  const getAutoStatus = (quantityStr) => {
+    if (!quantityStr) return 'In Stock';
+    const amount = parseFloat(quantityStr.replace(/,/g, '')) || 0;
+    const unit = quantityStr.toLowerCase();
+
+    if (unit.includes('kg')) {
+      return amount < 100 ? 'Low Stock' : 'In Stock';
+    } else if (unit.includes('pcs')) {
+      return amount < 30 ? 'Low Stock' : 'In Stock';
+    } else if (unit.includes('l')) {
+      return amount < 50 ? 'Low Stock' : 'In Stock';
+    }
+    return 'In Stock';
+  };
+
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-purple-600 to-purple-500 rounded-2xl p-8 text-white">
@@ -2568,7 +2583,7 @@ function InventoryContent({ inventory, onAddClick, onEdit, onDelete }) {
             image={item.image}
             name={item.name}
             quantity={item.quantity}
-            status={item.status}
+            status={getAutoStatus(item.quantity)}
             onEdit={() => onEdit(item)}
             onDelete={() => onDelete(item.id)}
           />
@@ -2580,37 +2595,70 @@ function InventoryContent({ inventory, onAddClick, onEdit, onDelete }) {
 
 // Chatbot Content
 function ChatbotContent() {
+  const [messages, setMessages] = useState([
+    { sender: 'bot', message: '🌾 Hello! I am your NagroMS assistant. How can I help you today?' },
+    { sender: 'user', message: 'When is the best time to plant rice?' },
+    { sender: 'bot', message: '📅 The best time to plant rice in Sri Lanka is during Yala season (April-September) and Maha season (October-March). Based on your location in Anuradhapura, I recommend starting in early February for Yala season!' }
+  ]);
+  const [inputText, setInputText] = useState('');
+
+  const handleSend = (e) => {
+    e.preventDefault();
+    if (!inputText.trim()) return;
+
+    const userText = inputText;
+    setMessages(prev => [...prev, { sender: 'user', message: userText }]);
+    setInputText('');
+
+    // Simulated reply
+    setTimeout(() => {
+      let botReply = "That's a great question! I'm here to help with your farm management. Anything else specifically about crops or equipment?";
+      
+      const lower = userText.toLowerCase();
+      if (lower.includes('price') || lower.includes('sale')) {
+        botReply = "You can manage your sales and see current market prices in the 'Sales & Income' section.";
+      } else if (lower.includes('weather')) {
+        botReply = "The weather for next week looks favorable for spraying pesticides. Check the 'Weather' tab for a detailed 7-day forecast.";
+      } else if (lower.includes('loan') || lower.includes('bank')) {
+        botReply = "Applying for a loan? You can browse available agricultural loans in the 'Bank Loans' section!";
+      }
+
+      setMessages(prev => [...prev, { sender: 'bot', message: botReply }]);
+    }, 800);
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="bg-gradient-to-r from-green-600 to-green-500 rounded-2xl p-8 text-white">
-        <h1 className="text-3xl mb-2">💬 Farm Assistant</h1>
-        <p className="text-green-100 text-lg">Ask questions about farming</p>
+    <div className="flex flex-col items-center space-y-6">
+      <div className="bg-gradient-to-r from-green-600 to-green-500 rounded-2xl p-6 text-white w-full max-w-2xl shadow-lg">
+        <h1 className="text-2xl mb-1 flex items-center gap-2">
+          <span>💬</span> Farm Assistant
+        </h1>
+        <p className="text-green-100 text-sm">Online | Ask me anything</p>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6 h-96 flex flex-col">
-        <div className="flex-1 space-y-4 overflow-y-auto mb-4">
-          <ChatMessage
-            sender="bot"
-            message="🌾 Hello! How can I help you today?"
-          />
-          <ChatMessage
-            sender="user"
-            message="When is the best time to plant rice?"
-          />
-          <ChatMessage
-            sender="bot"
-            message="📅 The best time to plant rice in Sri Lanka is during Yala season (April-September) and Maha season (October-March). Based on your location in Anuradhapura, I recommend starting in early February for Yala season!"
-          />
+      <div className="bg-white rounded-2xl shadow-xl border border-green-100 h-[500px] flex flex-col w-full max-w-2xl overflow-hidden">
+        <div className="flex-1 space-y-4 overflow-y-auto p-4 scroll-smooth">
+          {messages.map((msg, index) => (
+            <ChatMessage
+              key={index}
+              sender={msg.sender}
+              message={msg.message}
+            />
+          ))}
         </div>
-        <div className="flex gap-3">
-          <input
-            type="text"
-            placeholder="Type your question..."
-            className="flex-1 px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
-          />
-          <button className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-green-700 transition-colors">
-            Send
-          </button>
+        <div className="p-4 border-t border-green-50 bg-gray-50/50">
+          <form onSubmit={handleSend} className="flex gap-2">
+            <input
+              type="text"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder="Type a message..."
+              className="flex-1 px-4 py-2 border border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-md"
+            />
+            <button type="submit" className="px-4 py-2 bg-primary text-white rounded-xl hover:bg-green-700 transition-all font-bold shadow-md active:scale-95 text-sm">
+              Send
+            </button>
+          </form>
         </div>
       </div>
     </div>
@@ -3686,7 +3734,7 @@ function EditInventoryModal({ item, onChange, onSave, onCancel }) {
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
       <div className="bg-white rounded-2xl p-6 w-96 shadow-2xl animate-in fade-in zoom-in duration-200">
         <h2 className="text-xl text-primary font-bold mb-4">✏️ Edit Status</h2>
-        
+
         <div className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-muted-foreground mb-1 uppercase tracking-wider">Item Name</label>
@@ -3721,14 +3769,14 @@ function EditInventoryModal({ item, onChange, onSave, onCancel }) {
         </div>
 
         <div className="flex gap-3 mt-8">
-          <button 
-            className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-colors" 
+          <button
+            className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-colors"
             onClick={onCancel}
           >
             Cancel
           </button>
-          <button 
-            className="flex-1 py-3 bg-primary text-white rounded-xl font-bold hover:bg-green-700 transition-colors shadow-lg" 
+          <button
+            className="flex-1 py-3 bg-primary text-white rounded-xl font-bold hover:bg-green-700 transition-colors shadow-lg"
             onClick={onSave}
           >
             Save
@@ -3878,7 +3926,7 @@ function AddInventoryModal({ item, onChange, onSave, onCancel }) {
               className="w-full px-4 py-3 border border-green-100 rounded-2xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-lg font-bold"
             />
           </div>
-          
+
           <div>
             <label className="block text-xs font-black text-gray-400 mb-2 uppercase tracking-[0.1em]">Quantity</label>
             <input
@@ -3905,14 +3953,14 @@ function AddInventoryModal({ item, onChange, onSave, onCancel }) {
         </div>
 
         <div className="flex gap-3 mt-10">
-          <button 
-            className="flex-1 py-4 bg-gray-50 text-gray-500 rounded-2xl font-bold hover:bg-gray-100 transition-all active:scale-95" 
+          <button
+            className="flex-1 py-4 bg-gray-50 text-gray-500 rounded-2xl font-bold hover:bg-gray-100 transition-all active:scale-95"
             onClick={onCancel}
           >
             Cancel
           </button>
-          <button 
-            className="flex-1 py-4 bg-primary text-white rounded-2xl font-black hover:bg-green-700 transition-all shadow-xl shadow-green-200/50 active:scale-95" 
+          <button
+            className="flex-1 py-4 bg-primary text-white rounded-2xl font-black hover:bg-green-700 transition-all shadow-xl shadow-green-200/50 active:scale-95"
             onClick={onSave}
           >
             Add Item
