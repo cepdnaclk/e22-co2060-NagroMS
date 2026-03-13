@@ -434,7 +434,7 @@ export function FarmerDashboard({ onNavigate }) {
         ...newInventoryItem
       };
       setInventory([...inventory, item]);
-      setNewInventoryItem({ emoji: '📦', name: '', quantity: '', status: 'In Stock' });
+      setNewInventoryItem({ image: storageBagImg, name: '', quantity: '', status: 'In Stock' });
       setShowAddInventory(false);
     }
   };
@@ -2532,12 +2532,12 @@ function WeatherContent() {
         <h2 className="text-2xl text-primary mb-6">7-Day Forecast</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
           <WeatherDayCard day="Mon" emoji="☀️" temp="29°C" />
-          <WeatherDayCard day="Tue" emoji="🌧️" temp="26°C" />
+          <WeatherDayCard day="Tue" emoji="☀️" temp="26°C" />
           <WeatherDayCard day="Wed" emoji="⛈️" temp="25°C" />
-          <WeatherDayCard day="Thu" emoji="🌤️" temp="27°C" />
+          <WeatherDayCard day="Thu" emoji="🌞️" temp="27°C" />
           <WeatherDayCard day="Fri" emoji="☀️" temp="30°C" />
-          <WeatherDayCard day="Sat" emoji="🌦️" temp="28°C" />
-          <WeatherDayCard day="Sun" emoji="☀️" temp="31°C" />
+          <WeatherDayCard day="Sat" emoji="☀️" temp="28°C" />
+          <WeatherDayCard day="Sun" emoji="🔥" temp="31°C" />
         </div>
       </div>
     </div>
@@ -2565,7 +2565,7 @@ function InventoryContent({ inventory, onAddClick, onEdit, onDelete }) {
         {inventory.map(item => (
           <InventoryCard
             key={item.id}
-            emoji={item.emoji}
+            image={item.image}
             name={item.name}
             quantity={item.quantity}
             status={item.status}
@@ -3528,31 +3528,46 @@ function WeatherDayCard({ day, emoji, temp }) {
   );
 }
 
-function InventoryCard({ emoji, name, quantity, status, onEdit, onDelete }) {
-  const isLowStock = status === 'Low Stock';
+function InventoryCard({ image, name, quantity, status, onEdit, onDelete }) {
+  const getStatusStyles = (status) => {
+    switch (status) {
+      case 'Low Stock':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Out of Stock':
+        return 'bg-red-100 text-red-800';
+      default: // In Stock
+        return 'bg-green-100 text-green-800';
+    }
+  };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-purple-100 p-6 hover:shadow-xl transition-shadow">
-      <div className="flex items-center gap-4 mb-4">
-        <span className="text-6xl">{emoji}</span>
-        <div className="flex-1">
-          <p className="text-2xl text-foreground mb-1">{name}</p>
-          <span className={`inline-block px-3 py-1 rounded-full text-sm ${isLowStock ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
-            }`}>
+    <div className="bg-white rounded-xl shadow-lg border border-purple-100 overflow-hidden hover:shadow-xl transition-shadow">
+      {/* Rectangular Image Header */}
+      <div className="w-full h-48 bg-purple-50 flex items-center justify-center overflow-hidden">
+        {image ? (
+          <img src={image} alt={name} className="w-full h-full object-cover" />
+        ) : (
+          <Package className="w-12 h-12 text-purple-600 opacity-20" />
+        )}
+      </div>
+
+      <div className="p-6">
+        <div className="mb-4">
+          <p className="text-2xl text-foreground font-bold mb-2">{name}</p>
+          <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${getStatusStyles(status)}`}>
             {status}
           </span>
         </div>
-      </div>
-      <p className="text-xl text-muted-foreground">Quantity: <span className="text-foreground font-bold">{quantity}</span></p>
-      <div className="flex gap-2 mt-4">
-        <button className="flex-1 px-4 py-3 bg-blue-50 text-primary rounded-lg hover:bg-blue-100 transition-colors flex items-center justify-center gap-2" onClick={onEdit}>
-          <Edit className="w-5 h-5" />
-          Edit
-        </button>
-        <button className="flex-1 px-4 py-3 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center gap-2" onClick={onDelete}>
-          <Trash2 className="w-5 h-5" />
-          Delete
-        </button>
+        <p className="text-xl text-muted-foreground mb-4">Quantity: <span className="text-foreground font-bold">{quantity}</span></p>
+        <div className="flex gap-2 pt-4 border-t border-purple-50">
+          <button className="flex-1 px-4 py-2 bg-blue-50 text-primary rounded-lg hover:bg-blue-100 transition-colors flex items-center justify-center gap-2" onClick={onEdit}>
+            <Edit className="w-4 h-4" />
+            Edit
+          </button>
+          <button className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center gap-2" onClick={onDelete}>
+            <Trash2 className="w-5 h-5" />
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -3668,48 +3683,55 @@ function EditProductModal({ product, onChange, onSave, onCancel }) {
 // Edit Inventory Modal
 function EditInventoryModal({ item, onChange, onSave, onCancel }) {
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-      <div className="bg-white rounded-2xl p-8 w-96">
-        <h2 className="text-2xl text-primary mb-6">✏️ Edit Inventory Item</h2>
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl p-6 w-96 shadow-2xl animate-in fade-in zoom-in duration-200">
+        <h2 className="text-xl text-primary font-bold mb-4">✏️ Edit Status</h2>
+        
         <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <span className="text-6xl">{item.emoji}</span>
-            <input
-              type="text"
-              placeholder="Item Name"
-              value={item.name}
-              onChange={(e) => onChange('name', e.target.value)}
-              className="flex-1 px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
-            />
+          <div>
+            <label className="block text-xs font-bold text-muted-foreground mb-1 uppercase tracking-wider">Item Name</label>
+            <div className="px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-foreground font-bold">
+              {item.name}
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-6xl">📦</span>
+
+          <div>
+            <label className="block text-xs font-bold text-muted-foreground mb-1 uppercase tracking-wider">Quantity</label>
             <input
               type="text"
-              placeholder="Quantity (e.g., 500 kg)"
+              placeholder="e.g. 500 kg"
               value={item.quantity}
               onChange={(e) => onChange('quantity', e.target.value)}
-              className="flex-1 px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+              className="w-full px-4 py-3 border border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-lg"
             />
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-6xl">📊</span>
+
+          <div>
+            <label className="block text-xs font-bold text-muted-foreground mb-1 uppercase tracking-wider">Stock Status</label>
             <select
               value={item.status}
               onChange={(e) => onChange('status', e.target.value)}
-              className="flex-1 px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+              className="w-full px-4 py-3 border border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-lg appearance-none bg-white cursor-pointer"
             >
               <option value="In Stock">✅ In Stock</option>
               <option value="Low Stock">⚠️ Low Stock</option>
+              <option value="Out of Stock">❌ Out of Stock</option>
             </select>
           </div>
         </div>
-        <div className="flex justify-end gap-3 mt-6">
-          <button className="px-6 py-3 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors text-lg" onClick={onCancel}>
+
+        <div className="flex gap-3 mt-8">
+          <button 
+            className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-colors" 
+            onClick={onCancel}
+          >
             Cancel
           </button>
-          <button className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-green-700 transition-colors text-lg" onClick={onSave}>
-            💾 Save
+          <button 
+            className="flex-1 py-3 bg-primary text-white rounded-xl font-bold hover:bg-green-700 transition-colors shadow-lg" 
+            onClick={onSave}
+          >
+            Save
           </button>
         </div>
       </div>
@@ -3840,51 +3862,60 @@ function AddEquipmentModal({ equipment, onChange, onSave, onCancel }) {
 // Add Inventory Modal
 function AddInventoryModal({ item, onChange, onSave, onCancel }) {
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-      <div className="bg-white rounded-2xl p-8 w-96">
-        <h2 className="text-xl text-primary mb-4">Add New Inventory Item</h2>
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <img src={item.image || storageBagImg} alt="" className="w-16 h-16 object-contain" />
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div className="bg-white rounded-[2rem] p-8 w-[400px] shadow-2xl border border-green-100 animate-in fade-in zoom-in duration-200">
+        <h2 className="text-2xl font-bold text-primary mb-6 flex items-center gap-2">
+          <Plus className="w-6 h-6" /> Add Supplies
+        </h2>
+        <div className="space-y-5">
+          <div>
+            <label className="block text-xs font-black text-gray-400 mb-2 uppercase tracking-[0.1em]">Item Name</label>
             <input
               type="text"
-              placeholder="Item Name"
+              placeholder="e.g. Rice Seeds"
               value={item.name}
               onChange={(e) => onChange('name', e.target.value)}
-              className="flex-1 px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+              className="w-full px-4 py-3 border border-green-100 rounded-2xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-lg font-bold"
             />
           </div>
-          <div className="flex items-center gap-3">
-            <div className="w-16 h-16 bg-purple-50 rounded-lg flex items-center justify-center">
-              <Plus className="w-8 h-8 text-purple-600" />
-            </div>
+          
+          <div>
+            <label className="block text-xs font-black text-gray-400 mb-2 uppercase tracking-[0.1em]">Quantity</label>
             <input
               type="text"
-              placeholder="Quantity (e.g. 100 kg)"
+              placeholder="e.g. 500 kg"
               value={item.quantity}
               onChange={(e) => onChange('quantity', e.target.value)}
-              className="flex-1 px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+              className="w-full px-4 py-3 border border-green-100 rounded-2xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-lg font-bold"
             />
           </div>
-          <div className="flex items-center gap-3">
-            <div className="w-16 h-16 bg-blue-50 rounded-lg flex items-center justify-center">
-              <Plus className="w-8 h-8 text-blue-600" />
-            </div>
-            <input
-              type="text"
-              placeholder="Status"
+
+          <div>
+            <label className="block text-xs font-black text-gray-400 mb-2 uppercase tracking-[0.1em]">Current Status</label>
+            <select
               value={item.status}
               onChange={(e) => onChange('status', e.target.value)}
-              className="flex-1 px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
-            />
+              className="w-full px-4 py-3 border border-green-100 rounded-2xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-lg font-bold bg-white cursor-pointer"
+            >
+              <option value="In Stock">✅ In Stock</option>
+              <option value="Low Stock">⚠️ Low Stock</option>
+              <option value="Out of Stock">❌ Out of Stock</option>
+            </select>
           </div>
         </div>
-        <div className="flex justify-end gap-3 mt-6">
-          <button className="px-4 py-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors" onClick={onCancel}>
+
+        <div className="flex gap-3 mt-10">
+          <button 
+            className="flex-1 py-4 bg-gray-50 text-gray-500 rounded-2xl font-bold hover:bg-gray-100 transition-all active:scale-95" 
+            onClick={onCancel}
+          >
             Cancel
           </button>
-          <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-green-700 transition-colors" onClick={onSave}>
-            Add
+          <button 
+            className="flex-1 py-4 bg-primary text-white rounded-2xl font-black hover:bg-green-700 transition-all shadow-xl shadow-green-200/50 active:scale-95" 
+            onClick={onSave}
+          >
+            Add Item
           </button>
         </div>
       </div>
