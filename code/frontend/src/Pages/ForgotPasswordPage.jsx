@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Mail, AlertCircle, CheckCircle, Eye, EyeOff, Leaf, ArrowRight } from 'lucide-react';
 
 const REQUIREMENTS = [
@@ -11,7 +12,8 @@ const REQUIREMENTS = [
 
 const API = "http://localhost:5000/api";
 
-export function ForgotPasswordPage({ onNavigate }) {
+export function ForgotPasswordPage() {
+  const navigate = useNavigate();
   const [step, setStep]                   = useState(1);
   const [email, setEmail]                 = useState('');
   const [otp, setOtp]                     = useState(['', '', '', '', '', '']);
@@ -98,7 +100,7 @@ export function ForgotPasswordPage({ onNavigate }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to reset password.');
       setSuccessMsg('Password reset successfully!');
-      setTimeout(() => onNavigate('login'), 1500);
+      setTimeout(() => navigate('/login'), 1500);
     } catch (err) {
       setErrors({ password: err.message });
     } finally {
@@ -141,7 +143,7 @@ export function ForgotPasswordPage({ onNavigate }) {
       <div className="nagro-blob nagro-blob-3" />
 
       <div className="nagro-forgot-container">
-        <button type="button" onClick={() => onNavigate('login')} className="nagro-back-btn">
+        <button type="button" onClick={() => navigate('/login')} className="nagro-back-btn">
           <ArrowLeft className="w-4 h-4" /><span>Back to Login</span>
         </button>
 

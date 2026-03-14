@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Leaf, Mail, Lock, User, ArrowLeft, ArrowRight, CreditCard, Phone, MapPin,
   Check, Building2, UserCircle, Tractor, ShoppingBag, Wrench, GraduationCap,
@@ -14,7 +15,8 @@ const SRI_LANKAN_DISTRICTS = [
   'Monaragala','Ratnapura','Kegalle'
 ];
 
-export function SignUpPage({ onNavigate }) {
+export function SignUpPage() {
+  const navigate = useNavigate();
   const [step, setStep]               = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm]   = useState(false);
@@ -94,7 +96,7 @@ export function SignUpPage({ onNavigate }) {
       // Calls firebase.js → registerWithEmail → Firebase Auth + backend /api/auth/register
       const result = await registerWithEmail(formData);
       const dashRoute = result.dashboardRoute || getDashRoute(formData.roles[0]);
-      onNavigate(dashRoute);
+      navigate('/' + dashRoute);
     } catch (err) {
       const friendly = getFirebaseError(err.code) || err.message || 'Registration failed. Please try again.';
       setFormError(friendly);
@@ -117,7 +119,7 @@ export function SignUpPage({ onNavigate }) {
       const needsAccountType = formData.roles.includes('customer') || formData.roles.includes('service-provider');
       setStep(needsAccountType ? 2 : 1);
     } else if (step === 2) { setStep(1); }
-    else { onNavigate('landing'); }
+    else { navigate('/login'); }
   };
 
   const totalSteps  = formData.roles.includes('customer') || formData.roles.includes('service-provider') ? 3 : 2;
@@ -379,7 +381,7 @@ export function SignUpPage({ onNavigate }) {
 
         <p className="nagro-bottom-link nagro-signup-signin">
           Already have an account?{' '}
-          <button type="button" onClick={() => onNavigate('login')} className="nagro-link">Sign in here</button>
+          <button type="button" onClick={() => navigate('/login')} className="nagro-link">Sign in here</button>
         </p>
         <p className="nagro-signup-footer-note">🌾 Join farmers, customers & agricultural professionals on NagroMS</p>
       </div>
