@@ -103,6 +103,8 @@ export function FarmerDashboard({ onNavigate }) {
   const [rentalExpenses, setRentalExpenses] = useState([
     { id: 1, equipment: 'Combine Harvester', image: harvestorImg, days: 2, pricePerDay: 8000, total: 16000, date: '2026-02-22', owner: 'Rajith Equipment' },
     { id: 2, equipment: 'Power Cultivator', image: cultivatorImg, days: 1, pricePerDay: 3500, total: 3500, date: '2026-02-19', owner: 'Agro Rentals' },
+    { id: 3, equipment: 'Modern Tractor', image: tractorImg, days: 3, pricePerDay: 5000, total: 15000, date: '2026-02-25', owner: 'Sunil Rentals' },
+    { id: 4, equipment: 'Irrigation Pump', image: irrigationPumpImg, days: 5, pricePerDay: 2000, total: 10000, date: '2026-02-27', owner: 'Green Farm Services' },
   ]);
 
   const [sales, setSales] = useState([
@@ -2241,80 +2243,100 @@ function OrdersContent({ orders }) {
     </div>
   );
 }
-
-
-
 // Expenses Content
 function ExpensesContent({ rentalExpenses }) {
   const totalExpenses = rentalExpenses.reduce((total, expense) => total + expense.total, 0);
 
   return (
     <div className="space-y-6">
+
+      {/* Header */}
       <div className="bg-gradient-to-r from-red-600 to-red-500 rounded-2xl p-8 text-white">
         <h1 className="text-3xl mb-2 flex items-center gap-3">
-          <img src={dieselImg} alt="" className="w-10 h-10 object-contain brightness-0 invert" />
+          <span className="text-4xl">📉</span>
           Farm Expenses
         </h1>
         <p className="text-red-100 text-lg">Track all your spending</p>
       </div>
 
       {/* Total Expenses Summary */}
-      <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl p-6 border-2 border-red-200">
-        <div className="flex items-center gap-3 mb-4">
-          <span className="text-5xl">💸</span>
-          <div>
-            <h2 className="text-2xl text-primary font-bold">Total Expenses</h2>
-            <p className="text-muted-foreground">Money spent this month</p>
+      <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-3xl p-8 border-2 border-red-200 shadow-sm">
+        <div className="flex items-center gap-6">
+          <div className="bg-white rounded-2xl p-4 shadow-md">
+            <span className="text-5xl">💸</span>
           </div>
-        </div>
-        <div className="bg-white rounded-xl p-6 border-l-4 border-red-500">
-          <p className="text-4xl text-red-600 font-bold">-LKR {totalExpenses.toLocaleString()}</p>
+          <div className="flex-1">
+            <h2 className="text-2xl text-primary font-black uppercase tracking-tight">
+              Total Expenses
+            </h2>
+            <p className="text-gray-500 font-bold">Money spent this month</p>
+            <p className="text-4xl text-red-600 font-black mt-1">
+              -LKR {totalExpenses.toLocaleString()}
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Equipment Rental Expenses - Detailed */}
-      <div className="bg-white rounded-2xl shadow-lg border border-red-100 p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <span className="text-4xl">🔧</span>
-          <h2 className="text-2xl text-primary">Equipment Rental Expenses</h2>
+      {/* Equipment Rental Section */}
+      <div className="bg-white rounded-3xl shadow-xl border border-red-50 p-8">
+        <div className="flex items-center gap-4 mb-8">
+          <span className="text-5xl">🔧</span>
+          <h2 className="text-3xl font-black text-gray-800">Equipment Rental</h2>
         </div>
 
         {rentalExpenses.length > 0 ? (
           <>
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {rentalExpenses.map((expense) => (
-                <div key={expense.id} className="bg-red-50 rounded-xl p-6 border-l-4 border-red-500 hover:shadow-lg transition-shadow">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-4">
-                      <img src={expense.image || harvestorImg} alt="" className="w-16 h-16 object-contain" />
-                      <div>
-                        <p className="text-2xl text-foreground font-bold mb-1">{expense.equipment}</p>
-                        <p className="text-lg text-muted-foreground">Rented from: {expense.owner}</p>
-                        <p className="text-md text-muted-foreground">📅 Date: {expense.date}</p>
-                      </div>
+                <div
+                  key={expense.id}
+                  className="bg-red-50/50 rounded-3xl border-2 border-transparent hover:border-green-500 hover:bg-white hover:shadow-2xl transition-all duration-300 p-6"
+                >
+                  {/* Top Row: Image + Details */}
+                  <div className="flex flex-col md:flex-row gap-6">
+                    {/* IMAGE */}
+                    <div className="md:w-[54%] h-48 bg-white rounded-2xl flex items-center justify-center overflow-hidden shadow-sm">
+                      <img
+                        src={expense.image || harvestorImg}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                    <div className="text-right">
-                      <p className="text-3xl text-red-600 font-bold mb-1">-LKR {expense.total.toLocaleString()}</p>
-                      <div className="bg-red-100 rounded-lg px-3 py-1">
-                        <p className="text-sm text-red-800">💸 Paid</p>
+
+                    {/* DETAILS */}
+                    <div className="md:w-[46%] flex flex-col justify-between">
+                      <div>
+                        <p className="text-2xl font-black text-gray-800 mb-1">
+                          {expense.equipment}
+                        </p>
+                        <p className="text-sm text-gray-500 font-bold">
+                          Provider: {expense.owner}
+                        </p>
+                        <p className="text-sm text-gray-400 font-bold mt-1">
+                          📅 {expense.date}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-3xl text-red-600 font-black">
+                          -LKR {expense.total.toLocaleString()}
+                        </p>
+                        <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold">
+                          💸 PAID IN FULL
+                        </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Calculation Breakdown */}
-                  <div className="bg-white rounded-lg p-4 border border-red-200">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl">📊</span>
-                        <span className="text-lg text-muted-foreground">Calculation:</span>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg text-foreground">
-                          <span className="font-bold">{expense.days} days</span> × <span className="font-bold">LKR {expense.pricePerDay.toLocaleString()}</span>/day
-                        </p>
-                        <p className="text-xl text-red-600 font-bold">= LKR {expense.total.toLocaleString()}</p>
-                      </div>
-                    </div>
+                  {/* Bottom Row: Calculation */}
+                  <div className="bg-white rounded-xl p-4 border border-red-100 mt-6">
+                    <p className="text-sm text-gray-500 font-bold mb-1">📊 Calculation</p>
+                    <p className="text-gray-600 font-semibold">
+                      {expense.days} days × LKR {expense.pricePerDay.toLocaleString()}/day
+                    </p>
+                    <p className="text-lg text-red-600 font-bold">
+                      = LKR {expense.total.toLocaleString()}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -2325,23 +2347,27 @@ function ExpensesContent({ rentalExpenses }) {
               <div className="flex items-center justify-between bg-red-50 rounded-xl p-4">
                 <div className="flex items-center gap-3">
                   <span className="text-4xl">💰</span>
-                  <p className="text-2xl text-foreground font-bold">Total Spent on Equipment Rental:</p>
+                  <p className="text-2xl font-bold">Total Spent on Equipment Rental:</p>
                 </div>
                 <p className="text-4xl text-red-600 font-bold">-LKR {totalExpenses.toLocaleString()}</p>
               </div>
             </div>
 
-            {/* Expense Breakdown by Item */}
+            {/* Expense Breakdown */}
             <div className="mt-6 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-6">
-              <h3 className="text-xl text-primary font-bold mb-4">📊 Expense Breakdown</h3>
+              <h3 className="text-xl font-bold mb-4">📊 Expense Breakdown</h3>
               <div className="space-y-3">
                 {rentalExpenses.map((expense) => (
-                  <div key={expense.id} className="flex items-center justify-between bg-white rounded-lg p-3 border border-orange-200">
+                  <div
+                    key={expense.id}
+                    className="flex items-center justify-between bg-white rounded-lg p-3 border border-orange-200"
+                  >
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl">{expense.equipment.split(' ')[0]}</span>
-                      <span className="text-lg text-foreground">{expense.equipment}</span>
+                      <span className="text-lg">{expense.equipment}</span>
                     </div>
-                    <span className="text-lg text-red-600 font-bold">LKR {expense.total.toLocaleString()}</span>
+                    <span className="text-lg text-red-600 font-bold">
+                      LKR {expense.total.toLocaleString()}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -2351,36 +2377,37 @@ function ExpensesContent({ rentalExpenses }) {
           <div className="text-center py-12">
             <span className="text-8xl">🎉</span>
             <p className="text-2xl text-foreground mt-4">No expenses yet!</p>
-            <p className="text-lg text-muted-foreground">You haven't spent money on equipment rentals</p>
+            <p className="text-lg text-muted-foreground">
+              You haven't spent money on equipment rentals
+            </p>
           </div>
         )}
       </div>
 
-      {/* Tips for Farmers */}
+      {/* Money Saving Tips */}
       <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl p-6 border-2 border-green-200">
         <div className="flex items-center gap-3 mb-4">
           <span className="text-4xl">💡</span>
-          <h3 className="text-xl text-primary font-bold">Money Saving Tips</h3>
+          <h3 className="text-xl font-bold">Money Saving Tips</h3>
         </div>
         <div className="space-y-2">
           <div className="flex items-start gap-3 bg-white rounded-lg p-4">
             <span className="text-2xl">✅</span>
-            <p className="text-lg text-foreground">Buy your own equipment if you rent it often - saves money!</p>
+            <p>Buy your own equipment if you rent it often - saves money!</p>
           </div>
           <div className="flex items-start gap-3 bg-white rounded-lg p-4">
             <span className="text-2xl">✅</span>
-            <p className="text-lg text-foreground">Share equipment costs with nearby farmers</p>
+            <p>Share equipment costs with nearby farmers</p>
           </div>
           <div className="flex items-start gap-3 bg-white rounded-lg p-4">
             <span className="text-2xl">✅</span>
-            <p className="text-lg text-foreground">Rent equipment during off-season for better prices</p>
+            <p>Rent equipment during off-season for better prices</p>
           </div>
         </div>
       </div>
     </div>
   );
 }
-
 
 
 function LoansContent({ availableLoans, activeLoans }) {
