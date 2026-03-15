@@ -1253,6 +1253,10 @@
   border-color: var(--green-500);
 }
 
+.hover\:border-green-500:hover {
+  border-color: var(--green-500);
+}
+
 /* Focus States */
 .focus\:outline-none:focus {
   outline: none;
