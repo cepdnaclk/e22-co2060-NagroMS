@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -165,11 +165,54 @@ export function FarmerDashboard({ onNavigate }) {
 
   // State for orders
   const [orders, setOrders] = useState([
-    { id: 1, product: 'Fresh Tomatoes', image: tomatoImg, quantity: '100 kg', customer: 'Perera Stores', phone: '077-567-8901', status: 'Pending', date: '2026-02-24' },
-    { id: 2, product: 'Organic Rice', image: riceImg, quantity: '150 kg', customer: 'Green Market', phone: '071-678-9012', status: 'Pending', date: '2026-02-24' },
-    { id: 3, product: 'Carrots', image: carrotsImg, quantity: '50 kg', customer: 'Fresh Foods', phone: '076-789-0123', status: 'Processing', date: '2026-02-23' },
-    { id: 4, product: 'Sweet Corn', image: cornImg, quantity: '80 kg', customer: 'Organic Mart', phone: '077-890-1234', status: 'Pending', date: '2026-02-23' },
-    { id: 5, product: 'Green Beans', image: beansImg, quantity: '40 kg', customer: 'Perera Stores', phone: '077-567-8901', status: 'Processing', date: '2026-02-22' },
+    {
+      id: 1,
+      customerName: 'Perera Stores',
+      location: 'Colombo',
+      phone: '077-567-8901',
+      icon: '🛒',
+      orderDate: '2026-02-24',
+      products: [
+        { id: 101, productName: 'Fresh Tomatoes', productImage: tomatoImg, quantity: 100, unit: 'kg', status: 'pending' },
+        { id: 102, productName: 'Green Beans', productImage: beansImg, quantity: 40, unit: 'kg', status: 'pending' }
+      ]
+    },
+    {
+      id: 2,
+      customerName: 'Green Market',
+      location: 'Kandy',
+      phone: '071-678-9012',
+      icon: '🏪',
+      orderDate: '2026-02-24',
+      products: [
+        { id: 103, productName: 'Organic Rice', productImage: riceImg, quantity: 150, unit: 'kg', status: 'completed' },
+        { id: 106, productName: 'Fresh Tomatoes', productImage: tomatoImg, quantity: 60, unit: 'kg', status: 'pending' },
+        { id: 107, productName: 'Sweet Corn', productImage: cornImg, quantity: 45, unit: 'kg', status: 'pending' }
+      ]
+    },
+    {
+      id: 3,
+      customerName: 'Fresh Foods',
+      location: 'Gampaha',
+      phone: '076-789-0123',
+      icon: '🚛',
+      orderDate: '2026-02-23',
+      products: [
+        { id: 104, productName: 'Carrots', productImage: carrotsImg, quantity: 50, unit: 'kg', status: 'pending' }
+      ]
+    },
+    {
+      id: 4,
+      customerName: 'Organic Mart',
+      location: 'Colombo',
+      phone: '077-890-1234',
+      icon: '🥗',
+      orderDate: '2026-02-23',
+      products: [
+        { id: 105, productName: 'Sweet Corn', productImage: cornImg, quantity: 80, unit: 'kg', status: 'pending' },
+        { id: 108, productName: 'Carrots', productImage: carrotsImg, quantity: 30, unit: 'kg', status: 'pending' }
+      ]
+    }
   ]);
 
   // State for inventory
@@ -1717,7 +1760,7 @@ export function SalesContent({ customerPurchases = [], equipmentRentals = [] }) 
                   const itemTotal = product.quantity * product.pricePerUnit;
                   return (
                     <div key={idx} className="bg-gray-50 rounded-2xl p-5 border-2 border-gray-100 hover:border-green-200 hover:bg-white hover:shadow-2xl transition-all flex flex-col items-center text-center w-64">
-                      <div className="w-36 h-36 bg-white rounded-2xl p-2 mb-3 flex items-center justify-center border-4 border-green-50 shadow-inner group transition-transform hover:scale-105">
+                      <div className="w-28 h-28 bg-white rounded-2xl p-2 mb-3 flex items-center justify-center border-4 border-green-50 shadow-inner group transition-transform hover:scale-105">
                         {product.productImage ? (
                           <img src={product.productImage} alt="" className="w-full h-full object-cover" />
                         ) : (
@@ -1787,7 +1830,7 @@ export function SalesContent({ customerPurchases = [], equipmentRentals = [] }) 
                 {selectedRentalCustomer.rentals.map((rental, idx) => {
                   return (
                     <div key={idx} className="bg-orange-50/20 rounded-2xl p-5 border-2 border-orange-100 hover:border-orange-300 hover:bg-white hover:shadow-2xl transition-all flex flex-col items-center text-center w-64">
-                      <div className="w-36 h-36 bg-white rounded-2xl p-2 mb-3 flex items-center justify-center border-4 border-orange-50 shadow-inner group transition-transform hover:scale-105">
+                      <div className="w-28 h-28 bg-white rounded-2xl p-2 mb-3 flex items-center justify-center border-4 border-orange-50 shadow-inner group transition-transform hover:scale-105">
                         {rental.equipmentImage ? (
                           <img src={rental.equipmentImage} alt="" className="w-full h-full object-cover" />
                         ) : (
@@ -1939,34 +1982,266 @@ export function SalesContent({ customerPurchases = [], equipmentRentals = [] }) 
   );
 }
 
-// Orders Content
+function ImageWithFallback({ src, alt, className }) {
+  const [error, setError] = useState(false);
+  return (
+    <img
+      src={error ? 'https://via.placeholder.com/400?text=No+Image' : src}
+      alt={alt}
+      className={className}
+      onError={() => setError(true)}
+    />
+  );
+}
 function OrdersContent({ orders }) {
+  const [ordersList, setOrdersList] = useState(orders);
+
+  // Auto-delete completed orders after 1 day
+  useEffect(() => {
+    const checkAndCleanOrders = () => {
+      const now = new Date();
+      setOrdersList(prevOrders => {
+        return prevOrders.filter(customer => {
+          // Check if all products are completed
+          const allCompleted = customer.products.every(p => p.status === 'completed');
+
+          if (allCompleted && customer.completedAt) {
+            // Check if 24 hours have passed since completion
+            const completedTime = new Date(customer.completedAt);
+            const hoursDiff = (now - completedTime) / (1000 * 60 * 60);
+            return hoursDiff < 24; // Keep if less than 24 hours
+          }
+
+          return true; // Keep if not all completed or no completedAt timestamp
+        });
+      });
+    };
+
+    // Check every minute
+    const interval = setInterval(checkAndCleanOrders, 60000);
+    checkAndCleanOrders(); // Check immediately on mount
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Toggle order status (pending <-> completed)
+  const toggleProductStatus = (customerId, productId) => {
+    setOrdersList(ordersList.map(customer => {
+      if (customer.id === customerId) {
+        const updatedProducts = customer.products.map(product => {
+          if (product.id === productId) {
+            return {
+              ...product,
+              status: product.status === 'pending' ? 'completed' : 'pending'
+            };
+          }
+          return product;
+        });
+
+        // Check if all products are now completed
+        const allCompleted = updatedProducts.every(p => p.status === 'completed');
+
+        return {
+          ...customer,
+          products: updatedProducts,
+          completedAt: allCompleted ? new Date().toISOString() : null
+        };
+      }
+      return customer;
+    }));
+  };
+
+  // Calculate statistics
+  const totalOrders = ordersList.reduce((sum, customer) => sum + customer.products.length, 0);
+  const completedOrders = ordersList.reduce((sum, customer) =>
+    sum + customer.products.filter(p => p.status === 'completed').length, 0);
+  const pendingOrders = totalOrders - completedOrders;
+
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-purple-600 to-purple-500 rounded-2xl p-8 text-white">
-        <h1 className="text-3xl mb-2">📦 Orders</h1>
-        <p className="text-purple-100 text-lg">Manage your orders</p>
+      {/* Header */}
+      <div className="bg-gradient-to-r from-green-600 to-green-500 rounded-2xl p-8 text-white shadow-lg">
+        <h1 className="text-3xl font-bold mb-2">📦 Customer Orders</h1>
+        <p className="text-green-100 text-lg">Manage and track all customer orders with auto-cleanup</p>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
-        <h2 className="text-2xl text-primary mb-6">Pending Orders</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {orders.map(order => (
-            <OrderCard
-              key={order.id}
-              product={order.product}
-              quantity={order.quantity}
-              customer={order.customer}
-              phone={order.phone}
-              status={order.status}
-              date={order.date}
-            />
+      {/* Statistics Cards */}
+      <div className="grid sm:grid-cols-3 gap-6">
+        <div className="bg-white rounded-2xl p-6 border-l-8 border-blue-500 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-3xl">📋</span>
+            <h3 className="text-lg text-muted-foreground font-semibold">Total Orders</h3>
+          </div>
+          <p className="text-4xl text-blue-600 font-black">{totalOrders}</p>
+        </div>
+        <div className="bg-white rounded-2xl p-6 border-l-8 border-green-500 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-3xl">✅</span>
+            <h3 className="text-lg text-muted-foreground font-semibold">Completed</h3>
+          </div>
+          <p className="text-4xl text-green-600 font-black">{completedOrders}</p>
+        </div>
+        <div className="bg-white rounded-2xl p-6 border-l-8 border-yellow-500 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-3xl">⏳</span>
+            <h3 className="text-lg text-muted-foreground font-semibold">Pending</h3>
+          </div>
+          <p className="text-4xl text-yellow-600 font-black">{pendingOrders}</p>
+        </div>
+      </div>
+
+      <div className="space-y-8">
+        {ordersList.map((customer) => {
+          const customerPending = customer.products.filter(p => p.status === 'pending').length;
+          const customerCompleted = customer.products.filter(p => p.status === 'completed').length;
+          const allCompleted = customerPending === 0;
+
+          return (
+            <div key={customer.id} className={`bg-white rounded-3xl shadow-xl border-2 transition-all duration-300 ${allCompleted ? 'border-green-400 bg-green-50/30' : 'border-gray-100'}`}>
+              {/* Customer Header */}
+              <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl overflow-hidden bg-white shadow-inner border border-gray-100">
+                    <ImageWithFallback
+                      src={`https://api.dicebear.com/7.x/initials/svg?seed=${customer.customerName}`}
+                      alt={customer.customerName}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800">{customer.customerName}</h2>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500 font-medium">
+                      <span>📍 {customer.location}</span>
+                      <span className="text-primary">📞 {customer.phone}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-2">
+                  <div className="text-right">
+                    <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Order Date</p>
+                    <p className="text-lg text-gray-700 font-bold">{customer.orderDate}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-black shadow-sm">
+                      ✅ {customerCompleted}
+                    </span>
+                    <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-black shadow-sm">
+                      ⏳ {customerPending}
+                    </span>
+                  </div>
+                  {allCompleted && customer.completedAt && (
+                    <p className="text-xs bg-red-100 text-red-600 px-3 py-1 rounded-full font-bold animate-pulse">
+                      🗑️ Auto-delete in 24hrs
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Products Grid */}
+              <div className="p-6">
+                <h3 className="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2">
+                  <span>📦</span> Ordered Products
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {customer.products.map((product) => (
+                    <div
+                      key={product.id}
+                      className={`group flex flex-col rounded-3xl border-2 transition-all duration-500 overflow-hidden ${product.status === 'completed'
+                        ? 'bg-green-50/30 border-green-200'
+                        : 'bg-white border-gray-100 shadow-md hover:shadow-2xl'
+                        }`}
+                    >
+                      {/* Product Image Container */}
+                      <div className="h-48 w-full overflow-hidden bg-gray-100 relative">
+                        <ImageWithFallback
+                          src={product.productImage}
+                          alt={product.productName}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
+                        {/* Optional small status badge on image corner if desired, but we'll put details below */}
+                        <div className="absolute top-3 right-3">
+                          <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase shadow-lg backdrop-blur-md ${product.status === 'completed'
+                            ? 'bg-green-500/90 text-white'
+                            : 'bg-yellow-500/90 text-white'
+                            }`}>
+                            {product.status === 'completed' ? 'Done' : 'Pending'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-6 text-center space-y-4">
+                        <div>
+                          <p className={`text-2xl font-black mb-1 ${product.status === 'completed' ? 'text-green-700 line-through opacity-50' : 'text-gray-800'}`}>
+                            {product.productName}
+                          </p>
+                          <p className="text-gray-400 font-bold text-lg">
+                            {product.quantity} {product.unit}
+                          </p>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => product.status !== 'pending' && toggleProductStatus(customer.id, product.id)}
+                            className={`flex-1 py-3 rounded-xl font-black transition-all shadow-sm transform hover:scale-105 ${product.status === 'pending'
+                              ? 'bg-yellow-400 text-yellow-900 shadow-yellow-200 ring-4 ring-yellow-50 hover:bg-yellow-500'
+                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                              }`}
+                          >
+                            Pending
+                          </button>
+                          <button
+                            onClick={() => product.status !== 'completed' && toggleProductStatus(customer.id, product.id)}
+                            className={`flex-1 py-3 rounded-xl font-black transition-all shadow-sm transform hover:scale-105 ${product.status === 'completed'
+                              ? 'bg-green-600 text-white shadow-green-200 ring-4 ring-green-50 hover:bg-green-700'
+                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                              }`}
+                          >
+                            Done
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Quick Action Info */}
+              <div className="px-6 py-4 bg-gray-50/50 rounded-b-3xl border-t border-gray-100">
+                <p className="text-sm text-gray-400 font-medium text-center italic">
+                  Mark all items as "Done" to finalize the order for the customer.
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Instructions Section */}
+      <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-3xl p-8 border-2 border-green-100 shadow-inner">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="bg-white p-3 rounded-2xl shadow-sm">
+            <span className="text-4xl text-primary font-bold">💡</span>
+          </div>
+          <h3 className="text-2xl text-gray-800 font-black">Pro Tips: Order Management</h3>
+        </div>
+        <div className="grid md:grid-cols-2 gap-4">
+          {[
+            { num: "1️⃣", text: "Orders are automatically grouped by customer for easier tracking." },
+            { num: "2️⃣", text: "Click the 'Done' button when items are ready for delivery." },
+            { num: "3️⃣", text: "Fully completed orders are moved to archive automatically after 24 hours." },
+            { num: "4️⃣", text: "Use the customer's phone number to coordinate pickup/delivery 📞" }
+          ].map((tip, i) => (
+            <div key={i} className="flex items-start gap-4 bg-white/60 backdrop-blur-sm rounded-2xl p-5 hover:bg-white transition-colors border border-white">
+              <span className="text-3xl shrink-0">{tip.num}</span>
+              <p className="text-lg text-gray-700 leading-relaxed font-medium">{tip.text}</p>
+            </div>
           ))}
         </div>
       </div>
     </div>
   );
 }
+
 
 
 // Expenses Content
