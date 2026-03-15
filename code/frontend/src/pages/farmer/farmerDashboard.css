@@ -536,6 +536,14 @@
   background-color: var(--yellow-100);
 }
 
+.bg-yellow-400 {
+  background-color: #facc15;
+}
+
+.bg-yellow-500 {
+  background-color: var(--yellow-500);
+}
+
 .bg-purple-50 {
   background-color: #faf5ff;
 }
@@ -1180,6 +1188,10 @@
   transform: scale(1.05);
 }
 
+.hover\:bg-yellow-500:hover {
+  background-color: var(--yellow-500);
+}
+
 /* Hover States */
 .hover\:bg-green-50:hover {
   background-color: var(--green-50);
@@ -1373,8 +1385,16 @@
   height: 6rem;
 }
 
+.h-28 {
+  height: 7rem;
+}
+
 .h-32 {
   height: 8rem;
+}
+
+.h-40 {
+  height: 10rem;
 }
 
 .h-48 {
