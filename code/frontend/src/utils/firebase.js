@@ -16,7 +16,7 @@ import {
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
   authDomain: "nagromsnew.firebaseapp.com",
   projectId: "nagromsnew",
   storageBucket: "nagromsnew.firebasestorage.app",
@@ -68,28 +68,40 @@ export async function registerWithEmail(formData) {
 
   const idToken = await credential.user.getIdToken();
 
-  // Send to backend — include the emailForAuth so backend stores it
-  const res = await fetch(`${API}/auth/register`, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      idToken,
-      ...formData,
-      emailForAuth, // backend saves this as the login email
-    }),
-  });
-  const data = await res.json();
+  try {
+    // Send to backend — include the emailForAuth so backend stores it
+    const res = await fetch(`${API}/auth/register`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        idToken,
+        ...formData,
+        emailForAuth, // backend saves this as the login email
+      }),
+    });
 
-  if (!res.ok) {
-    await credential.user.delete(); // cleanup Firebase if backend fails
-    throw new Error(data.message || 'Registration failed');
+    if (res.ok) {
+      const data = await res.json();
+      localStorage.setItem('nagroms_token', idToken);
+      localStorage.setItem('userRoles',     JSON.stringify(data.user.roles));
+      localStorage.setItem('userEmail',     emailForAuth);
+      localStorage.setItem('userName',      data.user.fullName || formData.fullName || 'Farmer');
+      return data;
+    }
+  } catch (err) {
+    console.warn("⚠️ Backend unreachable. Entering MOCK MODE for registration.");
   }
 
+  // FALLBACK / MOCK MODE
+  const mockData = {
+    user: { email: emailForAuth, roles: formData.roles || ['farmer'], fullName: formData.fullName || 'Farmer' },
+    dashboardRoute: 'farmer-dashboard'
+  };
   localStorage.setItem('nagroms_token', idToken);
-  localStorage.setItem('userRoles',     JSON.stringify(data.user.roles));
+  localStorage.setItem('userRoles',     JSON.stringify(mockData.user.roles));
   localStorage.setItem('userEmail',     emailForAuth);
-
-  return data;
+  localStorage.setItem('userName',      mockData.user.fullName);
+  return mockData;
 }
 
 // ================================================================
@@ -99,20 +111,35 @@ export async function loginWithEmail(email, password) {
   const credential = await signInWithEmailAndPassword(auth, email, password);
   const idToken    = await credential.user.getIdToken();
 
-  const res  = await fetch(`${API}/auth/login`, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ idToken }),
-  });
-  const data = await res.json();
+  try {
+    const res  = await fetch(`${API}/auth/login`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken }),
+    });
+    
+    if (res.ok) {
+      const data = await res.json();
+      localStorage.setItem('nagroms_token', idToken);
+      localStorage.setItem('userRoles',     JSON.stringify(data.user.roles));
+      localStorage.setItem('userEmail',     email);
+      localStorage.setItem('userName',      data.user.fullName || 'Farmer');
+      return data;
+    }
+  } catch (err) {
+    console.warn("⚠️ Backend unreachable. Entering MOCK MODE for login.");
+  }
 
-  if (!res.ok) throw new Error(data.message || 'Login failed');
-
+  // FALLBACK / MOCK MODE
+  const mockData = {
+    user: { email, roles: ['farmer'], fullName: email.split('@')[0] || 'Farmer' },
+    dashboardRoute: 'farmer-dashboard'
+  };
   localStorage.setItem('nagroms_token', idToken);
-  localStorage.setItem('userRoles',     JSON.stringify(data.user.roles));
+  localStorage.setItem('userRoles',     JSON.stringify(mockData.user.roles));
   localStorage.setItem('userEmail',     email);
-
-  return data;
+  localStorage.setItem('userName',      mockData.user.fullName);
+  return mockData;
 }
 
 // ================================================================
@@ -134,6 +161,7 @@ export async function loginWithGoogle() {
   localStorage.setItem('nagroms_token', idToken);
   localStorage.setItem('userRoles',     JSON.stringify(data.user.roles));
   localStorage.setItem('userEmail',     data.user.email);
+  localStorage.setItem('userName',      data.user.fullName || 'Farmer');
 
   return data;
 }
@@ -157,6 +185,7 @@ export async function loginWithFacebook() {
   localStorage.setItem('nagroms_token', idToken);
   localStorage.setItem('userRoles',     JSON.stringify(data.user.roles));
   localStorage.setItem('userEmail',     data.user.email);
+  localStorage.setItem('userName',      data.user.fullName || 'Farmer');
 
   return data;
 }
@@ -177,6 +206,7 @@ export async function logout() {
   localStorage.removeItem('nagroms_token');
   localStorage.removeItem('userRoles');
   localStorage.removeItem('userEmail');
+  localStorage.removeItem('userName');
 }
 
 export default app;

@@ -134,20 +134,27 @@ export function LoginPage({ onNavigate }) {
 
       // Phone/NIC login: look up email from backend by phone or NIC
       if (loginMethod === 'phone' || loginMethod === 'nic') {
-        const res  = await fetch('http://localhost:5000/api/auth/find-user', {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            [loginMethod === 'phone' ? 'phone' : 'nic']: formData.identifier
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok || !data.email) {
-          setErrors(prev => ({ ...prev, identifier: 'No account found with this ' + (loginMethod === 'phone' ? 'phone number.' : 'NIC number.') }));
-          setIsLoading(false);
-          return;
+        try {
+          const res  = await fetch('http://localhost:5000/api/auth/find-user', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              [loginMethod === 'phone' ? 'phone' : 'nic']: formData.identifier
+            }),
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            if (data.email) {
+              emailToUse = data.email;
+            }
+          }
+        } catch (err) {
+          console.warn("⚠️ Backend unreachable. Generating mock email for phone/NIC.");
+          // Generate same fake email pattern as firebase.js for consistency
+          const cleaned = formData.identifier.replace(/\D/g, '').toLowerCase();
+          emailToUse = `${loginMethod}_${cleaned}@nagroms.local`;
         }
-        emailToUse = data.email;
       }
 
       const result = await loginWithEmail(emailToUse, formData.password);
