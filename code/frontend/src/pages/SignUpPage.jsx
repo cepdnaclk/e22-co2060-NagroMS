@@ -358,7 +358,7 @@ export function SignUpPage({ onNavigate }) {
 
                 <label className="nagro-terms">
                   <input type="checkbox" className="nagro-checkbox" required/>
-                  <span>I agree to the <a href="#" className="nagro-link">Terms of Service</a> and <a href="#" className="nagro-link">Privacy Policy</a></span>
+                  <span>I agree to the <a href="#!" className="nagro-link">Terms of Service</a> and <a href="#!" className="nagro-link">Privacy Policy</a></span>
                 </label>
 
                 {formError && (

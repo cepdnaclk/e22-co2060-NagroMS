@@ -1,0 +1,225 @@
+﻿diff --git a/code/frontend/src/pages/farmer/farmerDashboard.jsx b/code/frontend/src/pages/farmer/farmerDashboard.jsx
+index 5048c55..cfd5b39 100644
+--- a/code/frontend/src/pages/farmer/farmerDashboard.jsx
++++ b/code/frontend/src/pages/farmer/farmerDashboard.jsx
+@@ -1938,30 +1938,196 @@ export function SalesContent({ customerPurchases = [], equipmentRentals = [] })
+     </div>
+   );
+ }
+-
+ // Orders Content
+ function OrdersContent({ orders }) {
++  const [ordersList, setOrdersList] = React.useState(orders);
++
++  // Toggle order status (pending <-> completed)
++  const toggleProductStatus = (customerId, productId) => {
++    setOrdersList(ordersList.map(customer => {
++      if (customer.id === customerId) {
++        return {
++          ...customer,
++          products: customer.products.map(product => {
++            if (product.id === productId) {
++              return {
++                ...product,
++                status: product.status === 'pending' ? 'completed' : 'pending'
++              };
++            }
++            return product;
++          })
++        };
++      }
++      return customer;
++    }));
++  };
++
++  // Calculate statistics
++  const totalOrders = ordersList.reduce((sum, customer) => sum + customer.products.length, 0);
++  const completedOrders = ordersList.reduce((sum, customer) =>
++    sum + customer.products.filter(p => p.status === 'completed').length, 0);
++  const pendingOrders = totalOrders - completedOrders;
++
+   return (
+     <div className="space-y-6">
++      {/* Header */}
+       <div className="bg-gradient-to-r from-purple-600 to-purple-500 rounded-2xl p-8 text-white">
+         <h1 className="text-3xl mb-2">≡ƒôª Orders</h1>
+-        <p className="text-purple-100 text-lg">Manage your orders</p>
++        <p className="text-purple-100 text-lg">Manage customer orders</p>
+       </div>
+ 
+-      <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
+-        <h2 className="text-2xl text-primary mb-6">Pending Orders</h2>
+-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+-          {orders.map(order => (
+-            <OrderCard
+-              key={order.id}
+-              product={order.product}
+-              quantity={order.quantity}
+-              customer={order.customer}
+-              phone={order.phone}
+-              status={order.status}
+-              date={order.date}
+-            />
+-          ))}
++      {/* Statistics Cards */}
++      <div className="grid sm:grid-cols-3 gap-4">
++        <div className="bg-white rounded-xl p-5 border-l-4 border-purple-500 shadow-md">
++          <div className="flex items-center gap-2 mb-2">
++            <span className="text-3xl">≡ƒôï</span>
++            <h3 className="text-lg text-muted-foreground">Total Orders</h3>
++          </div>
++          <p className="text-3xl text-purple-600 font-bold">{totalOrders}</p>
++        </div>
++        <div className="bg-white rounded-xl p-5 border-l-4 border-green-500 shadow-md">
++          <div className="flex items-center gap-2 mb-2">
++            <span className="text-3xl">Γ£à</span>
++            <h3 className="text-lg text-muted-foreground">Completed</h3>
++          </div>
++          <p className="text-3xl text-green-600 font-bold">{completedOrders}</p>
++        </div>
++        <div className="bg-white rounded-xl p-5 border-l-4 border-orange-500 shadow-md">
++          <div className="flex items-center gap-2 mb-2">
++            <span className="text-3xl">ΓÅ│</span>
++            <h3 className="text-lg text-muted-foreground">Pending</h3>
++          </div>
++          <p className="text-3xl text-orange-600 font-bold">{pendingOrders}</p>
++        </div>
++      </div>
++
++      {/* Customer Orders List */}
++      <div className="space-y-4">
++        {ordersList.map((customer) => {
++          const customerPending = customer.products.filter(p => p.status === 'pending').length;
++          const customerCompleted = customer.products.filter(p => p.status === 'completed').length;
++
++          return (
++            <div key={customer.id} className="bg-white rounded-2xl shadow-lg border-2 border-purple-100 p-6 hover:shadow-xl transition-shadow">
++              {/* Customer Header */}
++              <div className="flex items-center justify-between mb-4 pb-4 border-b-2 border-purple-100">
++                <div className="flex items-center gap-4">
++                  <div className="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center text-3xl shrink-0">
++                    {customer.icon}
++                  </div>
++                  <div>
++                    <p className="text-2xl text-foreground font-bold">{customer.customerName}</p>
++                    <p className="text-md text-muted-foreground">{customer.location}</p>
++                    <p className="text-sm text-primary font-bold">≡ƒô₧ {customer.phone}</p>
++                  </div>
++                </div>
++                <div className="text-right">
++                  <p className="text-sm text-muted-foreground">Order Date</p>
++                  <p className="text-lg text-foreground font-bold">{customer.orderDate}</p>
++                  <div className="flex gap-2 mt-2">
++                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">
++                      Γ£à {customerCompleted} Done
++                    </span>
++                    <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-bold">
++                      ΓÅ│ {customerPending} Pending
++                    </span>
++                  </div>
++                </div>
++              </div>
++
++              {/* Products List */}
++              <div className="space-y-3">
++                <p className="text-lg text-foreground font-bold mb-3">≡ƒôª Ordered Products:</p>
++                {customer.products.map((product) => (
++                  <div
++                    key={product.id}
++                    onClick={() => toggleProductStatus(customer.id, product.id)}
++                    className={`flex items-center justify-between p-4 rounded-xl cursor-pointer transition-all hover:scale-105 ${product.status === 'completed'
++                      ? 'bg-green-50 border-2 border-green-300'
++                      : 'bg-orange-50 border-2 border-orange-300'
++                      }`}
++                  >
++                    <div className="flex items-center gap-3">
++                      {/* Checkbox/Tick */}
++                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${product.status === 'completed'
++                        ? 'bg-green-500'
++                        : 'bg-white border-2 border-orange-400'
++                        }`}>
++                        {product.status === 'completed' ? (
++                          <CheckCircle className="w-6 h-6 text-white" />
++                        ) : (
++                          <div className="w-6 h-6" />
++                        )}
++                      </div>
++
++                      {/* Product Info */}
++                      <div className="flex items-center gap-2">
++                        <span className="text-3xl">{product.productIcon}</span>
++                        <div>
++                          <p className={`text-xl font-bold ${product.status === 'completed'
++                            ? 'text-green-700 line-through'
++                            : 'text-foreground'
++                            }`}>
++                            {product.productName}
++                          </p>
++                          <p className="text-sm text-muted-foreground">
++                            {product.quantity} {product.unit}
++                          </p>
++                        </div>
++                      </div>
++                    </div>
++
++                    {/* Status Badge */}
++                    <div>
++                      {product.status === 'completed' ? (
++                        <span className="px-4 py-2 bg-green-500 text-white rounded-full text-sm font-bold">
++                          Γ£à Completed
++                        </span>
++                      ) : (
++                        <span className="px-4 py-2 bg-orange-500 text-white rounded-full text-sm font-bold">
++                          ΓÅ│ Pending
++                        </span>
++                      )}
++                    </div>
++                  </div>
++                ))}
++              </div>
++
++              {/* Quick Info */}
++              <div className="mt-4 pt-4 border-t border-purple-100">
++                <p className="text-sm text-muted-foreground italic">
++                  ≡ƒæå Click on any product to mark as complete/pending
++                </p>
++              </div>
++            </div>
++          );
++        })}
++      </div>
++
++      {/* Help Section */}
++      <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 border-2 border-blue-200">
++        <div className="flex items-center gap-3 mb-4">
++          <span className="text-4xl">≡ƒÆí</span>
++          <h3 className="text-xl text-primary font-bold">How to Use Orders</h3>
++        </div>
++        <div className="space-y-2">
++          <div className="flex items-start gap-3 bg-white rounded-lg p-3">
++            <span className="text-2xl">1∩╕ÅΓâú</span>
++            <p className="text-lg text-foreground">Each customer can order multiple products</p>
++          </div>
++          <div className="flex items-start gap-3 bg-white rounded-lg p-3">
++            <span className="text-2xl">2∩╕ÅΓâú</span>
++            <p className="text-lg text-foreground">Click on any product to mark it as completed Γ£à</p>
++          </div>
++          <div className="flex items-start gap-3 bg-white rounded-lg p-3">
++            <span className="text-2xl">3∩╕ÅΓâú</span>
++            <p className="text-lg text-foreground">Click again to mark it back as pending ΓÅ│</p>
++          </div>
++          <div className="flex items-start gap-3 bg-white rounded-lg p-3">
++            <span className="text-2xl">4∩╕ÅΓâú</span>
++            <p className="text-lg text-foreground">Contact customers using the phone number shown ≡ƒô₧</p>
++          </div>
+         </div>
+       </div>
+     </div>
+@@ -1969,6 +2135,7 @@ function OrdersContent({ orders }) {
+ }
+ 
+ 
++
+ // Expenses Content
+ function ExpensesContent({ rentalExpenses }) {
+   const totalExpenses = rentalExpenses.reduce((total, expense) => total + expense.total, 0);
