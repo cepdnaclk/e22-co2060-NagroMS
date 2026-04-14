@@ -28,7 +28,9 @@ import {
   AlertCircle,
   ChevronDown,
   ArrowRight,
-  CreditCard
+  CreditCard,
+  Bot,
+  Sparkles
 } from 'lucide-react';
 import { RoleSwitcher } from "../RoleSwitcher.jsx";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "./InputOTP";
@@ -72,6 +74,12 @@ import trendingUpIcon from "./images/products/money.png";
 export function FarmerDashboard({ onNavigate }) {
   const [activeNav, setActiveNav] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userName, setUserName] = useState(localStorage.getItem('userName') || 'Farmer');
+  const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail') || '');
+  const [userPhone, setUserPhone] = useState(localStorage.getItem('userPhone') || '');
+  const [userLocation, setUserLocation] = useState(localStorage.getItem('userLocation') || 'Anuradhapura');
+  const [userNIC, setUserNIC] = useState(localStorage.getItem('userNIC') || '');
+  const [profilePicture, setProfilePicture] = useState(localStorage.getItem('profilePicture') || '👨‍🌾');
 
   // State for products
   const [products, setProducts] = useState([
@@ -548,7 +556,7 @@ export function FarmerDashboard({ onNavigate }) {
   const renderContent = () => {
     switch (activeNav) {
       case 'dashboard':
-        return <DashboardContent onNavigate={handleQuickNavigation} products={products} rentedEquipment={rentedEquipment} sales={sales} orders={orders} rentalIncome={rentalIncome} rentalExpenses={rentalExpenses} />;
+        return <DashboardContent onNavigate={handleQuickNavigation} products={products} rentedEquipment={rentedEquipment} sales={sales} orders={orders} rentalIncome={rentalIncome} rentalExpenses={rentalExpenses} userName={userName} />;
       case 'products':
         return <MyProductsContent
           products={products}
@@ -578,7 +586,7 @@ export function FarmerDashboard({ onNavigate }) {
           }}
         />;
       case 'weather':
-        return <WeatherContent />;
+        return <WeatherContent userLocation={userLocation} />;
       case 'inventory':
         return <InventoryContent
           inventory={inventory}
@@ -587,9 +595,24 @@ export function FarmerDashboard({ onNavigate }) {
           onDelete={(id) => setDeleteInventoryConfirm(id)}
         />;
       case 'chatbot':
-        return <ChatbotContent />;
+        return <ChatbotContent userLocation={userLocation} />;
       case 'settings':
-        return <SettingsContent />;
+        return (
+          <SettingsContent
+            userName={userName}
+            userEmail={userEmail}
+            userPhone={userPhone}
+            userLocation={userLocation}
+            userNIC={userNIC}
+            setUserName={setUserName}
+            setUserEmail={setUserEmail}
+            setUserPhone={setUserPhone}
+            setUserLocation={setUserLocation}
+            setUserNIC={setUserNIC}
+            profilePicture={profilePicture}
+            setProfilePicture={setProfilePicture}
+          />
+        );
       default:
         return <DashboardContent onNavigate={handleQuickNavigation} products={products} rentedEquipment={rentedEquipment} sales={sales} orders={orders} rentalIncome={rentalIncome} rentalExpenses={rentalExpenses} />;
     }
@@ -757,12 +780,12 @@ export function FarmerDashboard({ onNavigate }) {
               className="w-full bg-green-50 rounded-xl p-4 mb-3 hover:bg-green-100 transition-all text-left shadow-sm hover:shadow-md border border-green-100"
             >
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full border-2 border-primary flex items-center justify-center bg-white">
-                  <img src={peoplesImg} alt="" className="w-8 h-8 object-contain" />
+                <div className="w-12 h-12 rounded-full border-2 border-primary flex items-center justify-center bg-white text-2xl">
+                  {profilePicture}
                 </div>
                 <div className="flex-1 overflow-hidden">
-                  <p className="text-sm font-bold text-foreground truncate">Sunil Perera</p>
-                  <p className="text-xs text-muted-foreground truncate">farmer@example.com</p>
+                  <p className="text-sm font-bold text-foreground truncate">{userName}</p>
+                  <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
                 </div>
               </div>
               <div className="mt-3 flex items-center gap-2 text-xs text-primary font-bold bg-white/50 px-2 py-1 rounded-lg">
@@ -897,20 +920,22 @@ function NavButton({ icon, label, active, onClick }) {
         }
       `}
     >
-      <span className="w-8 h-8 flex items-center justify-center">
-        {typeof icon === 'string' && icon.length <= 4 ? (
-          <span className="text-2xl">{icon}</span>
-        ) : (
-          <img src={icon} alt="" className="w-8 h-8 object-contain" />
-        )}
-      </span>
+      {icon && (
+        <span className="w-8 h-8 flex items-center justify-center">
+          {typeof icon === 'string' && icon.length <= 4 ? (
+            <span className="text-2xl">{icon}</span>
+          ) : (
+            <img src={icon} alt="" className="w-8 h-8 object-contain" />
+          )}
+        </span>
+      )}
       <span className="text-base font-medium">{label}</span>
     </button>
   );
 }
 
 // Dashboard Content
-function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders, rentalIncome, rentalExpenses }) {
+function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders, rentalIncome, rentalExpenses, userName }) {
   const [showMoneyModal, setShowMoneyModal] = useState(null); // 'in', 'out', or null
 
   // Calculate actual counts
@@ -921,15 +946,17 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
   const rentalExpensesTotal = rentalExpenses.reduce((total, expense) => total + expense.total, 0);
   const totalIncome = salesTotal + rentalIncomeTotal;
   const netProfit = totalIncome - rentalExpensesTotal;
-  const pendingOrdersCount = orders.filter(order => order.status === 'Pending').length;
+  // Correctly calculate total pending products across all orders
+  const pendingOrdersCount = orders.reduce((sum, order) => 
+    sum + order.products.filter(p => p.status === 'pending').length, 0
+  );
 
   return (
     <div className="space-y-6">
       {/* Welcome Banner with Image */}
       <div className="bg-gradient-to-r from-green-600 to-green-500 rounded-2xl p-8 text-white">
         <h1 className="text-3xl mb-2 flex items-center gap-3">
-          <img src={riceImg} alt="" className="w-10 h-10 object-contain brightness-0 invert" />
-          Welcome Back, Sunil!
+          Welcome Back, {userName.split(' ')[0]}!
         </h1>
         <p className="text-green-100 text-lg">Your farm is growing well today</p>
       </div>
@@ -937,28 +964,24 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
       {/* Quick Action Cards - Visual */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <QuickActionCard
-          icon={riceImg}
           title="My Products"
           subtitle={`${productCount} Items`}
           color="bg-green-100"
           onClick={() => onNavigate('products')}
         />
         <QuickActionCard
-          icon="💰"
           title="Total Income"
           subtitle={`LKR ${totalIncome.toLocaleString()}`}
           color="bg-blue-100"
           onClick={() => onNavigate('sales')}
         />
         <QuickActionCard
-          icon={dieselImg}
           title="Expenses"
           subtitle={`LKR ${rentalExpensesTotal.toLocaleString()}`}
           color="bg-red-100"
           onClick={() => onNavigate('expenses')}
         />
         <QuickActionCard
-          icon={storageBagImg}
           title="Orders"
           subtitle={`${pendingOrdersCount} Pending`}
           color="bg-purple-100"
@@ -969,18 +992,15 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
       {/* Financial Summary - New Section */}
       <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl p-6 border-2 border-green-200">
         <div className="flex items-center gap-3 mb-6">
-          <span className="text-4xl">💰</span>
           <h2 className="text-2xl text-primary font-bold">Money Summary</h2>
         </div>
 
         <div className="grid md:grid-cols-3 gap-4">
           {/* Total Income */}
-          <button
-            onClick={() => setShowMoneyModal('in')}
-            className="bg-white rounded-xl p-5 border-l-4 border-green-500 shadow-md hover:shadow-xl transition-all text-left cursor-pointer hover:scale-105"
+          <div
+            className="bg-white rounded-xl p-5 border-l-4 border-green-500 shadow-md hover:shadow-xl transition-all text-left"
           >
             <div className="flex items-center gap-2 mb-2">
-              <img src={trendingUpIcon || riceImg} alt="" className="w-6 h-6 object-contain" />
               <h3 className="text-lg text-muted-foreground">Money In</h3>
             </div>
             <p className="text-3xl text-green-600 font-bold mb-3">
@@ -989,27 +1009,24 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
             <div className="space-y-1 border-t border-gray-200 pt-3">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground flex items-center gap-1">
-                  <img src={riceImg} alt="" className="w-4 h-4 object-contain" /> Product Sales:
+                  Product Sales:
                 </span>
                 <span className="text-foreground font-bold">LKR {salesTotal.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground flex items-center gap-1">
-                  <img src={tractorImg} alt="" className="w-4 h-4 object-contain" /> Rental Income:
+                  Rental Income:
                 </span>
                 <span className="text-foreground font-bold">LKR {rentalIncomeTotal.toLocaleString()}</span>
               </div>
             </div>
-            <p className="text-sm text-green-500 mt-3">👆 Click for details</p>
-          </button>
+          </div>
 
           {/* Total Expenses */}
-          <button
-            onClick={() => setShowMoneyModal('out')}
-            className="bg-white rounded-xl p-5 border-l-4 border-red-500 shadow-md hover:shadow-xl transition-all text-left cursor-pointer hover:scale-105"
+          <div
+            className="bg-white rounded-xl p-5 border-l-4 border-red-500 shadow-md hover:shadow-xl transition-all text-left"
           >
             <div className="flex items-center gap-2 mb-2">
-              <img src={dieselImg} alt="" className="w-6 h-6 object-contain" />
               <h3 className="text-lg text-muted-foreground">Money Out</h3>
             </div>
             <p className="text-3xl text-red-600 font-bold mb-3">
@@ -1018,19 +1035,17 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
             <div className="space-y-1 border-t border-gray-200 pt-3">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground flex items-center gap-1">
-                  <img src={sprayerImg} alt="" className="w-4 h-4 object-contain" /> Equipment Rental:
+                  Equipment Rental:
                 </span>
                 <span className="text-foreground font-bold">LKR {rentalExpensesTotal.toLocaleString()}</span>
               </div>
             </div>
-            <p className="text-sm text-red-500 mt-3">👆 Click for details</p>
-          </button>
+          </div>
 
           {/* Net Profit */}
           <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-5 shadow-lg">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-3xl">💎</span>
-              <h3 className="text-lg text-white">Net Profit</h3>
+              <h3 className="text-lg text-white font-bold underline">Net Profit Summary</h3>
             </div>
             <p className="text-4xl text-white font-bold mb-3">
               LKR {netProfit.toLocaleString()}
@@ -1049,8 +1064,7 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
         {/* My Products Overview - Real-time */}
         <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
           <div className="flex items-center gap-3 mb-6">
-            <span className="text-4xl">🌾</span>
-            <h2 className="text-2xl text-primary">My Products Overview</h2>
+            <h2 className="text-2xl text-primary font-bold">My Products Overview</h2>
           </div>
 
           {/* Low Stock Alerts */}
@@ -1109,53 +1123,48 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
         {/* Recent Sales & Orders - Real-time */}
         <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
           <div className="flex items-center gap-3 mb-6">
-            <img src={moneyIcon} alt="" className="w-10 h-10 object-contain" />
             <h2 className="text-2xl text-primary font-bold">Recent Activity</h2>
           </div>
 
-          {/* Recent Sales */}
-          <div className="mb-6">
-            <h3 className="text-lg text-foreground font-bold mb-3">Latest Sales</h3>
-            <div className="space-y-2">
-              {sales.slice(0, 3).map(sale => (
-                <div key={sale.id} className="flex items-center justify-between bg-blue-50 rounded-lg p-3">
-                  <div className="flex items-center gap-2">
-                    <img src={sale.image} alt="" className="w-10 h-10 object-contain" />
-                    <div>
-                      <p className="text-sm text-foreground">{sale.product}</p>
-                      <p className="text-xs text-muted-foreground">{sale.customer}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-primary font-bold">+LKR {sale.total.toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground">{sale.date}</p>
-                  </div>
+          {/* Latest Sales Summary - Visual Card */}
+          <div className="mb-8">
+            <h3 className="text-lg text-foreground font-bold mb-3">Income Summary</h3>
+            <div className="bg-blue-50 rounded-xl p-5 border-l-4 border-blue-500 hover:shadow-md transition-all cursor-pointer" onClick={() => onNavigate('sales')}>
+              <div className="flex justify-between items-center mb-3">
+                <p className="text-sm text-blue-700 font-bold uppercase tracking-wider">Activity: High</p>
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+              </div>
+              <p className="text-3xl text-blue-900 font-black">
+                LKR {totalIncome.toLocaleString()}
+              </p>
+              <div className="grid grid-cols-2 gap-4 mt-4 border-t border-blue-100 pt-3">
+                <div>
+                  <p className="text-xs text-blue-600 font-bold uppercase">Products</p>
+                  <p className="text-sm text-blue-900 font-bold">LKR {salesTotal.toLocaleString()}</p>
                 </div>
-              ))}
+                <div>
+                  <p className="text-xs text-blue-600 font-bold uppercase">Rentals</p>
+                  <p className="text-sm text-blue-900 font-bold">LKR {rentalIncomeTotal.toLocaleString()}</p>
+                </div>
+              </div>
+              <p className="text-sm text-blue-600 mt-4 font-medium">View full sales & income report →</p>
             </div>
           </div>
 
-          {/* Pending Orders */}
+          {/* Pending Orders Summary - Visual Card */}
           <div>
-            <h3 className="text-lg text-foreground font-bold mb-3">Pending Orders</h3>
-            <div className="space-y-2">
-              {orders.filter(o => o.status === 'Pending').slice(0, 3).map(order => (
-                <div key={order.id} className="flex items-center justify-between bg-purple-50 rounded-lg p-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{order.product.split(' ')[0]}</span>
-                    <div>
-                      <p className="text-sm text-foreground">{order.quantity}</p>
-                      <p className="text-xs text-muted-foreground">{order.customer}</p>
-                    </div>
-                  </div>
-                  <a
-                    href={`tel:${order.phone}`}
-                    className="px-3 py-1 bg-primary text-white rounded-lg text-xs hover:bg-green-700 transition-colors"
-                  >
-                    📞 Call
-                  </a>
-                </div>
-              ))}
+            <div className="flex items-center gap-3 mb-3">
+              <h3 className="text-lg text-foreground font-bold">Pending Orders Summary</h3>
+            </div>
+            <div className="bg-purple-50 rounded-xl p-4 border-l-4 border-purple-500 hover:shadow-md transition-all cursor-pointer" onClick={() => onNavigate('orders')}>
+              <div className="flex justify-between items-center mb-2">
+                <p className="text-sm text-purple-700 font-bold uppercase tracking-wider">Status: Action Required</p>
+                <span className="bg-purple-200 text-purple-800 text-xs px-2 py-1 rounded-full font-bold">Priority</span>
+              </div>
+              <p className="text-3xl text-purple-900 font-black">
+                {pendingOrdersCount} Total Items
+              </p>
+              <p className="text-sm text-purple-600 mt-1 font-medium">Click to manage all pending customer orders →</p>
             </div>
           </div>
         </div>
@@ -1202,13 +1211,11 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
         {/* Crop Suggestions - Visual */}
         <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
           <div className="flex items-center gap-3 mb-6">
-            <img src={riceImg} alt="" className="w-10 h-10 object-contain" />
             <h2 className="text-2xl text-primary font-bold">Best Crops Now</h2>
           </div>
           <div className="space-y-4">
             <div className="bg-green-50 rounded-xl p-4 border-l-4 border-green-500">
               <div className="flex items-center gap-3 mb-2">
-                <img src={riceImg} alt="" className="w-8 h-8 object-contain" />
                 <p className="text-xl text-foreground font-bold">Paddy Rice</p>
               </div>
               <p className="text-lg text-muted-foreground ml-12">📅 Best: Feb-Apr</p>
@@ -1218,7 +1225,6 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
             </div>
             <div className="bg-green-50 rounded-xl p-4 border-l-4 border-green-500">
               <div className="flex items-center gap-3 mb-2">
-                <img src={carrotsImg} alt="" className="w-8 h-8 object-contain" />
                 <p className="text-xl text-foreground font-bold">Vegetables</p>
               </div>
               <p className="text-lg text-muted-foreground ml-12">📅 Good now</p>
@@ -1239,7 +1245,6 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
               <>
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
-                    <span className="text-6xl">📈</span>
                     <div>
                       <h2 className="text-3xl text-primary font-bold">Money In - Detailed Calculation</h2>
                       <p className="text-muted-foreground">All the money you earned</p>
@@ -1256,7 +1261,6 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
                 {/* Product Sales Details */}
                 <div className="mb-6">
                   <div className="flex items-center gap-3 mb-4">
-                    <span className="text-5xl">🌾</span>
                     <h3 className="text-2xl text-foreground font-bold">Product Sales</h3>
                   </div>
 
@@ -1299,7 +1303,6 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
                 {/* Rental Income Details */}
                 <div className="mb-6">
                   <div className="flex items-center gap-3 mb-4">
-                    <img src={tractorImg} alt="" className="w-12 h-12 object-contain" />
                     <h3 className="text-2xl text-foreground font-bold">Equipment Rental Income</h3>
                   </div>
 
@@ -1343,15 +1346,14 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
                 <div className="bg-gradient-to-br from-green-100 to-blue-100 rounded-xl p-6 border-2 border-green-500">
                   <div className="text-center">
                     <p className="text-2xl text-foreground font-bold mb-4 flex items-center justify-center gap-2">
-                      <TrendingUp className="w-8 h-8 text-green-500" />
                       Total Money In Calculation
                     </p>
                     <div className="space-y-2 mb-4">
                       <p className="text-xl text-foreground flex items-center justify-center gap-2">
-                        <img src={riceImg} alt="" className="w-6 h-6 object-contain" /> Product Sales = LKR {salesTotal.toLocaleString()}
+                        Product Sales = LKR {salesTotal.toLocaleString()}
                       </p>
                       <p className="text-xl text-foreground flex items-center justify-center gap-2">
-                        <img src={tractorImg} alt="" className="w-6 h-6 object-contain" /> Rental Income = LKR {rentalIncomeTotal.toLocaleString()}
+                        Rental Income = LKR {rentalIncomeTotal.toLocaleString()}
                       </p>
                       <div className="border-t-2 border-green-500 pt-3 mt-3">
                         <p className="text-3xl text-green-600 font-bold">
@@ -1374,7 +1376,6 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
               <>
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
-                    <img src={trendingUpIcon} alt="" className="w-12 h-12 object-contain rotate-180 brightness-75 grayscale" />
                     <div>
                       <h2 className="text-3xl text-primary font-bold">Money Out - Detailed Calculation</h2>
                       <p className="text-muted-foreground">All your expenses</p>
@@ -1391,7 +1392,6 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
                 {/* Expenses Details */}
                 <div className="mb-6">
                   <div className="flex items-center gap-3 mb-4">
-                    <img src={sprayerImg} alt="" className="w-12 h-12 object-contain" />
                     <h3 className="text-2xl text-foreground font-bold">Equipment Rental Expenses</h3>
                   </div>
 
@@ -2858,7 +2858,7 @@ function EquipmentContent({ myEquipment, onAddClick, onDeleteEquipment, onRentCl
   );
 }
 // Weather Content
-function WeatherContent() {
+function WeatherContent({ userLocation }) {
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl p-8 text-white">
@@ -2871,7 +2871,7 @@ function WeatherContent() {
 
       {/* Current Weather - Large */}
       <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-8">
-        <h2 className="text-2xl text-primary mb-6">Today - Anuradhapura</h2>
+        <h2 className="text-2xl text-primary mb-6">Today - {userLocation}</h2>
         <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-8">
           <div className="flex items-center gap-6 mb-6">
             <span className="text-8xl">☀️</span>
@@ -2978,11 +2978,11 @@ function InventoryContent({ inventory, onAddClick, onEdit, onDelete }) {
 }
 
 // Chatbot Content
-function ChatbotContent() {
+function ChatbotContent({ userLocation }) {
   const [messages, setMessages] = useState([
-    { sender: 'bot', message: '🌾 Hello! I am your NagroMS assistant. How can I help you today?' },
+    { sender: 'bot', message: `🌾 Hello! I am your NagroMS assistant. How can I help you today?` },
     { sender: 'user', message: 'When is the best time to plant rice?' },
-    { sender: 'bot', message: '📅 The best time to plant rice in Sri Lanka is during Yala season (April-September) and Maha season (October-March). Based on your location in Anuradhapura, I recommend starting in early February for Yala season!' }
+    { sender: 'bot', message: `📅 The best time to plant rice in Sri Lanka is during Yala season (April-September) and Maha season (October-March). Based on your location in ${userLocation}, I recommend starting in early February for Yala season!` }
   ]);
   const [inputText, setInputText] = useState('');
 
@@ -3050,19 +3050,28 @@ function ChatbotContent() {
 }
 
 // Settings Content
-function SettingsContent() {
+function SettingsContent({
+  userName, userEmail, userPhone, userLocation, userNIC,
+  setUserName, setUserEmail, setUserPhone, setUserLocation, setUserNIC,
+  profilePicture, setProfilePicture
+}) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
 
-  // Profile state
-  const [profileData, setProfileData] = useState({
-    name: 'Sunil Perera',
-    email: 'farmer@example.com',
-    phone: '+94 77 123 4567',
-    location: 'Anuradhapura, Sri Lanka',
-    farmSize: '5'
+  // Profile state initialized directly from props
+  const [profileData, setProfileData] = useState(() => {
+    const savedProfile = localStorage.getItem('userProfile');
+    const parsed = savedProfile ? JSON.parse(savedProfile) : {};
+
+    return {
+      name: (userName || '').toString() || 'Farmer',
+      email: (userEmail || '').toString() || '',
+      phone: (userPhone || '').toString() || '',
+      location: (userLocation || '').toString() || 'Anuradhapura',
+      nic: (userNIC || '').toString() || '',
+      farmSize: (parsed.farmSize || '5').toString()
+    };
   });
-  const [profilePicture, setProfilePicture] = useState('👨‍🌾');
   const [showPicturePicker, setShowPicturePicker] = useState(false);
 
   // Password change state with verification
@@ -3099,8 +3108,21 @@ function SettingsContent() {
 
     // Save profile data (in real app, send to backend)
     localStorage.setItem('userProfile', JSON.stringify(profileData));
+    localStorage.setItem('userName', profileData.name);
+    localStorage.setItem('userEmail', profileData.email);
+    localStorage.setItem('userPhone', profileData.phone);
+    localStorage.setItem('userLocation', profileData.location);
+    localStorage.setItem('userNIC', profileData.nic);
     localStorage.setItem('profilePicture', profilePicture);
-    alert('✅ Profile updated successfully!');
+
+    // Update parent state directly from profileData
+    setUserName(profileData.name);
+    setUserEmail(profileData.email);
+    setUserPhone(profileData.phone);
+    setUserLocation(profileData.location);
+    setUserNIC(profileData.nic);
+
+    alert('✅ Profile updated and synced successfully!');
   };
 
   const validatePassword = (password) => {
@@ -3260,42 +3282,52 @@ function SettingsContent() {
 
         <div className="space-y-4">
           <div>
-            <label className="text-sm text-muted-foreground mb-1 block font-semibold">Full Name</label>
+            <label className="text-sm text-primary mb-1 block font-bold">👤 Full Name (As registered)</label>
             <input
               type="text"
               value={profileData.name}
               onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg text-foreground bg-white"
             />
           </div>
 
           <div>
-            <label className="text-sm text-muted-foreground mb-1 block font-semibold">📧 Email Address</label>
+            <label className="text-sm text-primary mb-1 block font-bold">📧 Email Address</label>
             <input
               type="email"
               value={profileData.email}
               onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg text-foreground bg-white"
             />
           </div>
 
           <div>
-            <label className="text-sm text-muted-foreground mb-1 block font-semibold">📱 Phone Number</label>
+            <label className="text-sm text-primary mb-1 block font-bold">📱 Phone Number</label>
             <input
               type="tel"
               value={profileData.phone}
               onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg text-foreground bg-white"
             />
           </div>
 
           <div>
-            <label className="text-sm text-muted-foreground mb-1 block font-semibold">🏠 Farm Location</label>
+            <label className="text-sm text-primary mb-1 block font-bold">🪪 NIC Number</label>
+            <input
+              type="text"
+              value={profileData.nic}
+              onChange={(e) => setProfileData({ ...profileData, nic: e.target.value })}
+              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg text-foreground bg-white"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-primary mb-1 block font-bold">🏠 Farm Location / District</label>
             <input
               type="text"
               value={profileData.location}
               onChange={(e) => setProfileData({ ...profileData, location: e.target.value })}
-              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg text-foreground bg-white"
             />
           </div>
 
@@ -3762,13 +3794,15 @@ function SettingsContent() {
 function QuickActionCard({ icon, title, subtitle, color, onClick }) {
   return (
     <div className={`${color} rounded-xl p-6 hover:shadow-lg transition-shadow cursor-pointer ${onClick ? 'cursor-pointer' : ''}`} onClick={onClick}>
-      <span className="w-12 h-12 flex items-center justify-center mb-3">
-        {typeof icon === 'string' && icon.length <= 4 ? (
-          <span className="text-5xl">{icon}</span>
-        ) : (
-          <img src={icon} alt="" className="w-12 h-12 object-contain" />
-        )}
-      </span>
+      {icon && (
+        <span className="w-12 h-12 flex items-center justify-center mb-3">
+          {typeof icon === 'string' && icon.length <= 4 ? (
+            <span className="text-5xl">{icon}</span>
+          ) : (
+            <img src={icon} alt="" className="w-12 h-12 object-contain" />
+          )}
+        </span>
+      )}
       <p className="text-2xl text-gray-900 mb-1 font-semibold">{subtitle}</p>
       <p className="text-lg text-gray-700">{title}</p>
     </div>

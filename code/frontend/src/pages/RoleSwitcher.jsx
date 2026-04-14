@@ -49,7 +49,12 @@ export function RoleSwitcher({ currentRole, onNavigate }) {
   const handleLogout = () => {
     localStorage.removeItem('userRoles');
     localStorage.removeItem('userEmail');
+    localStorage.removeItem('userName');
     localStorage.removeItem('userPhone');
+    localStorage.removeItem('userNIC');
+    localStorage.removeItem('userLocation');
+    localStorage.removeItem('userProfile');
+    localStorage.removeItem('nagroms_token');
     onNavigate('landing');
   };
 
