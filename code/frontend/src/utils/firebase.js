@@ -86,6 +86,9 @@ export async function registerWithEmail(formData) {
       localStorage.setItem('userRoles',     JSON.stringify(data.user.roles));
       localStorage.setItem('userEmail',     emailForAuth);
       localStorage.setItem('userName',      data.user.fullName || formData.fullName || 'Farmer');
+      localStorage.setItem('userPhone',     data.user.phone || formData.phone || '');
+      localStorage.setItem('userNIC',       data.user.nic || formData.nic || '');
+      localStorage.setItem('userLocation',  data.user.district || formData.district || '');
       return data;
     }
   } catch (err) {
@@ -94,13 +97,23 @@ export async function registerWithEmail(formData) {
 
   // FALLBACK / MOCK MODE
   const mockData = {
-    user: { email: emailForAuth, roles: formData.roles || ['farmer'], fullName: formData.fullName || 'Farmer' },
+    user: { 
+      email: emailForAuth, 
+      roles: formData.roles || ['farmer'], 
+      fullName: formData.fullName || 'Farmer',
+      phone: formData.phone || '',
+      nic: formData.nic || '',
+      district: formData.district || ''
+    },
     dashboardRoute: 'farmer-dashboard'
   };
   localStorage.setItem('nagroms_token', idToken);
   localStorage.setItem('userRoles',     JSON.stringify(mockData.user.roles));
   localStorage.setItem('userEmail',     emailForAuth);
   localStorage.setItem('userName',      mockData.user.fullName);
+  localStorage.setItem('userPhone',     mockData.user.phone);
+  localStorage.setItem('userNIC',       mockData.user.nic);
+  localStorage.setItem('userLocation',  mockData.user.district);
   return mockData;
 }
 
@@ -124,6 +137,9 @@ export async function loginWithEmail(email, password) {
       localStorage.setItem('userRoles',     JSON.stringify(data.user.roles));
       localStorage.setItem('userEmail',     email);
       localStorage.setItem('userName',      data.user.fullName || 'Farmer');
+      localStorage.setItem('userPhone',     data.user.phone || '');
+      localStorage.setItem('userNIC',       data.user.nic || '');
+      localStorage.setItem('userLocation',  data.user.district || '');
       return data;
     }
   } catch (err) {
@@ -139,6 +155,9 @@ export async function loginWithEmail(email, password) {
   localStorage.setItem('userRoles',     JSON.stringify(mockData.user.roles));
   localStorage.setItem('userEmail',     email);
   localStorage.setItem('userName',      mockData.user.fullName);
+  localStorage.setItem('userPhone',     ''); // Mock login doesn't have phone
+  localStorage.setItem('userNIC',       '');
+  localStorage.setItem('userLocation',  'Anuradhapura'); // Default for mock
   return mockData;
 }
 
@@ -162,6 +181,9 @@ export async function loginWithGoogle() {
   localStorage.setItem('userRoles',     JSON.stringify(data.user.roles));
   localStorage.setItem('userEmail',     data.user.email);
   localStorage.setItem('userName',      data.user.fullName || 'Farmer');
+  localStorage.setItem('userPhone',     data.user.phone || '');
+  localStorage.setItem('userNIC',       data.user.nic || '');
+  localStorage.setItem('userLocation',  data.user.district || '');
 
   return data;
 }
@@ -186,6 +208,9 @@ export async function loginWithFacebook() {
   localStorage.setItem('userRoles',     JSON.stringify(data.user.roles));
   localStorage.setItem('userEmail',     data.user.email);
   localStorage.setItem('userName',      data.user.fullName || 'Farmer');
+  localStorage.setItem('userPhone',     data.user.phone || '');
+  localStorage.setItem('userNIC',       data.user.nic || '');
+  localStorage.setItem('userLocation',  data.user.district || '');
 
   return data;
 }
@@ -207,6 +232,9 @@ export async function logout() {
   localStorage.removeItem('userRoles');
   localStorage.removeItem('userEmail');
   localStorage.removeItem('userName');
+  localStorage.removeItem('userPhone');
+  localStorage.removeItem('userNIC');
+  localStorage.removeItem('userLocation');
 }
 
 export default app;
