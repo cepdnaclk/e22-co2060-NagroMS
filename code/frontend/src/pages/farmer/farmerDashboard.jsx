@@ -35,6 +35,23 @@ import {
 import { RoleSwitcher } from "../RoleSwitcher.jsx";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "./InputOTP";
 import './farmerDashboard.css';
+import {
+  fetchFarmerProfile,
+  fetchProducts as apiFetchProducts,
+  fetchOrders as apiFetchOrders,
+  fetchSales as apiFetchSales,
+  addProduct as apiAddProduct,
+  updateProduct as apiUpdateProduct,
+  deleteProduct as apiDeleteProduct,
+  fetchEquipment as apiFetchEquipment,
+  addEquipment as apiAddEquipment,
+  updateEquipment as apiUpdateEquipment,
+  deleteEquipment as apiDeleteEquipment,
+  fetchInventory as apiFetchInventory,
+  addInventory as apiAddInventory,
+  updateInventory as apiUpdateInventory,
+  deleteInventory as apiDeleteInventory,
+} from '../../services/farmerApi';
 
 
 
@@ -61,6 +78,8 @@ import hnbImg from "./images/products/HNB.png";
 import bocImg from "./images/products/boc.png";
 import peoplesImg from "./images/products/peoples.png";
 import commercialImg from "./images/products/commercial.png";
+
+
 import sampathImg from "./images/products/sampath.png";
 import nsbImg from "./images/products/nsb.png";
 
@@ -71,6 +90,36 @@ import chatbotIcon from "./images/products/chatbot.png";
 import settingsIcon from "./images/products/settings.png";
 import trendingUpIcon from "./images/products/money.png";
 
+export const getImageForName = (name) => {
+  if (!name) return undefined;
+  const n = name.toLowerCase();
+
+  // Products
+  if (n.includes('tomato')) return tomatoImg;
+  if (n.includes('rice')) return riceImg;
+  if (n.includes('bean')) return beansImg;
+  if (n.includes('carrot')) return carrotsImg;
+  if (n.includes('corn')) return cornImg;
+  if (n.includes('cucumber')) return cucumberImg;
+
+  // Equipment
+  if (n.includes('tractor')) return tractorImg;
+  if (n.includes('cultivator')) return cultivatorImg;
+  if (n.includes('harvest')) return harvestorImg;
+  if (n.includes('seed')) return seederImg;
+  if (n.includes('spray')) return sprayerImg;
+  if (n.includes('pump')) return irrigationPumpImg;
+
+  // Inventory
+  if (n.includes('fertilizer')) return fertilizerImg;
+  if (n.includes('pesticid')) return pesticideImg;
+  if (n.includes('diesel')) return dieselImg;
+  if (n.includes('bag')) return storageBagImg;
+  if (n.includes('tool')) return handtoolImg;
+  if (n.includes('seed')) return riceSeedsImg;
+
+  return undefined;
+};
 export function FarmerDashboard({ onNavigate }) {
   const [activeNav, setActiveNav] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -80,160 +129,85 @@ export function FarmerDashboard({ onNavigate }) {
   const [userLocation, setUserLocation] = useState(localStorage.getItem('userLocation') || 'Anuradhapura');
   const [userNIC, setUserNIC] = useState(localStorage.getItem('userNIC') || '');
   const [profilePicture, setProfilePicture] = useState(localStorage.getItem('profilePicture') || '👨‍🌾');
+  const [loading, setLoading] = useState(true);
+
+  // Fetch live data from backend on mount
+  useEffect(() => {
+    async function loadDashboardData() {
+      try {
+        // Fetch profile
+        const profileRes = await fetchFarmerProfile();
+        if (profileRes.success && profileRes.data) {
+          const p = profileRes.data;
+          if (p.fullName)  { setUserName(p.fullName); localStorage.setItem('userName', p.fullName); }
+          if (p.email)     { setUserEmail(p.email);   localStorage.setItem('userEmail', p.email); }
+          if (p.phone)     { setUserPhone(p.phone);   localStorage.setItem('userPhone', p.phone); }
+          if (p.district)  { setUserLocation(p.district); localStorage.setItem('userLocation', p.district); }
+          if (p.nic)       { setUserNIC(p.nic);       localStorage.setItem('userNIC', p.nic); }
+        }
+        // Fetch products
+        const productsRes = await apiFetchProducts();
+        if (productsRes.success && productsRes.data) {
+          setProducts(productsRes.data);
+        }
+        // Fetch orders
+        const ordersRes = await apiFetchOrders();
+        if (ordersRes.success && ordersRes.data && ordersRes.data.length > 0) {
+          setOrders(ordersRes.data);
+        }
+        // Fetch sales
+        const salesRes = await apiFetchSales();
+        if (salesRes.success && salesRes.data && salesRes.data.length > 0) {
+          setSales(salesRes.data);
+        }
+
+        // Fetch equipment
+        const eqRes = await apiFetchEquipment();
+        if (eqRes.success && eqRes.data && eqRes.data.length > 0) {
+          setMyEquipment(eqRes.data);
+        }
+
+        // Fetch inventory
+        const invRes = await apiFetchInventory();
+        if (invRes.success && invRes.data && invRes.data.length > 0) {
+          setInventory(invRes.data);
+        }
+      } catch (err) {
+        console.warn('Backend not available, using demo data:', err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadDashboardData();
+  }, []);
 
   // State for products
-  const [products, setProducts] = useState([
-    { id: 1, image: tomatoImg, name: 'Fresh Tomatoes', quantity: '50', price: '150', status: 'In Stock' },
-    { id: 2, image: riceImg, name: 'Organic Rice', quantity: '200', price: '180', status: 'In Stock' },
-    { id: 3, image: beansImg, name: 'Green Beans', quantity: '30', price: '120', status: 'Low Stock' },
-    { id: 4, image: carrotsImg, name: 'Carrots', quantity: '180', price: '100', status: 'In Stock' },
-    { id: 5, image: cornImg, name: 'Sweet Corn', quantity: '60', price: '90', status: 'In Stock' },
-    { id: 6, image: cucumberImg, name: 'Cucumber', quantity: '25', price: '80', status: 'Low Stock' },
-  ]);
+  const [products, setProducts] = useState([]);
 
   // State for equipment (farmer's own equipment for rent)
-  const [myEquipment, setMyEquipment] = useState([
-    { id: 1, image: tractorImg, name: 'Tractor', price: '5000', available: true },
-    { id: 2, image: sprayerImg, name: 'Sprayer', price: '2500', available: true },
-  ]);
+  const [myEquipment, setMyEquipment] = useState([]);
 
   // State for rented equipment from others
   const [rentedEquipment, setRentedEquipment] = useState([]);
 
   // State for rental income (money earned from renting out equipment)
-  const [rentalIncome, setRentalIncome] = useState([
-    { id: 1, equipment: 'Modern Tractor', image: tractorImg, days: 3, pricePerDay: 5000, total: 15000, date: '2026-02-18', renter: 'Kumar Farm' },
-    { id: 2, equipment: 'Crop Sprayer', image: sprayerImg, days: 2, pricePerDay: 2500, total: 5000, date: '2026-02-15', renter: 'Silva Agro' },
-    { id: 3, equipment: 'Modern Tractor', image: tractorImg, days: 5, pricePerDay: 5000, total: 25000, date: '2026-02-10', renter: 'Green Fields' },
-  ]);
+  const [rentalIncome, setRentalIncome] = useState([]);
 
   // State for rental expenses (money spent renting equipment from others)
-  const [rentalExpenses, setRentalExpenses] = useState([
-    { id: 1, equipment: 'Combine Harvester', image: harvestorImg, days: 2, pricePerDay: 8000, total: 16000, date: '2026-02-22', owner: 'Rajith Equipment' },
-    { id: 2, equipment: 'Power Cultivator', image: cultivatorImg, days: 1, pricePerDay: 3500, total: 3500, date: '2026-02-19', owner: 'Agro Rentals' },
-    { id: 3, equipment: 'Modern Tractor', image: tractorImg, days: 3, pricePerDay: 5000, total: 15000, date: '2026-02-25', owner: 'Sunil Rentals' },
-    { id: 4, equipment: 'Irrigation Pump', image: irrigationPumpImg, days: 5, pricePerDay: 2000, total: 10000, date: '2026-02-27', owner: 'Green Farm Services' },
-  ]);
+  const [rentalExpenses, setRentalExpenses] = useState([]);
 
-  const [sales, setSales] = useState([
-    { id: 1, product: 'Fresh Tomatoes', image: tomatoImg, quantity: '50 kg', price: 150, total: 7500, date: '2026-02-20', customer: 'Perera Stores' },
-    { id: 2, product: 'Organic Rice', image: riceImg, quantity: '100 kg', price: 180, total: 18000, date: '2026-02-19', customer: 'Green Market' },
-    { id: 3, product: 'Carrots', image: carrotsImg, quantity: '30 kg', price: 100, total: 3000, date: '2026-02-18', customer: 'Fresh Foods' },
-    { id: 4, product: 'Sweet Corn', image: cornImg, quantity: '40 kg', price: 90, total: 3600, date: '2026-02-17', customer: 'Organic Mart' },
-    { id: 5, product: 'Green Beans', image: beansImg, quantity: '20 kg', price: 120, total: 2400, date: '2026-02-16', customer: 'Perera Stores' },
-    { id: 6, product: 'Fresh Tomatoes', image: tomatoImg, quantity: '70 kg', price: 150, total: 10500, date: '2026-02-15', customer: 'Green Market' },
-  ]);
+  const [sales, setSales] = useState([]);
 
   // Sample data for NEW SalesContent structure
-  const [customerPurchases] = useState([
-    {
-      id: 1,
-      customerName: "Perera Stores",
-      location: "Colombo 07",
-      phone: "077-1234567",
-      icon: "🏪",
-      products: [
-        { productName: "Fresh Tomatoes", quantity: 120, pricePerUnit: 150, productImage: tomatoImg, date: '2026-03-10' },
-        { productName: "Organic Rice", quantity: 50, pricePerUnit: 180, productImage: riceImg, date: '2026-03-05' }
-      ]
-    },
-    {
-      id: 2,
-      customerName: "Green Market",
-      location: "Kandy Central",
-      phone: "071-9876543",
-      icon: "🥬",
-      products: [
-        { productName: "Carrots", quantity: 80, pricePerUnit: 120, productImage: carrotsImg, date: '2026-02-15' },
-        { productName: "Sweet Corn", quantity: 100, pricePerUnit: 95, productImage: cornImg, date: '2026-02-10' }
-      ]
-    }
-  ]);
+  const [customerPurchases] = useState([]);
 
-  const [equipmentRentals] = useState([
-    {
-      id: 1,
-      customerName: "Silva Agro",
-      location: "Gampaha",
-      phone: "011-2345678",
-      icon: "👨‍🌾",
-      rentals: [
-        { equipmentName: "Modern Tractor", days: 3, costPerDay: 5000, totalCost: 15000, equipmentImage: tractorImg, date: '2026-03-12' }
-      ]
-    },
-    {
-      id: 2,
-      customerName: "Rajith Farm",
-      location: "Matara",
-      phone: "041-5566778",
-      icon: "🚜",
-      rentals: [
-        { equipmentName: "Crop Sprayer", days: 2, costPerDay: 2500, totalCost: 5000, equipmentImage: sprayerImg, date: '2026-01-20' }
-      ]
-    }
-  ]);
+  const [equipmentRentals] = useState([]);
 
   // State for orders
-  const [orders, setOrders] = useState([
-    {
-      id: 1,
-      customerName: 'Perera Stores',
-      location: 'Colombo',
-      phone: '077-567-8901',
-      icon: '🛒',
-      orderDate: '2026-02-24',
-      products: [
-        { id: 101, productName: 'Fresh Tomatoes', productImage: tomatoImg, quantity: 100, unit: 'kg', status: 'pending' },
-        { id: 102, productName: 'Green Beans', productImage: beansImg, quantity: 40, unit: 'kg', status: 'pending' }
-      ]
-    },
-    {
-      id: 2,
-      customerName: 'Green Market',
-      location: 'Kandy',
-      phone: '071-678-9012',
-      icon: '🏪',
-      orderDate: '2026-02-24',
-      products: [
-        { id: 103, productName: 'Organic Rice', productImage: riceImg, quantity: 150, unit: 'kg', status: 'completed' },
-        { id: 106, productName: 'Fresh Tomatoes', productImage: tomatoImg, quantity: 60, unit: 'kg', status: 'pending' },
-        { id: 107, productName: 'Sweet Corn', productImage: cornImg, quantity: 45, unit: 'kg', status: 'pending' }
-      ]
-    },
-    {
-      id: 3,
-      customerName: 'Fresh Foods',
-      location: 'Gampaha',
-      phone: '076-789-0123',
-      icon: '🚛',
-      orderDate: '2026-02-23',
-      products: [
-        { id: 104, productName: 'Carrots', productImage: carrotsImg, quantity: 50, unit: 'kg', status: 'pending' }
-      ]
-    },
-    {
-      id: 4,
-      customerName: 'Organic Mart',
-      location: 'Colombo',
-      phone: '077-890-1234',
-      icon: '🥗',
-      orderDate: '2026-02-23',
-      products: [
-        { id: 105, productName: 'Sweet Corn', productImage: cornImg, quantity: 80, unit: 'kg', status: 'pending' },
-        { id: 108, productName: 'Carrots', productImage: carrotsImg, quantity: 30, unit: 'kg', status: 'pending' }
-      ]
-    }
-  ]);
+  const [orders, setOrders] = useState([]);
 
   // State for inventory
-  const [inventory, setInventory] = useState([
-    { id: 1, image: riceSeedsImg, name: 'Rice Seeds', quantity: '500 kg', status: 'In Stock' },
-    { id: 2, image: fertilizerImg, name: 'Fertilizer', quantity: '80 kg', status: 'Low Stock' },
-    { id: 3, image: pesticideImg, name: 'Pesticide', quantity: '40 L', status: 'Low Stock' },
-    { id: 4, image: handtoolImg, name: 'Hand Tools', quantity: '15 pcs', status: 'Low Stock' },
-    { id: 5, image: dieselImg, name: 'Diesel', quantity: '120 L', status: 'In Stock' },
-    { id: 6, image: storageBagImg, name: 'Storage Bags', quantity: '200 pcs', status: 'In Stock' },
-  ]);
+  const [inventory, setInventory] = useState([]);
 
   // State for available loans from banks
   const [availableLoans] = useState([
@@ -456,46 +430,90 @@ export function FarmerDashboard({ onNavigate }) {
     setEditingProduct({ ...product });
   };
 
-  const handleSaveProduct = () => {
-    setProducts(products.map(p =>
-      p.id === editingProduct.id ? editingProduct : p
-    ));
+  const handleSaveProduct = async () => {
+    try {
+      const res = await apiUpdateProduct(editingProduct.id, {
+        name:     editingProduct.name,
+        quantity: editingProduct.quantity,
+        price:    editingProduct.price,
+        status:   editingProduct.status,
+      });
+      if (res.success) {
+        setProducts(products.map(p => p.id === editingProduct.id ? res.data : p));
+      } else {
+        setProducts(products.map(p => p.id === editingProduct.id ? editingProduct : p));
+      }
+    } catch (err) {
+      console.warn('Backend unavailable, updating locally only:', err.message);
+      setProducts(products.map(p => p.id === editingProduct.id ? editingProduct : p));
+    }
     setEditingProduct(null);
   };
 
-  const handleDeleteProduct = (id) => {
+  const handleDeleteProduct = async (id) => {
+    try {
+      await apiDeleteProduct(id);
+    } catch (err) {
+      console.warn('Backend unavailable, deleting locally only:', err.message);
+    }
     setProducts(products.filter(p => p.id !== id));
     setDeleteConfirm(null);
   };
 
-  const handleAddProduct = () => {
-    if (newProduct.name && newProduct.quantity && newProduct.price) {
-      const product = {
-        id: Date.now(),
-        ...newProduct
-      };
-      setProducts([...products, product]);
-      setNewProduct({ name: '', quantity: '', price: '', status: 'In Stock' });
-      setShowAddProduct(false);
+  const handleAddProduct = async () => {
+    // Show alert if fields are empty
+    if (!newProduct.name || !newProduct.quantity || !newProduct.price) {
+      alert(`Please fill in all fields. Currently -> Name: "${newProduct.name}", Quantity: "${newProduct.quantity}", Price: "${newProduct.price}"`);
+      return;
     }
+
+    try {
+      const res = await apiAddProduct({
+        name:     newProduct.name,
+        quantity: newProduct.quantity,
+        price:    newProduct.price,
+        status:   newProduct.status || 'In Stock',
+      });
+      if (res.success && res.data) {
+        setProducts([...products, res.data]);
+        alert('Product added successfully!');
+      } else {
+        alert('Backend error: ' + (res.message || 'Unknown error. Adding locally.'));
+        setProducts([...products, { id: Date.now(), ...newProduct }]);
+      }
+    } catch (err) {
+      alert('Network error. Adding locally. Error: ' + err.message);
+      setProducts([...products, { id: Date.now(), ...newProduct }]);
+    }
+    setNewProduct({ name: '', quantity: '', price: '', status: 'In Stock' });
+    setShowAddProduct(false);
   };
 
+
   // Handlers for equipment
-  const handleDeleteEquipment = (id) => {
-    setMyEquipment(myEquipment.map(eq =>
-      eq.id === id ? { ...eq, available: !eq.available } : eq
-    ));
+  const handleDeleteEquipment = async (id) => {
+    try {
+      await apiDeleteEquipment(id);
+    } catch (err) {
+      console.warn('Backend unavailable, deleting locally only');
+    }
+    setMyEquipment(myEquipment.filter(eq => eq.id !== id));
     setDeleteEquipmentConfirm(null);
   };
 
-  const handleAddEquipment = () => {
+  const handleAddEquipment = async () => {
     if (newEquipment.name && newEquipment.price) {
-      const equipment = {
-        id: Date.now(),
-        ...newEquipment,
-        available: true
-      };
-      setMyEquipment([...myEquipment, equipment]);
+      const equipData = { ...newEquipment, available: true };
+      try {
+        const res = await apiAddEquipment(equipData);
+        if (res.success && res.data) {
+          setMyEquipment([...myEquipment, res.data]);
+        } else {
+          setMyEquipment([...myEquipment, { id: Date.now(), ...equipData }]);
+        }
+      } catch (err) {
+        setMyEquipment([...myEquipment, { id: Date.now(), ...equipData }]);
+      }
       setNewEquipment({ emoji: '🚜', name: '', price: '' });
       setShowAddEquipment(false);
     }
@@ -522,25 +540,47 @@ export function FarmerDashboard({ onNavigate }) {
     setEditingInventory({ ...item });
   };
 
-  const handleSaveInventory = () => {
-    setInventory(inventory.map(i =>
-      i.id === editingInventory.id ? editingInventory : i
-    ));
+  const handleSaveInventory = async () => {
+    try {
+      const res = await apiUpdateInventory(editingInventory.id, editingInventory);
+      if (res.success) {
+        setInventory(inventory.map(i => i.id === editingInventory.id ? res.data : i));
+      } else {
+        setInventory(inventory.map(i => i.id === editingInventory.id ? editingInventory : i));
+      }
+    } catch (err) {
+      setInventory(inventory.map(i => i.id === editingInventory.id ? editingInventory : i));
+    }
     setEditingInventory(null);
   };
 
-  const handleDeleteInventory = (id) => {
+  const handleDeleteInventory = async (id) => {
+    try {
+      await apiDeleteInventory(id);
+    } catch (err) {
+      console.warn('Backend unavailable, deleting locally only');
+    }
     setInventory(inventory.filter(i => i.id !== id));
     setDeleteInventoryConfirm(null);
   };
 
-  const handleAddInventory = () => {
+  const handleAddInventory = async () => {
     if (newInventoryItem.name && newInventoryItem.quantity) {
-      const item = {
-        id: Date.now(),
-        ...newInventoryItem
-      };
-      setInventory([...inventory, item]);
+      const itemData = { ...newInventoryItem };
+      try {
+        const res = await apiAddInventory({
+          resource: itemData.name,
+          amount: itemData.quantity,
+          ...itemData
+        });
+        if (res.success && res.data) {
+          setInventory([...inventory, res.data]);
+        } else {
+          setInventory([...inventory, { id: Date.now(), ...itemData }]);
+        }
+      } catch (err) {
+        setInventory([...inventory, { id: Date.now(), ...itemData }]);
+      }
       setNewInventoryItem({ image: storageBagImg, name: '', quantity: '', status: 'In Stock' });
       setShowAddInventory(false);
     }
@@ -865,7 +905,7 @@ export function FarmerDashboard({ onNavigate }) {
       {showAddProduct && (
         <AddProductModal
           product={newProduct}
-          onChange={(field, value) => setNewProduct({ ...newProduct, [field]: value })}
+          onChange={(field, value) => setNewProduct(prev => ({ ...prev, [field]: value }))}
           onSave={handleAddProduct}
           onCancel={() => setShowAddProduct(false)}
         />
@@ -875,7 +915,7 @@ export function FarmerDashboard({ onNavigate }) {
       {showAddEquipment && (
         <AddEquipmentModal
           equipment={newEquipment}
-          onChange={(field, value) => setNewEquipment({ ...newEquipment, [field]: value })}
+          onChange={(field, value) => setNewEquipment(prev => ({ ...prev, [field]: value }))}
           onSave={handleAddEquipment}
           onCancel={() => setShowAddEquipment(false)}
         />
@@ -1504,7 +1544,7 @@ function MyProductsContent({ products, onAddClick, onEdit, onDelete }) {
           return (
             <ProductCard
               key={product.id}
-              image={product.image}
+              image={product.image || getImageForName(product.name)}
               name={product.name}
               quantity={qty}
               price={`LKR ${product.price}/kg`}
@@ -2027,17 +2067,22 @@ function OrdersContent({ orders }) {
   }, []);
 
   // Toggle order status (pending <-> completed)
-  const toggleProductStatus = (customerId, productId) => {
+  const toggleProductStatus = async (customerId, productId) => {
+    // Find the new status first
+    const customer = ordersList.find(c => c.id === customerId);
+    const product  = customer?.products.find(p => p.id === productId);
+    if (!product) return;
+
+    const newStatus = product.status === 'pending' ? 'completed' : 'pending';
+
+    // Update UI immediately (optimistic update)
     setOrdersList(ordersList.map(customer => {
       if (customer.id === customerId) {
-        const updatedProducts = customer.products.map(product => {
-          if (product.id === productId) {
-            return {
-              ...product,
-              status: product.status === 'pending' ? 'completed' : 'pending'
-            };
+        const updatedProducts = customer.products.map(p => {
+          if (p.id === productId) {
+            return { ...p, status: newStatus };
           }
-          return product;
+          return p;
         });
 
         // Check if all products are now completed
@@ -2051,7 +2096,16 @@ function OrdersContent({ orders }) {
       }
       return customer;
     }));
+
+    // Sync to backend
+    try {
+      const { updateOrderStatus } = await import('../../services/farmerApi');
+      await updateOrderStatus(productId, newStatus);
+    } catch (err) {
+      console.warn('Backend unavailable, order status updated locally only:', err.message);
+    }
   };
+
 
   // Calculate statistics
   const totalOrders = ordersList.reduce((sum, customer) => sum + customer.products.length, 0);
@@ -2748,7 +2802,7 @@ function EquipmentContent({ myEquipment, onAddClick, onDeleteEquipment, onRentCl
           {myEquipment.map(eq => (
             <EquipmentCard
               key={eq.id}
-              image={eq.image}
+              image={eq.image || getImageForName(eq.name)}
               name={eq.name}
               price={`LKR ${eq.price}/day`}
               available={eq.available}
@@ -2964,9 +3018,9 @@ function InventoryContent({ inventory, onAddClick, onEdit, onDelete }) {
         {inventory.map(item => (
           <InventoryCard
             key={item.id}
-            image={item.image}
-            name={item.name}
-            quantity={item.quantity}
+            image={item.image || getImageForName(item.name || item.resource)}
+            name={item.name || item.resource}
+            quantity={item.quantity || item.amount}
             status={getAutoStatus(item.quantity)}
             onEdit={() => onEdit(item)}
             onDelete={() => onDelete(item.id)}
