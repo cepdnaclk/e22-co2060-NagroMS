@@ -37,6 +37,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "./InputOTP";
 import './farmerDashboard.css';
 import {
   fetchFarmerProfile,
+  updateFarmerProfile as apiUpdateFarmerProfile,
   fetchProducts as apiFetchProducts,
   fetchOrders as apiFetchOrders,
   fetchSales as apiFetchSales,
@@ -3153,30 +3154,51 @@ function SettingsContent({
     // Redirect to login or home page
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     // Validate fields
     if (!profileData.name || !profileData.email || !profileData.phone) {
       alert('⚠️ Please fill in all required fields');
       return;
     }
 
-    // Save profile data (in real app, send to backend)
-    localStorage.setItem('userProfile', JSON.stringify(profileData));
-    localStorage.setItem('userName', profileData.name);
-    localStorage.setItem('userEmail', profileData.email);
-    localStorage.setItem('userPhone', profileData.phone);
-    localStorage.setItem('userLocation', profileData.location);
-    localStorage.setItem('userNIC', profileData.nic);
-    localStorage.setItem('profilePicture', profilePicture);
+    try {
+      const res = await apiUpdateFarmerProfile({
+        fullName: profileData.name,
+        email:    profileData.email,
+        phone:    profileData.phone,
+        location: profileData.location,
+        nic:      profileData.nic,
+        farmSize: profileData.farmSize
+      });
 
-    // Update parent state directly from profileData
-    setUserName(profileData.name);
-    setUserEmail(profileData.email);
-    setUserPhone(profileData.phone);
-    setUserLocation(profileData.location);
-    setUserNIC(profileData.nic);
+      if (res.success) {
+        // Update local storage
+        localStorage.setItem('userProfile', JSON.stringify(profileData));
+        localStorage.setItem('userName', profileData.name);
+        localStorage.setItem('userEmail', profileData.email);
+        localStorage.setItem('userPhone', profileData.phone);
+        localStorage.setItem('userLocation', profileData.location);
+        localStorage.setItem('userNIC', profileData.nic);
+        localStorage.setItem('profilePicture', profilePicture);
 
-    alert('✅ Profile updated and synced successfully!');
+        // Update parent state
+        setUserName(profileData.name);
+        setUserEmail(profileData.email);
+        setUserPhone(profileData.phone);
+        setUserLocation(profileData.location);
+        setUserNIC(profileData.nic);
+
+        alert('✅ Profile updated and synced successfully!');
+      } else {
+        alert('❌ Backend failed to update: ' + (res.message || 'Unknown error'));
+      }
+    } catch (err) {
+      console.error('Profile update error:', err);
+      // Fallback for demo
+      localStorage.setItem('userProfile', JSON.stringify(profileData));
+      setUserName(profileData.name);
+      alert('⚠️ Backend unavailable. Data saved locally for now.');
+    }
   };
 
   const validatePassword = (password) => {
