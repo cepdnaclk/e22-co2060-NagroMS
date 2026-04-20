@@ -28,11 +28,31 @@ import {
   AlertCircle,
   ChevronDown,
   ArrowRight,
-  CreditCard
+  CreditCard,
+  Bot,
+  Sparkles
 } from 'lucide-react';
 import { RoleSwitcher } from "../RoleSwitcher.jsx";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "./InputOTP";
 import './farmerDashboard.css';
+import {
+  fetchFarmerProfile,
+  updateFarmerProfile as apiUpdateFarmerProfile,
+  fetchProducts as apiFetchProducts,
+  fetchOrders as apiFetchOrders,
+  fetchSales as apiFetchSales,
+  addProduct as apiAddProduct,
+  updateProduct as apiUpdateProduct,
+  deleteProduct as apiDeleteProduct,
+  fetchEquipment as apiFetchEquipment,
+  addEquipment as apiAddEquipment,
+  updateEquipment as apiUpdateEquipment,
+  deleteEquipment as apiDeleteEquipment,
+  fetchInventory as apiFetchInventory,
+  addInventory as apiAddInventory,
+  updateInventory as apiUpdateInventory,
+  deleteInventory as apiDeleteInventory,
+} from '../../services/farmerApi';
 
 
 
@@ -59,6 +79,8 @@ import hnbImg from "./images/products/HNB.png";
 import bocImg from "./images/products/boc.png";
 import peoplesImg from "./images/products/peoples.png";
 import commercialImg from "./images/products/commercial.png";
+
+
 import sampathImg from "./images/products/sampath.png";
 import nsbImg from "./images/products/nsb.png";
 
@@ -69,163 +91,124 @@ import chatbotIcon from "./images/products/chatbot.png";
 import settingsIcon from "./images/products/settings.png";
 import trendingUpIcon from "./images/products/money.png";
 
+export const getImageForName = (name) => {
+  if (!name) return undefined;
+  const n = name.toLowerCase();
+
+  // Products
+  if (n.includes('tomato')) return tomatoImg;
+  if (n.includes('rice')) return riceImg;
+  if (n.includes('bean')) return beansImg;
+  if (n.includes('carrot')) return carrotsImg;
+  if (n.includes('corn')) return cornImg;
+  if (n.includes('cucumber')) return cucumberImg;
+
+  // Equipment
+  if (n.includes('tractor')) return tractorImg;
+  if (n.includes('cultivator')) return cultivatorImg;
+  if (n.includes('harvest')) return harvestorImg;
+  if (n.includes('seed')) return seederImg;
+  if (n.includes('spray')) return sprayerImg;
+  if (n.includes('pump')) return irrigationPumpImg;
+
+  // Inventory
+  if (n.includes('fertilizer')) return fertilizerImg;
+  if (n.includes('pesticid')) return pesticideImg;
+  if (n.includes('diesel')) return dieselImg;
+  if (n.includes('bag')) return storageBagImg;
+  if (n.includes('tool')) return handtoolImg;
+  if (n.includes('seed')) return riceSeedsImg;
+
+  return undefined;
+};
 export function FarmerDashboard({ onNavigate }) {
   const [activeNav, setActiveNav] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userName, setUserName] = useState(localStorage.getItem('userName') || 'Farmer');
+  const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail') || '');
+  const [userPhone, setUserPhone] = useState(localStorage.getItem('userPhone') || '');
+  const [userLocation, setUserLocation] = useState(localStorage.getItem('userLocation') || 'Anuradhapura');
+  const [userNIC, setUserNIC] = useState(localStorage.getItem('userNIC') || '');
+  const [profilePicture, setProfilePicture] = useState(localStorage.getItem('profilePicture') || '👨‍🌾');
+  const [loading, setLoading] = useState(true);
+
+  // Fetch live data from backend on mount
+  useEffect(() => {
+    async function loadDashboardData() {
+      try {
+        // Fetch profile
+        const profileRes = await fetchFarmerProfile();
+        if (profileRes.success && profileRes.data) {
+          const p = profileRes.data;
+          if (p.fullName)  { setUserName(p.fullName); localStorage.setItem('userName', p.fullName); }
+          if (p.email)     { setUserEmail(p.email);   localStorage.setItem('userEmail', p.email); }
+          if (p.phone)     { setUserPhone(p.phone);   localStorage.setItem('userPhone', p.phone); }
+          if (p.district)  { setUserLocation(p.district); localStorage.setItem('userLocation', p.district); }
+          if (p.nic)       { setUserNIC(p.nic);       localStorage.setItem('userNIC', p.nic); }
+        }
+        // Fetch products
+        const productsRes = await apiFetchProducts();
+        if (productsRes.success && productsRes.data) {
+          setProducts(productsRes.data);
+        }
+        // Fetch orders
+        const ordersRes = await apiFetchOrders();
+        if (ordersRes.success && ordersRes.data && ordersRes.data.length > 0) {
+          setOrders(ordersRes.data);
+        }
+        // Fetch sales
+        const salesRes = await apiFetchSales();
+        if (salesRes.success && salesRes.data && salesRes.data.length > 0) {
+          setSales(salesRes.data);
+        }
+
+        // Fetch equipment
+        const eqRes = await apiFetchEquipment();
+        if (eqRes.success && eqRes.data && eqRes.data.length > 0) {
+          setMyEquipment(eqRes.data);
+        }
+
+        // Fetch inventory
+        const invRes = await apiFetchInventory();
+        if (invRes.success && invRes.data && invRes.data.length > 0) {
+          setInventory(invRes.data);
+        }
+      } catch (err) {
+        console.warn('Backend not available, using demo data:', err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadDashboardData();
+  }, []);
 
   // State for products
-  const [products, setProducts] = useState([
-    { id: 1, image: tomatoImg, name: 'Fresh Tomatoes', quantity: '50', price: '150', status: 'In Stock' },
-    { id: 2, image: riceImg, name: 'Organic Rice', quantity: '200', price: '180', status: 'In Stock' },
-    { id: 3, image: beansImg, name: 'Green Beans', quantity: '30', price: '120', status: 'Low Stock' },
-    { id: 4, image: carrotsImg, name: 'Carrots', quantity: '180', price: '100', status: 'In Stock' },
-    { id: 5, image: cornImg, name: 'Sweet Corn', quantity: '60', price: '90', status: 'In Stock' },
-    { id: 6, image: cucumberImg, name: 'Cucumber', quantity: '25', price: '80', status: 'Low Stock' },
-  ]);
+  const [products, setProducts] = useState([]);
 
   // State for equipment (farmer's own equipment for rent)
-  const [myEquipment, setMyEquipment] = useState([
-    { id: 1, image: tractorImg, name: 'Tractor', price: '5000', available: true },
-    { id: 2, image: sprayerImg, name: 'Sprayer', price: '2500', available: true },
-  ]);
+  const [myEquipment, setMyEquipment] = useState([]);
 
   // State for rented equipment from others
   const [rentedEquipment, setRentedEquipment] = useState([]);
 
   // State for rental income (money earned from renting out equipment)
-  const [rentalIncome, setRentalIncome] = useState([
-    { id: 1, equipment: 'Modern Tractor', image: tractorImg, days: 3, pricePerDay: 5000, total: 15000, date: '2026-02-18', renter: 'Kumar Farm' },
-    { id: 2, equipment: 'Crop Sprayer', image: sprayerImg, days: 2, pricePerDay: 2500, total: 5000, date: '2026-02-15', renter: 'Silva Agro' },
-    { id: 3, equipment: 'Modern Tractor', image: tractorImg, days: 5, pricePerDay: 5000, total: 25000, date: '2026-02-10', renter: 'Green Fields' },
-  ]);
+  const [rentalIncome, setRentalIncome] = useState([]);
 
   // State for rental expenses (money spent renting equipment from others)
-  const [rentalExpenses, setRentalExpenses] = useState([
-    { id: 1, equipment: 'Combine Harvester', image: harvestorImg, days: 2, pricePerDay: 8000, total: 16000, date: '2026-02-22', owner: 'Rajith Equipment' },
-    { id: 2, equipment: 'Power Cultivator', image: cultivatorImg, days: 1, pricePerDay: 3500, total: 3500, date: '2026-02-19', owner: 'Agro Rentals' },
-    { id: 3, equipment: 'Modern Tractor', image: tractorImg, days: 3, pricePerDay: 5000, total: 15000, date: '2026-02-25', owner: 'Sunil Rentals' },
-    { id: 4, equipment: 'Irrigation Pump', image: irrigationPumpImg, days: 5, pricePerDay: 2000, total: 10000, date: '2026-02-27', owner: 'Green Farm Services' },
-  ]);
+  const [rentalExpenses, setRentalExpenses] = useState([]);
 
-  const [sales, setSales] = useState([
-    { id: 1, product: 'Fresh Tomatoes', image: tomatoImg, quantity: '50 kg', price: 150, total: 7500, date: '2026-02-20', customer: 'Perera Stores' },
-    { id: 2, product: 'Organic Rice', image: riceImg, quantity: '100 kg', price: 180, total: 18000, date: '2026-02-19', customer: 'Green Market' },
-    { id: 3, product: 'Carrots', image: carrotsImg, quantity: '30 kg', price: 100, total: 3000, date: '2026-02-18', customer: 'Fresh Foods' },
-    { id: 4, product: 'Sweet Corn', image: cornImg, quantity: '40 kg', price: 90, total: 3600, date: '2026-02-17', customer: 'Organic Mart' },
-    { id: 5, product: 'Green Beans', image: beansImg, quantity: '20 kg', price: 120, total: 2400, date: '2026-02-16', customer: 'Perera Stores' },
-    { id: 6, product: 'Fresh Tomatoes', image: tomatoImg, quantity: '70 kg', price: 150, total: 10500, date: '2026-02-15', customer: 'Green Market' },
-  ]);
+  const [sales, setSales] = useState([]);
 
   // Sample data for NEW SalesContent structure
-  const [customerPurchases] = useState([
-    {
-      id: 1,
-      customerName: "Perera Stores",
-      location: "Colombo 07",
-      phone: "077-1234567",
-      icon: "🏪",
-      products: [
-        { productName: "Fresh Tomatoes", quantity: 120, pricePerUnit: 150, productImage: tomatoImg, date: '2026-03-10' },
-        { productName: "Organic Rice", quantity: 50, pricePerUnit: 180, productImage: riceImg, date: '2026-03-05' }
-      ]
-    },
-    {
-      id: 2,
-      customerName: "Green Market",
-      location: "Kandy Central",
-      phone: "071-9876543",
-      icon: "🥬",
-      products: [
-        { productName: "Carrots", quantity: 80, pricePerUnit: 120, productImage: carrotsImg, date: '2026-02-15' },
-        { productName: "Sweet Corn", quantity: 100, pricePerUnit: 95, productImage: cornImg, date: '2026-02-10' }
-      ]
-    }
-  ]);
+  const [customerPurchases] = useState([]);
 
-  const [equipmentRentals] = useState([
-    {
-      id: 1,
-      customerName: "Silva Agro",
-      location: "Gampaha",
-      phone: "011-2345678",
-      icon: "👨‍🌾",
-      rentals: [
-        { equipmentName: "Modern Tractor", days: 3, costPerDay: 5000, totalCost: 15000, equipmentImage: tractorImg, date: '2026-03-12' }
-      ]
-    },
-    {
-      id: 2,
-      customerName: "Rajith Farm",
-      location: "Matara",
-      phone: "041-5566778",
-      icon: "🚜",
-      rentals: [
-        { equipmentName: "Crop Sprayer", days: 2, costPerDay: 2500, totalCost: 5000, equipmentImage: sprayerImg, date: '2026-01-20' }
-      ]
-    }
-  ]);
+  const [equipmentRentals] = useState([]);
 
   // State for orders
-  const [orders, setOrders] = useState([
-    {
-      id: 1,
-      customerName: 'Perera Stores',
-      location: 'Colombo',
-      phone: '077-567-8901',
-      icon: '🛒',
-      orderDate: '2026-02-24',
-      products: [
-        { id: 101, productName: 'Fresh Tomatoes', productImage: tomatoImg, quantity: 100, unit: 'kg', status: 'pending' },
-        { id: 102, productName: 'Green Beans', productImage: beansImg, quantity: 40, unit: 'kg', status: 'pending' }
-      ]
-    },
-    {
-      id: 2,
-      customerName: 'Green Market',
-      location: 'Kandy',
-      phone: '071-678-9012',
-      icon: '🏪',
-      orderDate: '2026-02-24',
-      products: [
-        { id: 103, productName: 'Organic Rice', productImage: riceImg, quantity: 150, unit: 'kg', status: 'completed' },
-        { id: 106, productName: 'Fresh Tomatoes', productImage: tomatoImg, quantity: 60, unit: 'kg', status: 'pending' },
-        { id: 107, productName: 'Sweet Corn', productImage: cornImg, quantity: 45, unit: 'kg', status: 'pending' }
-      ]
-    },
-    {
-      id: 3,
-      customerName: 'Fresh Foods',
-      location: 'Gampaha',
-      phone: '076-789-0123',
-      icon: '🚛',
-      orderDate: '2026-02-23',
-      products: [
-        { id: 104, productName: 'Carrots', productImage: carrotsImg, quantity: 50, unit: 'kg', status: 'pending' }
-      ]
-    },
-    {
-      id: 4,
-      customerName: 'Organic Mart',
-      location: 'Colombo',
-      phone: '077-890-1234',
-      icon: '🥗',
-      orderDate: '2026-02-23',
-      products: [
-        { id: 105, productName: 'Sweet Corn', productImage: cornImg, quantity: 80, unit: 'kg', status: 'pending' },
-        { id: 108, productName: 'Carrots', productImage: carrotsImg, quantity: 30, unit: 'kg', status: 'pending' }
-      ]
-    }
-  ]);
+  const [orders, setOrders] = useState([]);
 
   // State for inventory
-  const [inventory, setInventory] = useState([
-    { id: 1, image: riceSeedsImg, name: 'Rice Seeds', quantity: '500 kg', status: 'In Stock' },
-    { id: 2, image: fertilizerImg, name: 'Fertilizer', quantity: '80 kg', status: 'Low Stock' },
-    { id: 3, image: pesticideImg, name: 'Pesticide', quantity: '40 L', status: 'Low Stock' },
-    { id: 4, image: handtoolImg, name: 'Hand Tools', quantity: '15 pcs', status: 'Low Stock' },
-    { id: 5, image: dieselImg, name: 'Diesel', quantity: '120 L', status: 'In Stock' },
-    { id: 6, image: storageBagImg, name: 'Storage Bags', quantity: '200 pcs', status: 'In Stock' },
-  ]);
+  const [inventory, setInventory] = useState([]);
 
   // State for available loans from banks
   const [availableLoans] = useState([
@@ -448,46 +431,90 @@ export function FarmerDashboard({ onNavigate }) {
     setEditingProduct({ ...product });
   };
 
-  const handleSaveProduct = () => {
-    setProducts(products.map(p =>
-      p.id === editingProduct.id ? editingProduct : p
-    ));
+  const handleSaveProduct = async () => {
+    try {
+      const res = await apiUpdateProduct(editingProduct.id, {
+        name:     editingProduct.name,
+        quantity: editingProduct.quantity,
+        price:    editingProduct.price,
+        status:   editingProduct.status,
+      });
+      if (res.success) {
+        setProducts(products.map(p => p.id === editingProduct.id ? res.data : p));
+      } else {
+        setProducts(products.map(p => p.id === editingProduct.id ? editingProduct : p));
+      }
+    } catch (err) {
+      console.warn('Backend unavailable, updating locally only:', err.message);
+      setProducts(products.map(p => p.id === editingProduct.id ? editingProduct : p));
+    }
     setEditingProduct(null);
   };
 
-  const handleDeleteProduct = (id) => {
+  const handleDeleteProduct = async (id) => {
+    try {
+      await apiDeleteProduct(id);
+    } catch (err) {
+      console.warn('Backend unavailable, deleting locally only:', err.message);
+    }
     setProducts(products.filter(p => p.id !== id));
     setDeleteConfirm(null);
   };
 
-  const handleAddProduct = () => {
-    if (newProduct.name && newProduct.quantity && newProduct.price) {
-      const product = {
-        id: Date.now(),
-        ...newProduct
-      };
-      setProducts([...products, product]);
-      setNewProduct({ name: '', quantity: '', price: '', status: 'In Stock' });
-      setShowAddProduct(false);
+  const handleAddProduct = async () => {
+    // Show alert if fields are empty
+    if (!newProduct.name || !newProduct.quantity || !newProduct.price) {
+      alert(`Please fill in all fields. Currently -> Name: "${newProduct.name}", Quantity: "${newProduct.quantity}", Price: "${newProduct.price}"`);
+      return;
     }
+
+    try {
+      const res = await apiAddProduct({
+        name:     newProduct.name,
+        quantity: newProduct.quantity,
+        price:    newProduct.price,
+        status:   newProduct.status || 'In Stock',
+      });
+      if (res.success && res.data) {
+        setProducts([...products, res.data]);
+        alert('Product added successfully!');
+      } else {
+        alert('Backend error: ' + (res.message || 'Unknown error. Adding locally.'));
+        setProducts([...products, { id: Date.now(), ...newProduct }]);
+      }
+    } catch (err) {
+      alert('Network error. Adding locally. Error: ' + err.message);
+      setProducts([...products, { id: Date.now(), ...newProduct }]);
+    }
+    setNewProduct({ name: '', quantity: '', price: '', status: 'In Stock' });
+    setShowAddProduct(false);
   };
 
+
   // Handlers for equipment
-  const handleDeleteEquipment = (id) => {
-    setMyEquipment(myEquipment.map(eq =>
-      eq.id === id ? { ...eq, available: !eq.available } : eq
-    ));
+  const handleDeleteEquipment = async (id) => {
+    try {
+      await apiDeleteEquipment(id);
+    } catch (err) {
+      console.warn('Backend unavailable, deleting locally only');
+    }
+    setMyEquipment(myEquipment.filter(eq => eq.id !== id));
     setDeleteEquipmentConfirm(null);
   };
 
-  const handleAddEquipment = () => {
+  const handleAddEquipment = async () => {
     if (newEquipment.name && newEquipment.price) {
-      const equipment = {
-        id: Date.now(),
-        ...newEquipment,
-        available: true
-      };
-      setMyEquipment([...myEquipment, equipment]);
+      const equipData = { ...newEquipment, available: true };
+      try {
+        const res = await apiAddEquipment(equipData);
+        if (res.success && res.data) {
+          setMyEquipment([...myEquipment, res.data]);
+        } else {
+          setMyEquipment([...myEquipment, { id: Date.now(), ...equipData }]);
+        }
+      } catch (err) {
+        setMyEquipment([...myEquipment, { id: Date.now(), ...equipData }]);
+      }
       setNewEquipment({ emoji: '🚜', name: '', price: '' });
       setShowAddEquipment(false);
     }
@@ -514,25 +541,47 @@ export function FarmerDashboard({ onNavigate }) {
     setEditingInventory({ ...item });
   };
 
-  const handleSaveInventory = () => {
-    setInventory(inventory.map(i =>
-      i.id === editingInventory.id ? editingInventory : i
-    ));
+  const handleSaveInventory = async () => {
+    try {
+      const res = await apiUpdateInventory(editingInventory.id, editingInventory);
+      if (res.success) {
+        setInventory(inventory.map(i => i.id === editingInventory.id ? res.data : i));
+      } else {
+        setInventory(inventory.map(i => i.id === editingInventory.id ? editingInventory : i));
+      }
+    } catch (err) {
+      setInventory(inventory.map(i => i.id === editingInventory.id ? editingInventory : i));
+    }
     setEditingInventory(null);
   };
 
-  const handleDeleteInventory = (id) => {
+  const handleDeleteInventory = async (id) => {
+    try {
+      await apiDeleteInventory(id);
+    } catch (err) {
+      console.warn('Backend unavailable, deleting locally only');
+    }
     setInventory(inventory.filter(i => i.id !== id));
     setDeleteInventoryConfirm(null);
   };
 
-  const handleAddInventory = () => {
+  const handleAddInventory = async () => {
     if (newInventoryItem.name && newInventoryItem.quantity) {
-      const item = {
-        id: Date.now(),
-        ...newInventoryItem
-      };
-      setInventory([...inventory, item]);
+      const itemData = { ...newInventoryItem };
+      try {
+        const res = await apiAddInventory({
+          resource: itemData.name,
+          amount: itemData.quantity,
+          ...itemData
+        });
+        if (res.success && res.data) {
+          setInventory([...inventory, res.data]);
+        } else {
+          setInventory([...inventory, { id: Date.now(), ...itemData }]);
+        }
+      } catch (err) {
+        setInventory([...inventory, { id: Date.now(), ...itemData }]);
+      }
       setNewInventoryItem({ image: storageBagImg, name: '', quantity: '', status: 'In Stock' });
       setShowAddInventory(false);
     }
@@ -548,7 +597,7 @@ export function FarmerDashboard({ onNavigate }) {
   const renderContent = () => {
     switch (activeNav) {
       case 'dashboard':
-        return <DashboardContent onNavigate={handleQuickNavigation} products={products} rentedEquipment={rentedEquipment} sales={sales} orders={orders} rentalIncome={rentalIncome} rentalExpenses={rentalExpenses} />;
+        return <DashboardContent onNavigate={handleQuickNavigation} products={products} rentedEquipment={rentedEquipment} sales={sales} orders={orders} rentalIncome={rentalIncome} rentalExpenses={rentalExpenses} userName={userName} />;
       case 'products':
         return <MyProductsContent
           products={products}
@@ -578,7 +627,7 @@ export function FarmerDashboard({ onNavigate }) {
           }}
         />;
       case 'weather':
-        return <WeatherContent />;
+        return <WeatherContent userLocation={userLocation} />;
       case 'inventory':
         return <InventoryContent
           inventory={inventory}
@@ -587,9 +636,24 @@ export function FarmerDashboard({ onNavigate }) {
           onDelete={(id) => setDeleteInventoryConfirm(id)}
         />;
       case 'chatbot':
-        return <ChatbotContent />;
+        return <ChatbotContent userLocation={userLocation} />;
       case 'settings':
-        return <SettingsContent />;
+        return (
+          <SettingsContent
+            userName={userName}
+            userEmail={userEmail}
+            userPhone={userPhone}
+            userLocation={userLocation}
+            userNIC={userNIC}
+            setUserName={setUserName}
+            setUserEmail={setUserEmail}
+            setUserPhone={setUserPhone}
+            setUserLocation={setUserLocation}
+            setUserNIC={setUserNIC}
+            profilePicture={profilePicture}
+            setProfilePicture={setProfilePicture}
+          />
+        );
       default:
         return <DashboardContent onNavigate={handleQuickNavigation} products={products} rentedEquipment={rentedEquipment} sales={sales} orders={orders} rentalIncome={rentalIncome} rentalExpenses={rentalExpenses} />;
     }
@@ -757,12 +821,12 @@ export function FarmerDashboard({ onNavigate }) {
               className="w-full bg-green-50 rounded-xl p-4 mb-3 hover:bg-green-100 transition-all text-left shadow-sm hover:shadow-md border border-green-100"
             >
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full border-2 border-primary flex items-center justify-center bg-white">
-                  <img src={peoplesImg} alt="" className="w-8 h-8 object-contain" />
+                <div className="w-12 h-12 rounded-full border-2 border-primary flex items-center justify-center bg-white text-2xl">
+                  {profilePicture}
                 </div>
                 <div className="flex-1 overflow-hidden">
-                  <p className="text-sm font-bold text-foreground truncate">Sunil Perera</p>
-                  <p className="text-xs text-muted-foreground truncate">farmer@example.com</p>
+                  <p className="text-sm font-bold text-foreground truncate">{userName}</p>
+                  <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
                 </div>
               </div>
               <div className="mt-3 flex items-center gap-2 text-xs text-primary font-bold bg-white/50 px-2 py-1 rounded-lg">
@@ -842,7 +906,7 @@ export function FarmerDashboard({ onNavigate }) {
       {showAddProduct && (
         <AddProductModal
           product={newProduct}
-          onChange={(field, value) => setNewProduct({ ...newProduct, [field]: value })}
+          onChange={(field, value) => setNewProduct(prev => ({ ...prev, [field]: value }))}
           onSave={handleAddProduct}
           onCancel={() => setShowAddProduct(false)}
         />
@@ -852,7 +916,7 @@ export function FarmerDashboard({ onNavigate }) {
       {showAddEquipment && (
         <AddEquipmentModal
           equipment={newEquipment}
-          onChange={(field, value) => setNewEquipment({ ...newEquipment, [field]: value })}
+          onChange={(field, value) => setNewEquipment(prev => ({ ...prev, [field]: value }))}
           onSave={handleAddEquipment}
           onCancel={() => setShowAddEquipment(false)}
         />
@@ -897,20 +961,22 @@ function NavButton({ icon, label, active, onClick }) {
         }
       `}
     >
-      <span className="w-8 h-8 flex items-center justify-center">
-        {typeof icon === 'string' && icon.length <= 4 ? (
-          <span className="text-2xl">{icon}</span>
-        ) : (
-          <img src={icon} alt="" className="w-8 h-8 object-contain" />
-        )}
-      </span>
+      {icon && (
+        <span className="w-8 h-8 flex items-center justify-center">
+          {typeof icon === 'string' && icon.length <= 4 ? (
+            <span className="text-2xl">{icon}</span>
+          ) : (
+            <img src={icon} alt="" className="w-8 h-8 object-contain" />
+          )}
+        </span>
+      )}
       <span className="text-base font-medium">{label}</span>
     </button>
   );
 }
 
 // Dashboard Content
-function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders, rentalIncome, rentalExpenses }) {
+function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders, rentalIncome, rentalExpenses, userName }) {
   const [showMoneyModal, setShowMoneyModal] = useState(null); // 'in', 'out', or null
 
   // Calculate actual counts
@@ -921,15 +987,17 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
   const rentalExpensesTotal = rentalExpenses.reduce((total, expense) => total + expense.total, 0);
   const totalIncome = salesTotal + rentalIncomeTotal;
   const netProfit = totalIncome - rentalExpensesTotal;
-  const pendingOrdersCount = orders.filter(order => order.status === 'Pending').length;
+  // Correctly calculate total pending products across all orders
+  const pendingOrdersCount = orders.reduce((sum, order) => 
+    sum + order.products.filter(p => p.status === 'pending').length, 0
+  );
 
   return (
     <div className="space-y-6">
       {/* Welcome Banner with Image */}
       <div className="bg-gradient-to-r from-green-600 to-green-500 rounded-2xl p-8 text-white">
         <h1 className="text-3xl mb-2 flex items-center gap-3">
-          <img src={riceImg} alt="" className="w-10 h-10 object-contain brightness-0 invert" />
-          Welcome Back, Sunil!
+          Welcome Back, {userName.split(' ')[0]}!
         </h1>
         <p className="text-green-100 text-lg">Your farm is growing well today</p>
       </div>
@@ -937,28 +1005,24 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
       {/* Quick Action Cards - Visual */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <QuickActionCard
-          icon={riceImg}
           title="My Products"
           subtitle={`${productCount} Items`}
           color="bg-green-100"
           onClick={() => onNavigate('products')}
         />
         <QuickActionCard
-          icon="💰"
           title="Total Income"
           subtitle={`LKR ${totalIncome.toLocaleString()}`}
           color="bg-blue-100"
           onClick={() => onNavigate('sales')}
         />
         <QuickActionCard
-          icon={dieselImg}
           title="Expenses"
           subtitle={`LKR ${rentalExpensesTotal.toLocaleString()}`}
           color="bg-red-100"
           onClick={() => onNavigate('expenses')}
         />
         <QuickActionCard
-          icon={storageBagImg}
           title="Orders"
           subtitle={`${pendingOrdersCount} Pending`}
           color="bg-purple-100"
@@ -969,18 +1033,15 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
       {/* Financial Summary - New Section */}
       <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl p-6 border-2 border-green-200">
         <div className="flex items-center gap-3 mb-6">
-          <span className="text-4xl">💰</span>
           <h2 className="text-2xl text-primary font-bold">Money Summary</h2>
         </div>
 
         <div className="grid md:grid-cols-3 gap-4">
           {/* Total Income */}
-          <button
-            onClick={() => setShowMoneyModal('in')}
-            className="bg-white rounded-xl p-5 border-l-4 border-green-500 shadow-md hover:shadow-xl transition-all text-left cursor-pointer hover:scale-105"
+          <div
+            className="bg-white rounded-xl p-5 border-l-4 border-green-500 shadow-md hover:shadow-xl transition-all text-left"
           >
             <div className="flex items-center gap-2 mb-2">
-              <img src={trendingUpIcon || riceImg} alt="" className="w-6 h-6 object-contain" />
               <h3 className="text-lg text-muted-foreground">Money In</h3>
             </div>
             <p className="text-3xl text-green-600 font-bold mb-3">
@@ -989,27 +1050,24 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
             <div className="space-y-1 border-t border-gray-200 pt-3">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground flex items-center gap-1">
-                  <img src={riceImg} alt="" className="w-4 h-4 object-contain" /> Product Sales:
+                  Product Sales:
                 </span>
                 <span className="text-foreground font-bold">LKR {salesTotal.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground flex items-center gap-1">
-                  <img src={tractorImg} alt="" className="w-4 h-4 object-contain" /> Rental Income:
+                  Rental Income:
                 </span>
                 <span className="text-foreground font-bold">LKR {rentalIncomeTotal.toLocaleString()}</span>
               </div>
             </div>
-            <p className="text-sm text-green-500 mt-3">👆 Click for details</p>
-          </button>
+          </div>
 
           {/* Total Expenses */}
-          <button
-            onClick={() => setShowMoneyModal('out')}
-            className="bg-white rounded-xl p-5 border-l-4 border-red-500 shadow-md hover:shadow-xl transition-all text-left cursor-pointer hover:scale-105"
+          <div
+            className="bg-white rounded-xl p-5 border-l-4 border-red-500 shadow-md hover:shadow-xl transition-all text-left"
           >
             <div className="flex items-center gap-2 mb-2">
-              <img src={dieselImg} alt="" className="w-6 h-6 object-contain" />
               <h3 className="text-lg text-muted-foreground">Money Out</h3>
             </div>
             <p className="text-3xl text-red-600 font-bold mb-3">
@@ -1018,19 +1076,17 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
             <div className="space-y-1 border-t border-gray-200 pt-3">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground flex items-center gap-1">
-                  <img src={sprayerImg} alt="" className="w-4 h-4 object-contain" /> Equipment Rental:
+                  Equipment Rental:
                 </span>
                 <span className="text-foreground font-bold">LKR {rentalExpensesTotal.toLocaleString()}</span>
               </div>
             </div>
-            <p className="text-sm text-red-500 mt-3">👆 Click for details</p>
-          </button>
+          </div>
 
           {/* Net Profit */}
           <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-5 shadow-lg">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-3xl">💎</span>
-              <h3 className="text-lg text-white">Net Profit</h3>
+              <h3 className="text-lg text-white font-bold underline">Net Profit Summary</h3>
             </div>
             <p className="text-4xl text-white font-bold mb-3">
               LKR {netProfit.toLocaleString()}
@@ -1049,8 +1105,7 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
         {/* My Products Overview - Real-time */}
         <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
           <div className="flex items-center gap-3 mb-6">
-            <span className="text-4xl">🌾</span>
-            <h2 className="text-2xl text-primary">My Products Overview</h2>
+            <h2 className="text-2xl text-primary font-bold">My Products Overview</h2>
           </div>
 
           {/* Low Stock Alerts */}
@@ -1109,53 +1164,48 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
         {/* Recent Sales & Orders - Real-time */}
         <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
           <div className="flex items-center gap-3 mb-6">
-            <img src={moneyIcon} alt="" className="w-10 h-10 object-contain" />
             <h2 className="text-2xl text-primary font-bold">Recent Activity</h2>
           </div>
 
-          {/* Recent Sales */}
-          <div className="mb-6">
-            <h3 className="text-lg text-foreground font-bold mb-3">Latest Sales</h3>
-            <div className="space-y-2">
-              {sales.slice(0, 3).map(sale => (
-                <div key={sale.id} className="flex items-center justify-between bg-blue-50 rounded-lg p-3">
-                  <div className="flex items-center gap-2">
-                    <img src={sale.image} alt="" className="w-10 h-10 object-contain" />
-                    <div>
-                      <p className="text-sm text-foreground">{sale.product}</p>
-                      <p className="text-xs text-muted-foreground">{sale.customer}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-primary font-bold">+LKR {sale.total.toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground">{sale.date}</p>
-                  </div>
+          {/* Latest Sales Summary - Visual Card */}
+          <div className="mb-8">
+            <h3 className="text-lg text-foreground font-bold mb-3">Income Summary</h3>
+            <div className="bg-blue-50 rounded-xl p-5 border-l-4 border-blue-500 hover:shadow-md transition-all cursor-pointer" onClick={() => onNavigate('sales')}>
+              <div className="flex justify-between items-center mb-3">
+                <p className="text-sm text-blue-700 font-bold uppercase tracking-wider">Activity: High</p>
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+              </div>
+              <p className="text-3xl text-blue-900 font-black">
+                LKR {totalIncome.toLocaleString()}
+              </p>
+              <div className="grid grid-cols-2 gap-4 mt-4 border-t border-blue-100 pt-3">
+                <div>
+                  <p className="text-xs text-blue-600 font-bold uppercase">Products</p>
+                  <p className="text-sm text-blue-900 font-bold">LKR {salesTotal.toLocaleString()}</p>
                 </div>
-              ))}
+                <div>
+                  <p className="text-xs text-blue-600 font-bold uppercase">Rentals</p>
+                  <p className="text-sm text-blue-900 font-bold">LKR {rentalIncomeTotal.toLocaleString()}</p>
+                </div>
+              </div>
+              <p className="text-sm text-blue-600 mt-4 font-medium">View full sales & income report →</p>
             </div>
           </div>
 
-          {/* Pending Orders */}
+          {/* Pending Orders Summary - Visual Card */}
           <div>
-            <h3 className="text-lg text-foreground font-bold mb-3">Pending Orders</h3>
-            <div className="space-y-2">
-              {orders.filter(o => o.status === 'Pending').slice(0, 3).map(order => (
-                <div key={order.id} className="flex items-center justify-between bg-purple-50 rounded-lg p-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{order.product.split(' ')[0]}</span>
-                    <div>
-                      <p className="text-sm text-foreground">{order.quantity}</p>
-                      <p className="text-xs text-muted-foreground">{order.customer}</p>
-                    </div>
-                  </div>
-                  <a
-                    href={`tel:${order.phone}`}
-                    className="px-3 py-1 bg-primary text-white rounded-lg text-xs hover:bg-green-700 transition-colors"
-                  >
-                    📞 Call
-                  </a>
-                </div>
-              ))}
+            <div className="flex items-center gap-3 mb-3">
+              <h3 className="text-lg text-foreground font-bold">Pending Orders Summary</h3>
+            </div>
+            <div className="bg-purple-50 rounded-xl p-4 border-l-4 border-purple-500 hover:shadow-md transition-all cursor-pointer" onClick={() => onNavigate('orders')}>
+              <div className="flex justify-between items-center mb-2">
+                <p className="text-sm text-purple-700 font-bold uppercase tracking-wider">Status: Action Required</p>
+                <span className="bg-purple-200 text-purple-800 text-xs px-2 py-1 rounded-full font-bold">Priority</span>
+              </div>
+              <p className="text-3xl text-purple-900 font-black">
+                {pendingOrdersCount} Total Items
+              </p>
+              <p className="text-sm text-purple-600 mt-1 font-medium">Click to manage all pending customer orders →</p>
             </div>
           </div>
         </div>
@@ -1202,13 +1252,11 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
         {/* Crop Suggestions - Visual */}
         <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
           <div className="flex items-center gap-3 mb-6">
-            <img src={riceImg} alt="" className="w-10 h-10 object-contain" />
             <h2 className="text-2xl text-primary font-bold">Best Crops Now</h2>
           </div>
           <div className="space-y-4">
             <div className="bg-green-50 rounded-xl p-4 border-l-4 border-green-500">
               <div className="flex items-center gap-3 mb-2">
-                <img src={riceImg} alt="" className="w-8 h-8 object-contain" />
                 <p className="text-xl text-foreground font-bold">Paddy Rice</p>
               </div>
               <p className="text-lg text-muted-foreground ml-12">📅 Best: Feb-Apr</p>
@@ -1218,7 +1266,6 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
             </div>
             <div className="bg-green-50 rounded-xl p-4 border-l-4 border-green-500">
               <div className="flex items-center gap-3 mb-2">
-                <img src={carrotsImg} alt="" className="w-8 h-8 object-contain" />
                 <p className="text-xl text-foreground font-bold">Vegetables</p>
               </div>
               <p className="text-lg text-muted-foreground ml-12">📅 Good now</p>
@@ -1239,7 +1286,6 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
               <>
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
-                    <span className="text-6xl">📈</span>
                     <div>
                       <h2 className="text-3xl text-primary font-bold">Money In - Detailed Calculation</h2>
                       <p className="text-muted-foreground">All the money you earned</p>
@@ -1256,7 +1302,6 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
                 {/* Product Sales Details */}
                 <div className="mb-6">
                   <div className="flex items-center gap-3 mb-4">
-                    <span className="text-5xl">🌾</span>
                     <h3 className="text-2xl text-foreground font-bold">Product Sales</h3>
                   </div>
 
@@ -1299,7 +1344,6 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
                 {/* Rental Income Details */}
                 <div className="mb-6">
                   <div className="flex items-center gap-3 mb-4">
-                    <img src={tractorImg} alt="" className="w-12 h-12 object-contain" />
                     <h3 className="text-2xl text-foreground font-bold">Equipment Rental Income</h3>
                   </div>
 
@@ -1343,15 +1387,14 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
                 <div className="bg-gradient-to-br from-green-100 to-blue-100 rounded-xl p-6 border-2 border-green-500">
                   <div className="text-center">
                     <p className="text-2xl text-foreground font-bold mb-4 flex items-center justify-center gap-2">
-                      <TrendingUp className="w-8 h-8 text-green-500" />
                       Total Money In Calculation
                     </p>
                     <div className="space-y-2 mb-4">
                       <p className="text-xl text-foreground flex items-center justify-center gap-2">
-                        <img src={riceImg} alt="" className="w-6 h-6 object-contain" /> Product Sales = LKR {salesTotal.toLocaleString()}
+                        Product Sales = LKR {salesTotal.toLocaleString()}
                       </p>
                       <p className="text-xl text-foreground flex items-center justify-center gap-2">
-                        <img src={tractorImg} alt="" className="w-6 h-6 object-contain" /> Rental Income = LKR {rentalIncomeTotal.toLocaleString()}
+                        Rental Income = LKR {rentalIncomeTotal.toLocaleString()}
                       </p>
                       <div className="border-t-2 border-green-500 pt-3 mt-3">
                         <p className="text-3xl text-green-600 font-bold">
@@ -1374,7 +1417,6 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
               <>
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
-                    <img src={trendingUpIcon} alt="" className="w-12 h-12 object-contain rotate-180 brightness-75 grayscale" />
                     <div>
                       <h2 className="text-3xl text-primary font-bold">Money Out - Detailed Calculation</h2>
                       <p className="text-muted-foreground">All your expenses</p>
@@ -1391,7 +1433,6 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
                 {/* Expenses Details */}
                 <div className="mb-6">
                   <div className="flex items-center gap-3 mb-4">
-                    <img src={sprayerImg} alt="" className="w-12 h-12 object-contain" />
                     <h3 className="text-2xl text-foreground font-bold">Equipment Rental Expenses</h3>
                   </div>
 
@@ -1504,7 +1545,7 @@ function MyProductsContent({ products, onAddClick, onEdit, onDelete }) {
           return (
             <ProductCard
               key={product.id}
-              image={product.image}
+              image={product.image || getImageForName(product.name)}
               name={product.name}
               quantity={qty}
               price={`LKR ${product.price}/kg`}
@@ -2027,17 +2068,22 @@ function OrdersContent({ orders }) {
   }, []);
 
   // Toggle order status (pending <-> completed)
-  const toggleProductStatus = (customerId, productId) => {
+  const toggleProductStatus = async (customerId, productId) => {
+    // Find the new status first
+    const customer = ordersList.find(c => c.id === customerId);
+    const product  = customer?.products.find(p => p.id === productId);
+    if (!product) return;
+
+    const newStatus = product.status === 'pending' ? 'completed' : 'pending';
+
+    // Update UI immediately (optimistic update)
     setOrdersList(ordersList.map(customer => {
       if (customer.id === customerId) {
-        const updatedProducts = customer.products.map(product => {
-          if (product.id === productId) {
-            return {
-              ...product,
-              status: product.status === 'pending' ? 'completed' : 'pending'
-            };
+        const updatedProducts = customer.products.map(p => {
+          if (p.id === productId) {
+            return { ...p, status: newStatus };
           }
-          return product;
+          return p;
         });
 
         // Check if all products are now completed
@@ -2051,7 +2097,16 @@ function OrdersContent({ orders }) {
       }
       return customer;
     }));
+
+    // Sync to backend
+    try {
+      const { updateOrderStatus } = await import('../../services/farmerApi');
+      await updateOrderStatus(productId, newStatus);
+    } catch (err) {
+      console.warn('Backend unavailable, order status updated locally only:', err.message);
+    }
   };
+
 
   // Calculate statistics
   const totalOrders = ordersList.reduce((sum, customer) => sum + customer.products.length, 0);
@@ -2748,7 +2803,7 @@ function EquipmentContent({ myEquipment, onAddClick, onDeleteEquipment, onRentCl
           {myEquipment.map(eq => (
             <EquipmentCard
               key={eq.id}
-              image={eq.image}
+              image={eq.image || getImageForName(eq.name)}
               name={eq.name}
               price={`LKR ${eq.price}/day`}
               available={eq.available}
@@ -2858,7 +2913,7 @@ function EquipmentContent({ myEquipment, onAddClick, onDeleteEquipment, onRentCl
   );
 }
 // Weather Content
-function WeatherContent() {
+function WeatherContent({ userLocation }) {
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl p-8 text-white">
@@ -2871,7 +2926,7 @@ function WeatherContent() {
 
       {/* Current Weather - Large */}
       <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-8">
-        <h2 className="text-2xl text-primary mb-6">Today - Anuradhapura</h2>
+        <h2 className="text-2xl text-primary mb-6">Today - {userLocation}</h2>
         <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-8">
           <div className="flex items-center gap-6 mb-6">
             <span className="text-8xl">☀️</span>
@@ -2964,9 +3019,9 @@ function InventoryContent({ inventory, onAddClick, onEdit, onDelete }) {
         {inventory.map(item => (
           <InventoryCard
             key={item.id}
-            image={item.image}
-            name={item.name}
-            quantity={item.quantity}
+            image={item.image || getImageForName(item.name || item.resource)}
+            name={item.name || item.resource}
+            quantity={item.quantity || item.amount}
             status={getAutoStatus(item.quantity)}
             onEdit={() => onEdit(item)}
             onDelete={() => onDelete(item.id)}
@@ -2978,11 +3033,11 @@ function InventoryContent({ inventory, onAddClick, onEdit, onDelete }) {
 }
 
 // Chatbot Content
-function ChatbotContent() {
+function ChatbotContent({ userLocation }) {
   const [messages, setMessages] = useState([
-    { sender: 'bot', message: '🌾 Hello! I am your NagroMS assistant. How can I help you today?' },
+    { sender: 'bot', message: `🌾 Hello! I am your NagroMS assistant. How can I help you today?` },
     { sender: 'user', message: 'When is the best time to plant rice?' },
-    { sender: 'bot', message: '📅 The best time to plant rice in Sri Lanka is during Yala season (April-September) and Maha season (October-March). Based on your location in Anuradhapura, I recommend starting in early February for Yala season!' }
+    { sender: 'bot', message: `📅 The best time to plant rice in Sri Lanka is during Yala season (April-September) and Maha season (October-March). Based on your location in ${userLocation}, I recommend starting in early February for Yala season!` }
   ]);
   const [inputText, setInputText] = useState('');
 
@@ -3050,19 +3105,28 @@ function ChatbotContent() {
 }
 
 // Settings Content
-function SettingsContent() {
+function SettingsContent({
+  userName, userEmail, userPhone, userLocation, userNIC,
+  setUserName, setUserEmail, setUserPhone, setUserLocation, setUserNIC,
+  profilePicture, setProfilePicture
+}) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
 
-  // Profile state
-  const [profileData, setProfileData] = useState({
-    name: 'Sunil Perera',
-    email: 'farmer@example.com',
-    phone: '+94 77 123 4567',
-    location: 'Anuradhapura, Sri Lanka',
-    farmSize: '5'
+  // Profile state initialized directly from props
+  const [profileData, setProfileData] = useState(() => {
+    const savedProfile = localStorage.getItem('userProfile');
+    const parsed = savedProfile ? JSON.parse(savedProfile) : {};
+
+    return {
+      name: (userName || '').toString() || 'Farmer',
+      email: (userEmail || '').toString() || '',
+      phone: (userPhone || '').toString() || '',
+      location: (userLocation || '').toString() || 'Anuradhapura',
+      nic: (userNIC || '').toString() || '',
+      farmSize: (parsed.farmSize || '5').toString()
+    };
   });
-  const [profilePicture, setProfilePicture] = useState('👨‍🌾');
   const [showPicturePicker, setShowPicturePicker] = useState(false);
 
   // Password change state with verification
@@ -3090,17 +3154,51 @@ function SettingsContent() {
     // Redirect to login or home page
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     // Validate fields
     if (!profileData.name || !profileData.email || !profileData.phone) {
       alert('⚠️ Please fill in all required fields');
       return;
     }
 
-    // Save profile data (in real app, send to backend)
-    localStorage.setItem('userProfile', JSON.stringify(profileData));
-    localStorage.setItem('profilePicture', profilePicture);
-    alert('✅ Profile updated successfully!');
+    try {
+      const res = await apiUpdateFarmerProfile({
+        fullName: profileData.name,
+        email:    profileData.email,
+        phone:    profileData.phone,
+        location: profileData.location,
+        nic:      profileData.nic,
+        farmSize: profileData.farmSize
+      });
+
+      if (res.success) {
+        // Update local storage
+        localStorage.setItem('userProfile', JSON.stringify(profileData));
+        localStorage.setItem('userName', profileData.name);
+        localStorage.setItem('userEmail', profileData.email);
+        localStorage.setItem('userPhone', profileData.phone);
+        localStorage.setItem('userLocation', profileData.location);
+        localStorage.setItem('userNIC', profileData.nic);
+        localStorage.setItem('profilePicture', profilePicture);
+
+        // Update parent state
+        setUserName(profileData.name);
+        setUserEmail(profileData.email);
+        setUserPhone(profileData.phone);
+        setUserLocation(profileData.location);
+        setUserNIC(profileData.nic);
+
+        alert('✅ Profile updated and synced successfully!');
+      } else {
+        alert('❌ Backend failed to update: ' + (res.message || 'Unknown error'));
+      }
+    } catch (err) {
+      console.error('Profile update error:', err);
+      // Fallback for demo
+      localStorage.setItem('userProfile', JSON.stringify(profileData));
+      setUserName(profileData.name);
+      alert('⚠️ Backend unavailable. Data saved locally for now.');
+    }
   };
 
   const validatePassword = (password) => {
@@ -3260,42 +3358,52 @@ function SettingsContent() {
 
         <div className="space-y-4">
           <div>
-            <label className="text-sm text-muted-foreground mb-1 block font-semibold">Full Name</label>
+            <label className="text-sm text-primary mb-1 block font-bold">👤 Full Name (As registered)</label>
             <input
               type="text"
               value={profileData.name}
               onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg text-foreground bg-white"
             />
           </div>
 
           <div>
-            <label className="text-sm text-muted-foreground mb-1 block font-semibold">📧 Email Address</label>
+            <label className="text-sm text-primary mb-1 block font-bold">📧 Email Address</label>
             <input
               type="email"
               value={profileData.email}
               onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg text-foreground bg-white"
             />
           </div>
 
           <div>
-            <label className="text-sm text-muted-foreground mb-1 block font-semibold">📱 Phone Number</label>
+            <label className="text-sm text-primary mb-1 block font-bold">📱 Phone Number</label>
             <input
               type="tel"
               value={profileData.phone}
               onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg text-foreground bg-white"
             />
           </div>
 
           <div>
-            <label className="text-sm text-muted-foreground mb-1 block font-semibold">🏠 Farm Location</label>
+            <label className="text-sm text-primary mb-1 block font-bold">🪪 NIC Number</label>
+            <input
+              type="text"
+              value={profileData.nic}
+              onChange={(e) => setProfileData({ ...profileData, nic: e.target.value })}
+              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg text-foreground bg-white"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-primary mb-1 block font-bold">🏠 Farm Location / District</label>
             <input
               type="text"
               value={profileData.location}
               onChange={(e) => setProfileData({ ...profileData, location: e.target.value })}
-              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg text-foreground bg-white"
             />
           </div>
 
@@ -3762,13 +3870,15 @@ function SettingsContent() {
 function QuickActionCard({ icon, title, subtitle, color, onClick }) {
   return (
     <div className={`${color} rounded-xl p-6 hover:shadow-lg transition-shadow cursor-pointer ${onClick ? 'cursor-pointer' : ''}`} onClick={onClick}>
-      <span className="w-12 h-12 flex items-center justify-center mb-3">
-        {typeof icon === 'string' && icon.length <= 4 ? (
-          <span className="text-5xl">{icon}</span>
-        ) : (
-          <img src={icon} alt="" className="w-12 h-12 object-contain" />
-        )}
-      </span>
+      {icon && (
+        <span className="w-12 h-12 flex items-center justify-center mb-3">
+          {typeof icon === 'string' && icon.length <= 4 ? (
+            <span className="text-5xl">{icon}</span>
+          ) : (
+            <img src={icon} alt="" className="w-12 h-12 object-contain" />
+          )}
+        </span>
+      )}
       <p className="text-2xl text-gray-900 mb-1 font-semibold">{subtitle}</p>
       <p className="text-lg text-gray-700">{title}</p>
     </div>
