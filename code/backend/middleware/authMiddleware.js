@@ -4,7 +4,7 @@
 // ============================================================
 
 const { auth } = require('../config/firebase');
-const { getUserById } = require('../models/userModel');
+const { getUserById, createUser } = require('../models/userModel');
 
 // ──────────────────────────────────────────────────────────────
 // verifyToken
@@ -28,12 +28,17 @@ async function verifyToken(req, res, next) {
     const decodedToken = await auth.verifyIdToken(idToken);
 
     // Fetch full user profile from Firestore
-    const userProfile = await getUserById(decodedToken.uid);
+    let userProfile = await getUserById(decodedToken.uid);
 
     if (!userProfile) {
-      return res.status(404).json({
-        success: false,
-        message: 'User profile not found. Please register first.',
+      // Auto-create profile if missing (resiliency)
+      console.log(`Auto-creating missing Firestore profile for UID: ${decodedToken.uid}`);
+      userProfile = await createUser(decodedToken.uid, {
+        email: decodedToken.email || '',
+        fullName: decodedToken.name || '',
+        roles: ['farmer'], // Default to farmer for now since they are in the dashboard
+        isActive: true,
+        provider: 'auto-created'
       });
     }
 
