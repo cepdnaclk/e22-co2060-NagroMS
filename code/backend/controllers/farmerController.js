@@ -31,9 +31,10 @@ exports.updateFarmerProfile = async (req, res) => {
   try {
     const updates = {
       nic: req.body.nic,
-      district: req.body.district,
+      district: req.body.district || req.body.location,
       phone: req.body.phone,
       fullName: req.body.fullName,
+      farmSize: req.body.farmSize,
     };
     const updatedUser = await userModel.updateUser(req.user.uid, updates);
     res.status(200).json({ success: true, data: updatedUser });
