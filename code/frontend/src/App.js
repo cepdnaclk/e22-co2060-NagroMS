@@ -53,7 +53,7 @@ export default function App() {
         </Route>
 
         {/* Placeholder Routes for other roles */}
-        <Route path="/farmer-dashboard" element={<PlaceholderDashboard role="farmer" />} />
+         <Route path="/farmer-dashboard" element={<PlaceholderDashboard role="farmer" />} />
         <Route path="/customer-dashboard" element={<PlaceholderDashboard role="customer" />} />
         <Route path="/service-provider-dashboard" element={<PlaceholderDashboard role="service-provider" />} />
 
