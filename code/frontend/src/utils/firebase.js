@@ -16,7 +16,7 @@ import {
 
 // ── Your Firebase config (keep your existing values) ────────
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  apiKey: "AIzaSyAYbskUuo_Iy1DljdoHxmk3qKCbLzmE5To",
   authDomain: "nagromsnew.firebaseapp.com",
   projectId: "nagromsnew",
   storageBucket: "nagromsnew.firebasestorage.app",

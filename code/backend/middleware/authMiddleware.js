@@ -7,24 +7,17 @@ const { auth } = require('../config/firebase');
 const { getUserById, createUser } = require('../models/userModel');
 
 // ──────────────────────────────────────────────────────────────
-// verifyToken
-// Extracts Bearer token from Authorization header,
-// verifies it with Firebase Admin, attaches decoded user to req
+// verifyToken — verify Firebase Bearer token
 // ──────────────────────────────────────────────────────────────
 async function verifyToken(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        success: false,
-        message: 'Access denied. No token provided.',
-      });
+      return res.status(401).json({ success: false, message: 'Access denied. No token provided.' });
     }
 
     const idToken = authHeader.split('Bearer ')[1];
-
-    // Verify the Firebase ID token
     const decodedToken = await auth.verifyIdToken(idToken);
 
     // Fetch full user profile from Firestore
@@ -51,11 +44,9 @@ async function verifyToken(req, res, next) {
 
     // Attach both decoded token and Firestore profile to request
     req.user = {
-      uid:         decodedToken.uid,
-      email:       decodedToken.email,
-      roles:       userProfile.roles || [],
-      accountType: userProfile.accountType,
-      profile:     userProfile,
+      uid: decodedToken.uid,
+      email: decodedToken.email,
+      roles: decodedToken.roles || [],
     };
 
     next();
@@ -63,39 +54,21 @@ async function verifyToken(req, res, next) {
     console.error('Token verification error:', error.code, error.message);
 
     if (error.code === 'auth/id-token-expired') {
-      return res.status(401).json({
-        success: false,
-        message: 'Session expired. Please log in again.',
-      });
+      return res.status(401).json({ success: false, message: 'Session expired. Please log in again.' });
     }
-    if (error.code === 'auth/argument-error' ||
-        error.code === 'auth/id-token-revoked') {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid token. Please log in again.',
-      });
-    }
-
-    return res.status(401).json({
-      success: false,
-      message: 'Authentication failed.',
-    });
+    return res.status(401).json({ success: false, message: 'Authentication failed.' });
   }
 }
 
+// Alias for backward compatibility
+const authMiddleware = verifyToken;
+
 // ──────────────────────────────────────────────────────────────
-// requireRole(...roles)
-// Usage: router.get('/farmers', verifyToken, requireRole('farmer'), ...)
-// Accepts one or more roles — user must have AT LEAST ONE
+// requireRole(...roles) — user must have at least one role
 // ──────────────────────────────────────────────────────────────
 function requireRole(...allowedRoles) {
   return (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Not authenticated.',
-      });
-    }
+    if (!req.user) return res.status(401).json({ success: false, message: 'Not authenticated.' });
 
     const userRoles = req.user.roles || [];
     const hasRole = allowedRoles.some(role => userRoles.includes(role));
@@ -107,28 +80,8 @@ function requireRole(...allowedRoles) {
         yourRoles: userRoles,
       });
     }
-
     next();
   };
 }
 
-// ──────────────────────────────────────────────────────────────
-// requireAllRoles(...roles)
-// User must have ALL of the specified roles
-// ──────────────────────────────────────────────────────────────
-function requireAllRoles(...requiredRoles) {
-  return (req, res, next) => {
-    const userRoles = req.user?.roles || [];
-    const hasAll = requiredRoles.every(role => userRoles.includes(role));
-
-    if (!hasAll) {
-      return res.status(403).json({
-        success: false,
-        message: 'Insufficient permissions.',
-      });
-    }
-    next();
-  };
-}
-
-module.exports = { verifyToken, requireRole, requireAllRoles };
+module.exports = { verifyToken, authMiddleware, requireRole };
