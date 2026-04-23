@@ -3,7 +3,7 @@ import { Outlet, Navigate } from 'react-router-dom';
 import { getAuth } from 'firebase/auth';
 import { Menu } from 'lucide-react';
 import ExpertSidebar from '../components/expertsidebar';
-import { colors, shadows } from '../styles/expertStyles';
+import { colors, shadows } from '../Styles/expertStyles';
 
 export default function ExpertLayout() {
     const user = getAuth().currentUser;

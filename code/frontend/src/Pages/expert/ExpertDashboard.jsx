@@ -1,8 +1,8 @@
 import { Video, MessageSquare, Phone, TrendingUp, Users, Star, Calendar } from 'lucide-react';
 import { useExpertData } from '../../hooks/useExpertData';
 import { updateConsultationStatus } from '../../services/expertService';
-import * as S from '../.../styles/expertStyles';
-import '../../styles/expertDashboard.css';
+import * as S from '../../Styles/expertStyles';
+import '../../Styles/expertDashboard.css';
 import { useState } from 'react';
 
 const typeIcon = (type) => {
