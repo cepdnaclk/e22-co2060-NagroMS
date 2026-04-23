@@ -10,6 +10,10 @@ function App() {
 
   // Navigation handler
   const handleNavigate = (page) => {
+    if (page === 'customer-dashboard') {
+      window.location.href = 'http://localhost:5173';
+      return;
+    }
     setCurrentPage(page);
     window.scrollTo(0, 0); // Scroll to top on page change
   };
