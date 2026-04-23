@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { FileText, Heart, Eye, Plus, Trash2, Edit3, X, ChevronRight } from 'lucide-react';
 import { useExpertData } from '../../hooks/useExpertData';
 import { createArticle, deleteArticle } from '../../services/expertService';
-import '../../styles/expertDashboard.css';
+import '../../Styles/expertDashboard.css';
 
 const formatDate = (ts) => {
     if (!ts) return '';
