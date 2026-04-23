@@ -10,7 +10,7 @@ export default function ExpertLayout() {
     const token = localStorage.getItem('nagroms_token');
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
-    // Redirect to login if not authenticated
+    // Auth guard
     if (!user && !token) return <Navigate to="/login" replace />;
 
     return (

@@ -1,105 +1,133 @@
-import { Video, MessageSquare, Phone, Clock, Calendar, User } from 'lucide-react';
+import { useState } from 'react';
+import { Video, MessageSquare, Phone, Clock, Calendar, User, MapPin, CheckCircle, XCircle, RotateCcw, PlayCircle } from 'lucide-react';
 import { useExpertData } from '../../hooks/useExpertData';
 import { updateConsultationStatus } from '../../services/expertService';
-import * as S from '../../Styles/expertStyles';
-import { useState } from 'react';
+import '../../Styles/expertDashboard.css';
 
 const typeIcon = (type) => {
-    const props = { size: 15, color: S.colors.green, strokeWidth: 1.8 };
-    if (type === 'video') return <Video {...props} />;
-    if (type === 'phone') return <Phone {...props} />;
-    return <MessageSquare {...props} />;
+    const p = { size: 16, color: 'var(--exp-green)', strokeWidth: 1.8 };
+    if (type === 'video') return <Video {...p} />;
+    if (type === 'phone') return <Phone {...p} />;
+    return <MessageSquare {...p} />;
+};
+
+const typeLabel = (type) => {
+    if (type === 'video') return 'Video Call';
+    if (type === 'phone') return 'Phone Call';
+    return 'Chat';
 };
 
 const formatDate = (ts) => {
     if (!ts) return '';
-    const d = ts.toDate ? ts.toDate() : new Date(ts);
-    return d.toLocaleDateString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit' }) +
-        ' at ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    const d = ts?.toDate ? ts.toDate() : new Date(ts);
+    return d.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' }) +
+        ' · ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 };
+
+const FILTERS = ['all', 'pending', 'confirmed', 'declined', 'rescheduled'];
 
 export default function Consultations() {
     const { data: consultations, loading, expertId } = useExpertData('consultations');
-    const [statuses, setStatuses] = useState({});
+    const [filter, setFilter] = useState('all');
 
-    const updateStatus = async (id, status) => {
-        await updateConsultationStatus(id, status);
-        setStatuses(prev => ({ ...prev, [id]: status }));
+    const updateStatus = async (c, status) => {
+        try { 
+            await updateConsultationStatus(c.id, status, {
+                expertId,
+                farmerName: c.farmerName,
+                topic: c.topic,
+                scheduledAt: c.scheduledAt,
+                type: c.type,
+                district: c.district || ''
+            }); 
+        } catch (_) { }
     };
 
-    if (loading) return <div style={{ ...S.page, color: S.colors.textMuted }}>Loading...</div>;
+    if (loading) return (
+        <div className="exp-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+            <div className="exp-spinner" />
+        </div>
+    );
+
+    const list = consultations ?? [];
+    const filtered = filter === 'all' ? list : list.filter(c => c.status === filter);
+    const pendingCount = list.filter(c => c.status === 'pending').length;
 
     return (
-        <div style={S.page}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '26px' }}>
+        <div className="exp-page">
+            <div className="exp-header">
                 <div>
-                    <h1 style={S.pageTitle}>Consultation Requests</h1>
-                    <p style={{ ...S.pageSub, marginBottom: 0 }}>Manage your consultation schedule</p>
+                    <h1 className="exp-title">Consultations</h1>
+                    <p className="exp-subtitle">
+                        Manage your schedule · {pendingCount > 0 && <span style={{ color: 'var(--exp-gold)', fontWeight: 600 }}>{pendingCount} awaiting response</span>}
+                    </p>
                 </div>
-                <button style={styles.setAvailBtn}>Set Availability</button>
             </div>
 
-            {consultations?.length === 0 && (
-                <p style={{ color: S.colors.textMuted, fontSize: '13px' }}>No consultations yet.</p>
+            {/* Filter tabs */}
+            <div className="exp-filter-row">
+                {FILTERS.map(f => (
+                    <button 
+                        key={f} 
+                        className={`exp-filter-tab ${filter === f ? 'active' : ''}`}
+                        onClick={() => setFilter(f)}
+                    >
+                        {f.charAt(0).toUpperCase() + f.slice(1)}
+                        {f === 'pending' && pendingCount > 0 && (
+                            <span className="exp-filter-dot">{pendingCount}</span>
+                        )}
+                    </button>
+                ))}
+            </div>
+
+            {filtered.length === 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '48px 0', color: 'var(--exp-text-muted)', fontSize: 13 }}>
+                    <Calendar size={36} color="var(--exp-border)" strokeWidth={1.2} />
+                    <p>No {filter === 'all' ? '' : filter} consultations.</p>
+                </div>
             )}
 
-            {consultations?.map(c => {
-                const status = statuses[c.id] ?? c.status;
-                return (
-                    <div key={c.id} style={{ ...S.card, marginBottom: '14px' }}>
-                        <div style={styles.top}>
-                            <div style={styles.typeIcon}>{typeIcon(c.type)}</div>
-                            <div style={{ flex: 1 }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                    <div style={styles.title}>{c.topic}</div>
-                                    <span style={S.badge(status)}>{status}</span>
-                                </div>
-                                <div style={styles.detail}><User size={12} /> <span>{c.farmerName}</span></div>
-                                <div style={styles.detail}><Calendar size={12} /> <span>{formatDate(c.scheduledAt)}</span></div>
-                                <div style={styles.detail}><Clock size={12} /> <span>Duration: 30 minutes</span></div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {filtered.map(c => (
+                    <div key={c.id} className="exp-card interactive exp-list-card">
+                        <div className="exp-icon-box">{typeIcon(c.type)}</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                <span className="exp-list-title">{c.topic}</span>
+                                <span className={`exp-badge ${c.status}`}>{c.status}</span>
+                            </div>
+                            <div className="exp-list-meta">
+                                <span className="exp-meta-item"><User size={12} />{c.farmerName}</span>
+                                <span className="exp-meta-item"><Calendar size={12} />{formatDate(c.scheduledAt)}</span>
+                                <span className="exp-meta-item"><Clock size={12} />30 min · {typeLabel(c.type)}</span>
+                                {c.district && <span className="exp-meta-item"><MapPin size={12} />{c.district}</span>}
+                            </div>
+
+                            <div className="exp-action-row">
+                                {c.status === 'confirmed' && (
+                                    <button className="exp-btn" style={{ background: 'var(--exp-green-light)', border: '1px solid var(--exp-green)', color: 'var(--exp-green)' }}>
+                                        <PlayCircle size={14} /> Join Consultation
+                                    </button>
+                                )}
+                                {c.status === 'pending' && (<>
+                                    <button className="exp-btn exp-btn-primary"
+                                        onClick={() => updateStatus(c, 'confirmed')}>
+                                        <CheckCircle size={13} /> Accept
+                                    </button>
+                                    <button className="exp-btn exp-btn-outline" style={{ color: 'var(--exp-blue)', borderColor: '#bbdefb' }}
+                                        onClick={() => updateStatus(c, 'rescheduled')}>
+                                        <RotateCcw size={13} /> Reschedule
+                                    </button>
+                                    <button className="exp-btn exp-btn-outline" style={{ color: 'var(--exp-red)', borderColor: '#ffcdd2' }}
+                                        onClick={() => updateStatus(c, 'declined')}>
+                                        <XCircle size={13} /> Decline
+                                    </button>
+                                </>)}
                             </div>
                         </div>
-
-                        {status === 'confirmed' ? (
-                            <button style={styles.joinBtn}>Join Consultation</button>
-                        ) : status === 'pending' ? (
-                            <div style={styles.actions}>
-                                <button style={S.btn} onClick={() => updateStatus(c.id, 'confirmed')}>Accept</button>
-                                <button style={S.btn} onClick={() => updateStatus(c.id, 'rescheduled')}>Reschedule</button>
-                                <button style={{ ...S.btn, color: S.colors.red, borderColor: '#ffcdd2' }} onClick={() => updateStatus(c.id, 'declined')}>Decline</button>
-                            </div>
-                        ) : null}
                     </div>
-                );
-            })}
+                ))}
+            </div>
         </div>
     );
 }
-
-const styles = {
-    setAvailBtn: {
-        ...S.btn,
-        flex: 'none',
-        padding: '8px 16px',
-        fontSize: '13px',
-    },
-    top: { display: 'flex', gap: '14px', marginBottom: '14px' },
-    typeIcon: {
-        width: '34px', height: '34px',
-        background: S.colors.greenLight,
-        borderRadius: '8px',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0,
-        marginTop: '2px',
-    },
-    title: { fontSize: '14px', fontWeight: '600', color: S.colors.text },
-    detail: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: S.colors.textMuted, marginBottom: '4px' },
-    actions: { display: 'flex', gap: '8px' },
-    joinBtn: {
-        width: '100%', padding: '9px',
-        border: `0.5px solid ${S.colors.border}`,
-        borderRadius: '7px', background: 'none',
-        fontSize: '13px', cursor: 'pointer',
-        color: S.colors.textMuted, fontFamily: "'Lato', sans-serif",
-    },
-};
