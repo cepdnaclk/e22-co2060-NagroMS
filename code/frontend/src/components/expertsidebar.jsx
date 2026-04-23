@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Calendar, MessageSquare, BookOpen, Users, Settings, LogOut, X } from 'lucide-react';
 import { logout } from '../utils/firebase';
-import { colors } from '../Styles/expertStyles';
+import { colors } from '../styles/expertStyles';
 
 const navItems = [
     { to: '/expert-dashboard', label: 'Overview', icon: LayoutDashboard, end: true },
