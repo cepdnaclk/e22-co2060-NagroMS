@@ -1,6 +1,5 @@
 // ============================================================
 // NagroMS Backend — server.js
-// Main Express application entry point
 // ============================================================
 
 require('dotenv').config();
@@ -12,7 +11,6 @@ const rateLimit = require('express-rate-limit');
 
 const authRoutes = require('./routes/authRoutes');
 const farmerRoutes = require('./routes/farmerRoutes');
-
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -28,14 +26,11 @@ app.use(cors({
   credentials: true,
 }));
 
-// ── Rate limiting (protect auth endpoints) ───────────────────
+// ── Rate limiting ────────────────────────────────────────────
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 20,
-  message: {
-    success: false,
-    message: 'Too many requests from this IP. Please try again after 15 minutes.',
-  },
+  message: { success: false, message: 'Too many requests. Please try again after 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -64,12 +59,13 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/farmer', farmerRoutes);
 
 
+// Add other routes when ready:
+// app.use('/api/expert',   require('./routes/expertRoutes'));
+// app.use('/api/farmer',   require('./routes/farmerRoutes'));
+
 // ── 404 handler ──────────────────────────────────────────────
 app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: `Route ${req.originalUrl} not found`,
-  });
+  res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` });
 });
 
 // ── Global error handler ─────────────────────────────────────
