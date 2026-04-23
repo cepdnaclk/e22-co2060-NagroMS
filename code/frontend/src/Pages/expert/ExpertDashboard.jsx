@@ -1,7 +1,7 @@
 import { Video, MessageSquare, Phone, TrendingUp, Users, Star, Calendar } from 'lucide-react';
 import { useExpertData } from '../../hooks/useExpertData';
 import { updateConsultationStatus } from '../../services/expertService';
-import * as S from '../../styles/expertStyles';
+import * as S from '../.../styles/expertStyles';
 import '../../styles/expertDashboard.css';
 import { useState } from 'react';
 
@@ -30,9 +30,9 @@ const timeAgo = (ts) => {
 
 const statConfig = [
     { key: 'totalConsultations', label: 'Total Consultations', icon: <Calendar size={18} />, color: '#1F5A2E' },
-    { key: 'thisMonth',          label: 'This Month',          icon: <TrendingUp size={18} />, color: '#2563eb' },
-    { key: 'rating',             label: 'Expert Rating',       icon: <Star size={18} />,      color: '#b8860b', suffix: '/ 5' },
-    { key: 'activeFarmers',      label: 'Active Farmers',      icon: <Users size={18} />,     color: '#7c3aed' },
+    { key: 'thisMonth', label: 'This Month', icon: <TrendingUp size={18} />, color: '#2563eb' },
+    { key: 'rating', label: 'Expert Rating', icon: <Star size={18} />, color: '#b8860b', suffix: '/ 5' },
+    { key: 'activeFarmers', label: 'Active Farmers', icon: <Users size={18} />, color: '#7c3aed' },
 ];
 
 export default function ExpertDashboard() {
@@ -52,7 +52,7 @@ export default function ExpertDashboard() {
     const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
     const updateStatus = async (c, status) => {
-        try { 
+        try {
             // Pass the consultation data so it can be "promoted" from dummy to real if needed
             await updateConsultationStatus(c.id, status, {
                 expertId,
@@ -60,7 +60,7 @@ export default function ExpertDashboard() {
                 topic: c.topic,
                 scheduledAt: c.scheduledAt,
                 type: c.type
-            }); 
+            });
             setNotif({ message: `Consultation ${status}!`, type: 'success' });
             setTimeout(() => setNotif(null), 3000);
         } catch (err) {
