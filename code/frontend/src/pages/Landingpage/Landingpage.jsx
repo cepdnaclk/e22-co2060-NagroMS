@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import imageFallback from './assets/images/imagefallback.jpg';
 
 // Feature Card icons
@@ -54,12 +55,8 @@ function FeatureCard({ icon, title, description }) {
 }
 
 // Landing Page
-function LandingPage({ onNavigate }) {
-  const handleNavigate = (page) => {
-    if (onNavigate) {
-      onNavigate(page);
-    }
-  };
+function LandingPage() {
+  const navigate = useNavigate();
 
   return (
     <div style={{ fontFamily: 'sans-serif', background: '#f6fff5' }}>
@@ -145,7 +142,7 @@ function LandingPage({ onNavigate }) {
           </button>
 
           <button
-            onClick={() => handleNavigate('login')}
+            onClick={() => navigate('/login')}
             style={{
               padding: '12px 24px',
               color: '#1a7f37',
@@ -208,7 +205,7 @@ function LandingPage({ onNavigate }) {
             }}
           >
             <button
-              onClick={() => handleNavigate('signup')}
+              onClick={() => navigate('/signup')}
               style={{
                 padding: '14px 40px',
                 background: '#1a7f37',
@@ -224,7 +221,7 @@ function LandingPage({ onNavigate }) {
             </button>
 
             <button
-              onClick={() => handleNavigate('login')}
+              onClick={() => navigate('/login')}
               style={{
                 padding: '14px 40px',
                 background: 'white',

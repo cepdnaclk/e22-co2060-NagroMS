@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Phone, CreditCard, ArrowRight, AlertCircle } from 'lucide-react';
 import { loginWithEmail, loginWithGoogle, loginWithFacebook } from '../utils/firebase';
 
@@ -85,7 +86,8 @@ function FarmIllustration() {
   );
 }
 
-export function LoginPage({ onNavigate }) {
+export function LoginPage() {
+  const navigate = useNavigate();
   const [loginMethod, setLoginMethod]   = useState('email');
   const [formData, setFormData]         = useState({ identifier: '', password: '', rememberMe: false });
   const [showPassword, setShowPassword] = useState(false);
@@ -158,7 +160,7 @@ export function LoginPage({ onNavigate }) {
       }
 
       const result = await loginWithEmail(emailToUse, formData.password);
-      onNavigate(result.dashboardRoute);
+      navigate('/' + result.dashboardRoute);
     } catch (err) {
       const msg = getFirebaseError(err.code) || err.message || 'Login failed.';
       setErrors(prev => ({ ...prev, password: msg }));
@@ -172,7 +174,7 @@ export function LoginPage({ onNavigate }) {
     setIsLoading(true);
     try {
       const result = provider === 'Google' ? await loginWithGoogle() : await loginWithFacebook();
-      onNavigate(result.dashboardRoute || 'farmer-dashboard');
+      navigate('/' + (result.dashboardRoute || 'farmer-dashboard'));
     } catch (err) {
       setGeneralError(err.message || `${provider} login failed.`);
     } finally {
@@ -297,7 +299,7 @@ export function LoginPage({ onNavigate }) {
               <div className="nagro-field">
                 <div className="nagro-label-row">
                   <label className="nagro-label">Password</label>
-                  <button type="button" onClick={() => onNavigate('forgot-password')} className="nagro-forgot-link">
+                  <button type="button" onClick={() => navigate('/forgot-password')} className="nagro-forgot-link">
                     Forgot password?
                   </button>
                 </div>
@@ -343,7 +345,7 @@ export function LoginPage({ onNavigate }) {
 
             <p className="nagro-bottom-link">
               Don't have an account?{' '}
-              <button type="button" onClick={() => onNavigate('signup')} className="nagro-link">Create account</button>
+              <button type="button" onClick={() => navigate('/signup')} className="nagro-link">Create account</button>
             </p>
             <p className="nagro-security-note">🔒 Role-based secure access · SSL Encrypted</p>
           </div>
