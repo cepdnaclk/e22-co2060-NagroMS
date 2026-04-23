@@ -1,0 +1,249 @@
+/* Form styling to ensure text visibility */
+
+/* Input fields */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="number"],
+input[type="password"],
+input[type="search"],
+textarea,
+select {
+  color: #1a3a1a !important;
+  background-color: #f9fafb;
+}
+
+/* Focused inputs */
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="tel"]:focus,
+input[type="number"]:focus,
+input[type="password"]:focus,
+input[type="search"]:focus,
+textarea:focus,
+select:focus {
+  color: #1a3a1a !important;
+  background-color: #ffffff;
+}
+
+/* Disabled inputs */
+input:disabled,
+textarea:disabled,
+select:disabled {
+  color: #6b7280 !important;
+  background-color: #f3f4f6;
+}
+
+/* Placeholder text - gray but visible */
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af !important;
+  opacity: 1;
+}
+
+/* Select dropdowns */
+select {
+  color: #1a3a1a !important;
+}
+
+select option {
+  color: #1a3a1a !important;
+  background-color: #ffffff !important;
+}
+
+/* Text in colored backgrounds */
+.bg-gray-50 input,
+.bg-gray-50 textarea,
+.bg-gray-50 select {
+  color: #1a3a1a !important;
+}
+
+/* Specific fix for quantity inputs in product cards */
+input[type="number"] {
+  color: #1a3a1a !important;
+  -webkit-text-fill-color: #1a3a1a !important;
+}
+
+/* Cart and order text */
+.text-foreground {
+  color: #1a3a1a !important;
+}
+
+/* Muted text should still be visible */
+.text-muted-foreground {
+  color: #6b7280 !important;
+}
+
+/* Ensure all form labels are visible */
+label {
+  color: #1a3a1a !important;
+}
+
+/* Button text */
+button {
+  color: inherit;
+}
+
+/* White text should only be on colored backgrounds */
+.text-white {
+  color: #ffffff !important;
+}
+
+/* Colored gradient backgrounds need white text */
+.bg-gradient-to-r h1,
+.bg-gradient-to-r h2,
+.bg-gradient-to-r h3,
+.bg-gradient-to-r p,
+.bg-gradient-to-r span,
+.bg-gradient-to-r strong {
+  color: #ffffff !important;
+}
+
+/* Ensure text on green/orange backgrounds is white, but not child divs with bg-white */
+.from-green-600 h1,
+.from-green-600 h2,
+.from-green-600 h3,
+.from-green-600 p,
+.from-green-600 span:not(.bg-white *),
+.from-orange-600 h1,
+.from-orange-600 h2,
+.from-orange-600 h3,
+.from-orange-600 p,
+.from-orange-600 span:not(.bg-white *),
+.from-blue-600 h1,
+.from-blue-600 h2,
+.from-blue-600 h3,
+.from-blue-600 p,
+.from-blue-600 span:not(.bg-white *),
+.from-purple-600 h1,
+.from-purple-600 h2,
+.from-purple-600 h3,
+.from-purple-600 p,
+.from-purple-600 span:not(.bg-white *) {
+  color: #ffffff !important;
+}
+
+/* Ensure dashed border buttons (like request product) are visible */
+button.border-dashed {
+  color: #2d7a2d !important;
+}
+
+button.border-dashed span {
+  color: #2d7a2d !important;
+}
+
+button.border-dashed svg {
+  color: #2d7a2d !important;
+}
+
+/* SUPER SPECIFIC - Request product button */
+.request-product-btn {
+  color: #2d7a2d !important;
+}
+
+.request-product-btn * {
+  color: #2d7a2d !important;
+}
+
+.request-product-btn div {
+  color: #2d7a2d !important;
+}
+
+.request-product-btn span {
+  color: #2d7a2d !important;
+}
+
+.request-product-btn svg {
+  color: #2d7a2d !important;
+  stroke: #2d7a2d !important;
+  fill: currentColor !important;
+}
+
+button.bg-white.border-dashed {
+  color: #2d7a2d !important;
+}
+
+button.bg-white.border-dashed * {
+  color: #2d7a2d !important;
+}
+
+button.bg-white.border-dashed div {
+  color: #2d7a2d !important;
+}
+
+button.bg-white.border-dashed span {
+  color: #2d7a2d !important;
+}
+
+button.bg-white.border-dashed svg {
+  color: #2d7a2d !important;
+  stroke: #2d7a2d !important;
+  fill: currentColor !important;
+}
+
+/* Green primary buttons should have white text */
+button.bg-primary {
+  color: #ffffff !important;
+}
+
+button.bg-primary span {
+  color: #ffffff !important;
+}
+
+button.bg-primary svg {
+  color: #ffffff !important;
+}
+
+/* Gradient buttons also need white text */
+button[class*="from-green"] {
+  color: #ffffff !important;
+}
+
+button[class*="from-green"] span {
+  color: #ffffff !important;
+}
+
+button[class*="from-green"] svg {
+  color: #ffffff !important;
+}
+
+/* Price text */
+.text-primary {
+  color: #2d7a2d !important;
+}
+
+/* Ensure search input text is visible */
+input[type="search"] {
+  color: #1a3a1a !important;
+  -webkit-text-fill-color: #1a3a1a !important;
+}
+
+/* Fix for Safari autocomplete */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: #1a3a1a !important;
+  -webkit-box-shadow: 0 0 0 30px #f9fafb inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Number input spinner buttons */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  opacity: 1;
+  height: auto;
+}
+
+/* FINAL OVERRIDE - Request product button (must be at end for highest priority) */
+.request-product-btn,
+.request-product-btn *,
+.request-product-btn div,
+.request-product-btn span {
+  color: #2d7a2d !important;
+}
+
+.request-product-btn svg {
+  color: #2d7a2d !important;
+  stroke: #2d7a2d !important;
+}
