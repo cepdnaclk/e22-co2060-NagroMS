@@ -16,7 +16,7 @@ import {
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAYbskUuo_Iy1DljdoHxmk3qKCbLzmE5To",
+  apiKey: "AIzaSyBXHf7t9L_NFwR-eM9YN_0_Vcf4EfX4e9I",
   authDomain: "nagromsnew.firebaseapp.com",
   projectId: "nagromsnew",
   storageBucket: "nagromsnew.firebasestorage.app",
