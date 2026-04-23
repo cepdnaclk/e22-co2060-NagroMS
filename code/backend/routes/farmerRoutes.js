@@ -10,7 +10,8 @@ const {
   getProducts, addProduct, updateProduct, deleteProduct,
   getOrders, updateOrderStatus, getSales,
   getEquipment, addEquipment, updateEquipment, deleteEquipment,
-  getInventory, addInventory, updateInventory, deleteInventory
+  getInventory, addInventory, updateInventory, deleteInventory,
+  getLoans, addLoan, getExpenses, addExpense
 } = require('../controllers/farmerController');
 
 const { verifyToken, requireRole } = require('../middleware/authMiddleware');
@@ -45,5 +46,13 @@ router.get('/inventory', getInventory);
 router.post('/inventory', addInventory);
 router.put('/inventory/:id', updateInventory);
 router.delete('/inventory/:id', deleteInventory);
+
+// ── Loan routes ───────────────────────────────────────────────
+router.get('/loans', getLoans);
+router.post('/loans', addLoan);
+
+// ── Expense routes ────────────────────────────────────────────
+router.get('/expenses', getExpenses);
+router.post('/expenses', addExpense);
 
 module.exports = router;
