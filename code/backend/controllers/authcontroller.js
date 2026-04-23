@@ -76,7 +76,12 @@ async function register(req, res) {
     const userDoc = await createUser(uid, userData);
     await auth.setCustomUserClaims(uid, { roles });
 
-    return res.status(201).json({ success: true, message: 'Account created.', user: sanitizeUser(userDoc) });
+    return res.status(201).json({
+      success: true,
+      message: 'Account created.',
+      user: sanitizeUser(userDoc),
+      dashboardRoute: getDashboardRoute(roles),
+    });
   } catch (error) {
     console.error('Register error:', error);
     return res.status(500).json({ success: false, message: 'Registration failed.' });
@@ -189,7 +194,7 @@ async function sendOTP(req, res) {
     }
 
     // Generate OTP and store with 10-minute expiry
-    const otp    = generateOTP();
+    const otp = generateOTP();
     const expiry = Date.now() + 10 * 60 * 1000; // 10 minutes
     otpStore[email] = { otp, expiry };
 
@@ -197,8 +202,8 @@ async function sendOTP(req, res) {
 
     // Send email
     await transporter.sendMail({
-      from:    `"NagroMS" <${process.env.GMAIL_USER}>`,
-      to:      email,
+      from: `"NagroMS" <${process.env.GMAIL_USER}>`,
+      to: email,
       subject: 'NagroMS — Your Password Reset OTP',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #f0fdf4; border-radius: 12px;">
@@ -343,21 +348,12 @@ function sanitizeUser(user) {
 
 function getDashboardRoute(roles) {
   if (!roles || roles.length === 0) return 'login';
-  const map = {
-    'farmer':           'farmer-dashboard',
-    'customer':         'customer-dashboard',
-    'service-provider': 'service-provider-dashboard',
-    'expert':           'expert-dashboard',
-  };
-  return map[roles[0]] || 'login';
+  if (roles.includes('expert')) return 'expert-dashboard';
+  if (roles.includes('service-provider')) return 'service-provider-dashboard';
+  if (roles.includes('customer')) return 'customer-dashboard';
+  if (roles.includes('farmer')) return 'farmer-dashboard';
+  return 'login';
 }
-
-// NOTE: findUser added above
-module.exports = {
-  register, loginVerify, socialLogin, findUser,
-  sendOTP, verifyOTP, resetPassword,
-  getProfile, updateUserRoles,
-};
 
 // ============================================================
 // FIND USER BY PHONE OR NIC
@@ -395,3 +391,40 @@ async function findUser(req, res) {
     return res.status(500).json({ success: false, message: 'Lookup failed.' });
   }
 }
+
+// ============================================================
+// CHECK AVAILABILITY
+// POST /api/auth/check-availability
+// Used by: SignUpPage to validate uniqueness before Auth creation
+// ============================================================
+async function checkAvailability(req, res) {
+  try {
+    const { email, phone, nic } = req.body;
+    
+    if (email) {
+      const emailSnap = await db.collection('users').where('email', '==', email).limit(1).get();
+      if (!emailSnap.empty) return res.status(409).json({ success: false, message: 'This email is already in use by another account.' });
+    }
+    
+    if (phone) {
+      const phoneSnap = await db.collection('users').where('phone', '==', phone).limit(1).get();
+      if (!phoneSnap.empty) return res.status(409).json({ success: false, message: 'This phone number is already registered.' });
+    }
+    
+    if (nic) {
+      const nicSnap = await db.collection('users').where('nic', '==', nic).limit(1).get();
+      if (!nicSnap.empty) return res.status(409).json({ success: false, message: 'This NIC is already registered.' });
+    }
+    
+    return res.status(200).json({ success: true, message: 'Available' });
+  } catch (error) {
+    console.error('Check availability error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to check availability.' });
+  }
+}
+
+module.exports = {
+  register, loginVerify, socialLogin, findUser, checkAvailability,
+  sendOTP, verifyOTP, resetPassword,
+  getProfile, updateUserRoles,
+};
