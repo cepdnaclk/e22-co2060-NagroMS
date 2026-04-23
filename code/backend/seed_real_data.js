@@ -92,9 +92,24 @@ async function seedData() {
 
       // ── Orders ──────────────
       const sampleOrders = [
-        { customerName: 'Colombo Market', items: ['Rice'], total: 5000, status: 'pending' },
-        { customerName: 'Kandy Grocers', items: ['Tomatoes', 'Beans'], total: 3200, status: 'shipped' },
-        { customerName: 'Self Market', items: ['Carrots'], total: 1200, status: 'completed' }
+        { 
+          customerName: 'Colombo Market', 
+          products: [{ name: 'Red Rice', quantity: 10, price: 210, status: 'pending' }], 
+          total: 2100, 
+          status: 'pending' 
+        },
+        { 
+          customerName: 'Kandy Grocers', 
+          products: [{ name: 'Tomatoes', quantity: 5, price: 180, status: 'shipped' }], 
+          total: 900, 
+          status: 'shipped' 
+        },
+        { 
+          customerName: 'Self Market', 
+          products: [{ name: 'Carrots', quantity: 2, price: 320, status: 'completed' }], 
+          total: 640, 
+          status: 'completed' 
+        }
       ];
       for (const o of sampleOrders) {
         const docRef = db.collection('orders').doc();
