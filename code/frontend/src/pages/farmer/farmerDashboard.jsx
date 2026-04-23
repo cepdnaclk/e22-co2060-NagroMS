@@ -973,17 +973,18 @@ function NavButton({ icon, label, active, onClick }) {
 function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders, rentalIncome, rentalExpenses, userName }) {
   const [showMoneyModal, setShowMoneyModal] = useState(null); // 'in', 'out', or null
 
-  // Calculate actual counts
-  const productCount = products.length;
-  const rentedEquipmentCount = rentedEquipment.length;
-  const salesTotal = sales.reduce((total, sale) => total + sale.total, 0);
-  const rentalIncomeTotal = rentalIncome.reduce((total, rental) => total + rental.total, 0);
-  const rentalExpensesTotal = rentalExpenses.reduce((total, expense) => total + expense.total, 0);
+  // Calculate actual counts with safety checks
+  const productCount = (products || []).length;
+  const rentedEquipmentCount = (rentedEquipment || []).length;
+  const salesTotal = (sales || []).reduce((total, sale) => total + (sale.total || 0), 0);
+  const rentalIncomeTotal = (rentalIncome || []).reduce((total, rental) => total + (rental.total || 0), 0);
+  const rentalExpensesTotal = (rentalExpenses || []).reduce((total, expense) => total + (expense.total || 0), 0);
   const totalIncome = salesTotal + rentalIncomeTotal;
   const netProfit = totalIncome - rentalExpensesTotal;
-  // Correctly calculate total pending products across all orders
-  const pendingOrdersCount = orders.reduce((sum, order) => 
-    sum + order.products.filter(p => p.status === 'pending').length, 0
+  
+  // Correctly calculate total pending products across all orders with safety checks
+  const pendingOrdersCount = (orders || []).reduce((sum, order) => 
+    sum + (order.products || []).filter(p => p.status === 'pending').length, 0
   );
 
   return (
@@ -1103,12 +1104,12 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
           </div>
 
           {/* Low Stock Alerts */}
-          {products.filter(p => parseInt(p.quantity) <= 150).length > 0 && (
+          {(products || []).filter(p => parseInt(p.quantity) <= 150).length > 0 && (
             <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg mb-4">
               <p className="text-yellow-900 text-lg font-bold mb-2">
                 ⚠️ Low Stock Alert!
               </p>
-              {products.filter(p => parseInt(p.quantity) <= 150).map(p => (
+              {(products || []).filter(p => parseInt(p.quantity) <= 150).map(p => (
                 <p key={p.id} className="text-yellow-800 text-md">
                   {p.emoji} {p.name}: Only {p.quantity} kg left (Need {150 - parseInt(p.quantity)} kg more)
                 </p>
@@ -1118,7 +1119,7 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
 
           {/* Product Summary */}
           <div className="space-y-3">
-            {products.slice(0, 4).map(product => {
+            {(products || []).slice(0, 4).map(product => {
               const qty = parseInt(product.quantity) || 0;
               const stockStatus = qty > 150 ? 'In Stock' : 'Low Stock';
 
