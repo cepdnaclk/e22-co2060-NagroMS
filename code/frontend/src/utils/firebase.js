@@ -83,6 +83,7 @@ export async function registerWithEmail(formData) {
     if (res.ok) {
       const data = await res.json();
       localStorage.setItem('nagroms_token', idToken);
+      localStorage.setItem('nagroms_uid',   credential.user.uid);
       localStorage.setItem('userRoles',     JSON.stringify(data.user.roles));
       localStorage.setItem('userEmail',     emailForAuth);
       localStorage.setItem('userName',      data.user.fullName || formData.fullName || 'Farmer');
@@ -134,6 +135,7 @@ export async function loginWithEmail(email, password) {
     if (res.ok) {
       const data = await res.json();
       localStorage.setItem('nagroms_token', idToken);
+      localStorage.setItem('nagroms_uid',   credential.user.uid);
       localStorage.setItem('userRoles',     JSON.stringify(data.user.roles));
       localStorage.setItem('userEmail',     email);
       localStorage.setItem('userName',      data.user.fullName || 'Farmer');
@@ -229,6 +231,7 @@ export async function forgotPassword(email) {
 export async function logout() {
   await signOut(auth);
   localStorage.removeItem('nagroms_token');
+  localStorage.removeItem('nagroms_uid');
   localStorage.removeItem('userRoles');
   localStorage.removeItem('userEmail');
   localStorage.removeItem('userName');
