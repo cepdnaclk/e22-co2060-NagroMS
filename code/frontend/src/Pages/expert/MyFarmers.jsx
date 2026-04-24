@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Phone, MessageSquare, MapPin, BarChart2, UserCheck, UserX } from 'lucide-react';
-import { useExpertData } from '../../hooks/useExpertData';
+import { useExpertData } from './hooks/useExpertData';
 import '../../Styles/expertDashboard.css';
 
 const initials = (name = '') => name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
@@ -29,7 +29,7 @@ export default function MyFarmers() {
         .filter(f => filter === 'all' || f.status === filter)
         .filter(f => f.name?.toLowerCase().includes(search.toLowerCase()) || f.cropType?.toLowerCase().includes(search.toLowerCase()));
 
-    const activeCount   = list.filter(f => f.status === 'active').length;
+    const activeCount = list.filter(f => f.status === 'active').length;
     const inactiveCount = list.filter(f => f.status !== 'active').length;
 
     return (

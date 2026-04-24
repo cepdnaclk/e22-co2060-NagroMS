@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { User, Briefcase, Clock, FileText, Video, Phone, MessageSquare, CheckCircle, Save } from 'lucide-react';
-import { useExpertData } from '../../hooks/useExpertData';
+import { useExpertData } from './hooks/useExpertData';
 import { updateExpertProfile } from '../../services/expertService';
 import '../../Styles/expertDashboard.css';
 
@@ -39,11 +39,11 @@ export default function Settings() {
             // Save to database
             const { id, ...rest } = form;
             await updateExpertProfile(expertId, rest);
-            
+
             // Sync with local for immediate UI updates elsewhere
             localStorage.setItem(STORAGE_KEY, JSON.stringify(form));
             if (form.name) localStorage.setItem('userName', form.name);
-            
+
             setSaved(true);
         } catch (err) {
             console.error('Failed to save settings:', err);
@@ -62,8 +62,8 @@ export default function Settings() {
     );
 
     const TABS = [
-        { id: 'profile',       label: 'Profile',       icon: <User size={15} /> },
-        { id: 'availability',  label: 'Availability',  icon: <Clock size={15} /> },
+        { id: 'profile', label: 'Profile', icon: <User size={15} /> },
+        { id: 'availability', label: 'Availability', icon: <Clock size={15} /> },
     ];
 
     return (
@@ -135,7 +135,7 @@ export default function Settings() {
                         {[
                             { key: 'availVideo', label: 'Video Consultations', desc: 'Face-to-face video calls with farmers', icon: <Video size={18} color="var(--exp-green)" /> },
                             { key: 'availPhone', label: 'Phone Consultations', desc: 'Voice calls for quick advice', icon: <Phone size={18} color="#1565c0" /> },
-                            { key: 'availChat',  label: 'Chat Consultations',  desc: 'Text-based messaging sessions', icon: <MessageSquare size={18} color="#b8860b" /> },
+                            { key: 'availChat', label: 'Chat Consultations', desc: 'Text-based messaging sessions', icon: <MessageSquare size={18} color="#b8860b" /> },
                         ].map(({ key, label, desc, icon }) => (
                             <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 12, border: `1px solid ${form[key] ? 'var(--exp-green)' : 'var(--exp-border)'}`, marginBottom: 10, cursor: 'pointer', transition: 'all 0.2s', background: form[key] ? 'var(--exp-green-light)' : 'white' }}
                                 onClick={() => set(key, !form[key])}>

@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { getAuth } from 'firebase/auth';
 import {
-    getDashboardStats, 
+    getDashboardStats,
     subscribeToConsultations,
     subscribeToArticles,
     subscribeToQuestions,
     subscribeToProfile,
     subscribeToFarmers,
     getMyFarmers,
-} from '../services/expertService';
+} from '../../../services/expertService';
 import {
     DUMMY_OVERVIEW, DUMMY_CONSULTATIONS, DUMMY_QUESTIONS,
     DUMMY_ARTICLES, DUMMY_FARMERS, DUMMY_PROFILE,
@@ -37,7 +37,7 @@ export function useExpertData(type = 'overview') {
             return;
         }
 
-        let unsub = () => {};
+        let unsub = () => { };
 
         const init = async () => {
             setLoading(true);
@@ -45,12 +45,12 @@ export function useExpertData(type = 'overview') {
                 if (type === 'overview') {
                     // Start with dummy data but fetch real data
                     setData(DUMMY_MAP.overview);
-                    
+
                     try {
                         const stats = await getDashboardStats(expertId);
                         setData(prev => ({ ...prev, stats: stats || DUMMY_OVERVIEW.stats }));
                     } catch (e) { console.warn('Stats fetch failed'); }
-                    
+
                     const unsubConsult = subscribeToConsultations(expertId, (list) => {
                         setData(prev => ({ ...prev, consultations: list.length > 0 ? list.slice(0, 3) : DUMMY_CONSULTATIONS.slice(0, 3) }));
                     });
@@ -62,27 +62,27 @@ export function useExpertData(type = 'overview') {
                         if (prof?.name) localStorage.setItem('userName', prof.name);
                     });
                     unsub = () => { unsubConsult(); unsubQA(); unsubProf(); };
-                } 
+                }
                 else if (type === 'consultations') {
                     unsub = subscribeToConsultations(expertId, (list) => {
                         setData(list.length > 0 ? list : DUMMY_CONSULTATIONS);
                     });
-                } 
+                }
                 else if (type === 'qa') {
                     unsub = subscribeToQuestions(20, (list) => {
                         setData(list.length > 0 ? list : DUMMY_QUESTIONS);
                     });
-                } 
+                }
                 else if (type === 'knowledge') {
                     unsub = subscribeToArticles(expertId, (list) => {
                         setData(list.length > 0 ? list : DUMMY_ARTICLES);
                     });
-                } 
+                }
                 else if (type === 'farmers') {
                     unsub = subscribeToFarmers(expertId, (list) => {
                         setData(list.length > 0 ? list : DUMMY_FARMERS);
                     });
-                } 
+                }
                 else if (type === 'settings') {
                     unsub = subscribeToProfile(expertId, (prof) => {
                         setData(prof || DUMMY_PROFILE);

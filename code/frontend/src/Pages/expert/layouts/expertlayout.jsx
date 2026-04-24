@@ -3,7 +3,7 @@ import { Outlet, Navigate } from 'react-router-dom';
 import { getAuth } from 'firebase/auth';
 import { Menu } from 'lucide-react';
 import ExpertSidebar from '../components/expertsidebar';
-import { colors, shadows } from '../Styles/expertStyles';
+import { colors, shadows } from '../../../Styles/expertStyles';
 
 export default function ExpertLayout() {
     const user = getAuth().currentUser;
@@ -17,8 +17,8 @@ export default function ExpertLayout() {
         <div style={{ display: 'flex', minHeight: '100vh', background: colors.bg }}>
             {/* Top-left Hamburger Menu (Floating) */}
             <div style={styles.header}>
-                <button 
-                    onClick={() => setSidebarOpen(!sidebarOpen)} 
+                <button
+                    onClick={() => setSidebarOpen(!sidebarOpen)}
                     style={styles.menuBtn}
                     aria-label="Toggle Sidebar"
                 >
@@ -72,7 +72,7 @@ const styles = {
         backdropFilter: 'blur(2px)',
     },
     main: {
-        flex: 1, 
+        flex: 1,
         overflow: 'auto',
     }
 };
