@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { MessageCircle, Clock, ChevronDown, ChevronUp, Send } from 'lucide-react';
-import { useExpertData } from '../../hooks/useExpertData';
+import { useExpertData } from './hooks/useExpertData';
 import { addAnswer } from '../../services/expertService';
 import '../../Styles/expertDashboard.css';
 
@@ -14,7 +14,7 @@ const timeAgo = (ts) => {
 };
 
 const tagColors = ['#e8f5e9', '#e3f2fd', '#fff8e1', '#fce4ec', '#f3e5f5'];
-const tagText   = ['#1F5A2E', '#1565c0', '#b8860b', '#b73232', '#6a1b9a'];
+const tagText = ['#1F5A2E', '#1565c0', '#b8860b', '#b73232', '#6a1b9a'];
 
 export default function QAForum() {
     const { data: questions, loading, expertId } = useExpertData('qa');

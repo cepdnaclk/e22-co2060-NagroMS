@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Video, MessageSquare, Phone, Clock, Calendar, User, MapPin, CheckCircle, XCircle, RotateCcw, PlayCircle } from 'lucide-react';
-import { useExpertData } from '../../hooks/useExpertData';
+import { useExpertData } from './hooks/useExpertData';
 import { updateConsultationStatus } from '../../services/expertService';
 import '../../Styles/expertDashboard.css';
 
@@ -31,7 +31,7 @@ export default function Consultations() {
     const [filter, setFilter] = useState('all');
 
     const updateStatus = async (c, status) => {
-        try { 
+        try {
             await updateConsultationStatus(c.id, status, {
                 expertId,
                 farmerName: c.farmerName,
@@ -39,7 +39,7 @@ export default function Consultations() {
                 scheduledAt: c.scheduledAt,
                 type: c.type,
                 district: c.district || ''
-            }); 
+            });
         } catch (_) { }
     };
 
@@ -67,8 +67,8 @@ export default function Consultations() {
             {/* Filter tabs */}
             <div className="exp-filter-row">
                 {FILTERS.map(f => (
-                    <button 
-                        key={f} 
+                    <button
+                        key={f}
                         className={`exp-filter-tab ${filter === f ? 'active' : ''}`}
                         onClick={() => setFilter(f)}
                     >
