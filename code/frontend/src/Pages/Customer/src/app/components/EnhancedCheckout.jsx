@@ -9,7 +9,7 @@ import {
   X,
   AlertCircle
 } from 'lucide-react';
-import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
+import { ImageWithFallback } from './figma/ImageWithFallback';
 import { PhoneOTPModel } from './PhoneOTPModel';
 
 // Enhanced Checkout Section with Payment Receipt Upload

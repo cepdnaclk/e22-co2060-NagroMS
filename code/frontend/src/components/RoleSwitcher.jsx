@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { ChevronDown, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-export function RoleSwitcher({ currentRole, onNavigate }) {
+export function RoleSwitcher({ currentRole }) {
+  const navigate = useNavigate();
   const [userRoles, setUserRoles] = useState([]);
   const [userEmail, setUserEmail] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -41,13 +43,13 @@ export function RoleSwitcher({ currentRole, onNavigate }) {
 
   const handleRoleSwitch = (role) => {
     if (role === 'farmer') {
-      onNavigate('farmer-dashboard');
+      navigate('/farmer-dashboard');
     } else if (role === 'customer') {
-      onNavigate('customer-dashboard');
+      navigate('/customer-dashboard');
     } else if (role === 'service-provider') {
-      onNavigate('service-provider-dashboard');
+      navigate('/service-provider-dashboard');
     } else if (role === 'expert') {
-      onNavigate('expert-dashboard');
+      navigate('/expert-dashboard');
     }
     setIsOpen(false);
   };
@@ -122,7 +124,7 @@ export function RoleSwitcher({ currentRole, onNavigate }) {
                 onClick={() => {
                   localStorage.removeItem('userRoles');
                   localStorage.removeItem('userEmail');
-                  onNavigate('landing');
+                  navigate('/');
                 }}
                 className="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded transition-colors text-left"
               >

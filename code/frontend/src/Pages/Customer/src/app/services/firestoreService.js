@@ -2,7 +2,7 @@ import {
   doc, getDoc, setDoc, updateDoc,
   collection, addDoc, getDocs, query, where, orderBy
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db } from '../../../../../utils/firebase.js';
 
 // ─── CUSTOMER PROFILE ────────────────────────────────────────
 

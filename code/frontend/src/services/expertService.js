@@ -3,7 +3,7 @@ import {
     getDocs, getDoc, addDoc, updateDoc, deleteDoc, setDoc,
     serverTimestamp, onSnapshot, increment,
 } from 'firebase/firestore';
-import { db } from '../utils/firebase'; // adjust to your firebase config path
+import { db, auth } from '../utils/firebase.js'; // adjust to your firebase config path
 
 
 // ─── CONSULTATIONS ────────────────────────────────────────────────────────────
@@ -239,4 +239,4 @@ export const subscribeToProfile = (expertId, callback) => {
             email: userData.email || expertData.email || '',
         });
     });
-};
+};
