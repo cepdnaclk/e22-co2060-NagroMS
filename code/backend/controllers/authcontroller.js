@@ -44,35 +44,50 @@ function getDashboardRoute(roles) {
 const VALID_ROLES = ['expert', 'farmer', 'customer', 'service-provider'];
 
 // ──────────────────────────────────────────────────────────────
-// register — create user in Firebase Auth + Firestore
+// register — save user profile to Firestore after client-side
+//            Firebase Auth creation (idToken proves the user exists)
 // ──────────────────────────────────────────────────────────────
 async function register(req, res) {
   try {
     const {
-      email, password, fullName, phone, nic,
+      idToken,
+      fullName, phone, nic,
       accountType, businessName, businessRegistrationNumber,
-      contactPersonName, district, roles,
+      contactPersonName, district, roles, emailForAuth,
     } = req.body;
 
-    // Create user in Firebase Auth
-    const userRecord = await auth.createUser({
-      email,
-      password,
-      displayName: fullName || businessName || '',
-    });
+    // Verify the ID token from the client — this proves the Firebase
+    // user was already created successfully by the frontend SDK.
+    if (!idToken) {
+      return res.status(400).json({ success: false, message: 'ID token is required.' });
+    }
+    const decodedToken = await auth.verifyIdToken(idToken);
+    const uid = decodedToken.uid;
+
+    // Check if a Firestore profile already exists for this UID
+    const existing = await getUserById(uid);
+    if (existing) {
+      return res.status(409).json({ success: false, message: 'An account profile already exists for this user.' });
+    }
 
     // Save user document in Firestore
-    const userDoc = await createUser(userRecord.uid, {
-      email, phone, nic, fullName, accountType,
-      businessName, businessRegistrationNumber,
-      contactPersonName, district,
+    const userDoc = await createUser(uid, {
+      email: emailForAuth || decodedToken.email || '',
+      phone: phone || '',
+      nic: nic || '',
+      fullName: fullName || '',
+      accountType: accountType || 'individual',
+      businessName: businessName || '',
+      businessRegistrationNumber: businessRegistrationNumber || '',
+      contactPersonName: contactPersonName || '',
+      district: district || '',
       roles: roles || [],
       provider: 'email',
-      emailVerified: false,
+      emailVerified: decodedToken.email_verified || false,
     });
 
     // Set custom claims for roles
-    await auth.setCustomUserClaims(userRecord.uid, { roles: roles || [] });
+    await auth.setCustomUserClaims(uid, { roles: roles || [] });
 
     return res.status(201).json({
       success: true,
@@ -82,8 +97,8 @@ async function register(req, res) {
     });
   } catch (error) {
     console.error('Register error:', error);
-    if (error.code === 'auth/email-already-exists') {
-      return res.status(409).json({ success: false, message: 'Email already registered.' });
+    if (error.code === 'auth/argument-error' || error.code === 'auth/id-token-expired') {
+      return res.status(401).json({ success: false, message: 'Invalid or expired session. Please try again.' });
     }
     res.status(500).json({ success: false, message: error.message });
   }
