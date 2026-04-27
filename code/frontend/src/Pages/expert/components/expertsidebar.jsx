@@ -1,7 +1,8 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Calendar, MessageSquare, BookOpen, Users, Settings, LogOut, X } from 'lucide-react';
-import { logout } from '../utils/firebase';
-import { colors } from '../Styles/expertStyles';
+import { logout } from '../../../utils/firebase.js';
+import { colors } from '../../../Styles/expertStyles';
+import { RoleSwitcher } from '../../../components/RoleSwitcher';
 
 const navItems = [
     { to: '/expert-dashboard', label: 'Overview', icon: LayoutDashboard, end: true },
@@ -36,6 +37,10 @@ export default function ExpertSidebar({ isOpen, setIsOpen }) {
                 >
                     <X size={20} color={colors.textMuted} />
                 </button>
+            </div>
+
+            <div style={{ padding: '0 16px 16px' }}>
+                <RoleSwitcher currentRole="expert" />
             </div>
 
             <nav style={styles.nav}>

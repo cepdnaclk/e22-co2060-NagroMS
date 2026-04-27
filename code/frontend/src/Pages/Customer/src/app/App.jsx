@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CustomerDashboard } from '@/app/components/CustomerDashboard';
+import { CustomerDashboard } from './components/CustomerDashboard';
 
 export default function App() {
   const handleNavigate = (page) => {

@@ -5,7 +5,7 @@ import {
   Check, Building2, UserCircle, Tractor, ShoppingBag, Wrench, GraduationCap,
   AlertCircle, Eye, EyeOff
 } from 'lucide-react';
-import { registerWithEmail } from '../utils/firebase';
+import { registerWithEmail } from '../../utils/firebase.js';
 
 const SRI_LANKAN_DISTRICTS = [
   'Colombo','Gampaha','Kalutara','Kandy','Matale','Nuwara Eliya',

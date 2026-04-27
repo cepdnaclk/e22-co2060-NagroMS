@@ -32,7 +32,7 @@ import {
   Bot,
   Sparkles
 } from 'lucide-react';
-import { RoleSwitcher } from "../RoleSwitcher.jsx";
+import { RoleSwitcher } from "../../components/RoleSwitcher.jsx";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "./InputOTP";
 import './farmerDashboard.css';
 import {
@@ -140,11 +140,11 @@ export function FarmerDashboard({ onNavigate }) {
         const profileRes = await fetchFarmerProfile();
         if (profileRes.success && profileRes.data) {
           const p = profileRes.data;
-          if (p.fullName)  { setUserName(p.fullName); localStorage.setItem('userName', p.fullName); }
-          if (p.email)     { setUserEmail(p.email);   localStorage.setItem('userEmail', p.email); }
-          if (p.phone)     { setUserPhone(p.phone);   localStorage.setItem('userPhone', p.phone); }
-          if (p.district)  { setUserLocation(p.district); localStorage.setItem('userLocation', p.district); }
-          if (p.nic)       { setUserNIC(p.nic);       localStorage.setItem('userNIC', p.nic); }
+          if (p.fullName) { setUserName(p.fullName); localStorage.setItem('userName', p.fullName); }
+          if (p.email) { setUserEmail(p.email); localStorage.setItem('userEmail', p.email); }
+          if (p.phone) { setUserPhone(p.phone); localStorage.setItem('userPhone', p.phone); }
+          if (p.district) { setUserLocation(p.district); localStorage.setItem('userLocation', p.district); }
+          if (p.nic) { setUserNIC(p.nic); localStorage.setItem('userNIC', p.nic); }
         }
         // Fetch products
         const productsRes = await apiFetchProducts();
@@ -434,10 +434,10 @@ export function FarmerDashboard({ onNavigate }) {
   const handleSaveProduct = async () => {
     try {
       const res = await apiUpdateProduct(editingProduct.id, {
-        name:     editingProduct.name,
+        name: editingProduct.name,
         quantity: editingProduct.quantity,
-        price:    editingProduct.price,
-        status:   editingProduct.status,
+        price: editingProduct.price,
+        status: editingProduct.status,
       });
       if (res.success) {
         setProducts(products.map(p => p.id === editingProduct.id ? res.data : p));
@@ -470,10 +470,10 @@ export function FarmerDashboard({ onNavigate }) {
 
     try {
       const res = await apiAddProduct({
-        name:     newProduct.name,
+        name: newProduct.name,
         quantity: newProduct.quantity,
-        price:    newProduct.price,
-        status:   newProduct.status || 'In Stock',
+        price: newProduct.price,
+        status: newProduct.status || 'In Stock',
       });
       if (res.success && res.data) {
         setProducts([...products, res.data]);
@@ -988,7 +988,7 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
   const totalIncome = salesTotal + rentalIncomeTotal;
   const netProfit = totalIncome - rentalExpensesTotal;
   // Correctly calculate total pending products across all orders
-  const pendingOrdersCount = orders.reduce((sum, order) => 
+  const pendingOrdersCount = orders.reduce((sum, order) =>
     sum + order.products.filter(p => p.status === 'pending').length, 0
   );
 
@@ -2071,7 +2071,7 @@ function OrdersContent({ orders }) {
   const toggleProductStatus = async (customerId, productId) => {
     // Find the new status first
     const customer = ordersList.find(c => c.id === customerId);
-    const product  = customer?.products.find(p => p.id === productId);
+    const product = customer?.products.find(p => p.id === productId);
     if (!product) return;
 
     const newStatus = product.status === 'pending' ? 'completed' : 'pending';
@@ -3164,10 +3164,10 @@ function SettingsContent({
     try {
       const res = await apiUpdateFarmerProfile({
         fullName: profileData.name,
-        email:    profileData.email,
-        phone:    profileData.phone,
+        email: profileData.email,
+        phone: profileData.phone,
         location: profileData.location,
-        nic:      profileData.nic,
+        nic: profileData.nic,
         farmSize: profileData.farmSize
       });
 

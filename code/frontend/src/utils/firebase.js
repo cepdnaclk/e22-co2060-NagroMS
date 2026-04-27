@@ -16,12 +16,12 @@ import {
 
 // ── Your Firebase config (keep your existing values) ────────
 const firebaseConfig = {
-  apiKey: "AIzaSyAYbskUuo_Iy1DljdoHxmk3qKCbLzmE5To",
-  authDomain: "nagromsnew.firebaseapp.com",
-  projectId: "nagromsnew",
-  storageBucket: "nagromsnew.firebasestorage.app",
-  messagingSenderId: "28463182267",
-  appId: "1:28463182267:web:b76a1f04988a35f3ce149e"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID
 };
 
 const app = initializeApp(firebaseConfig);
@@ -75,11 +75,34 @@ export async function loginWithEmail(email, password) {
 // REGISTER WITH EMAIL
 // ============================================================
 export async function registerWithEmail(formData) {
-  const emailForAuth = formData.email || `${formData.phone.replace(/\s+/g, '')}@nagro.lk`;
+  const usingPhone = !formData.email;
+  const emailForAuth = formData.email
+    ? formData.email
+    : `${formData.phone.replace(/\s+/g, '')}@nagro.lk`;
   const password = formData.password || 'TemporaryPassword123!';
 
-  // Step 1: Firebase Auth
-  const credential = await createUserWithEmailAndPassword(auth, emailForAuth, password);
+  let credential;
+  try {
+    // Step 1: Firebase Auth — create user
+    credential = await createUserWithEmailAndPassword(auth, emailForAuth, password);
+  } catch (firebaseErr) {
+    // Give a clear, specific message based on what was entered
+    if (firebaseErr.code === 'auth/email-already-in-use') {
+      if (usingPhone) {
+        throw Object.assign(
+          new Error(`This phone number (${formData.phone}) is already registered. Please use a different phone number or sign in.`),
+          { code: 'auth/email-already-in-use' }
+        );
+      } else {
+        throw Object.assign(
+          new Error(`This email address (${formData.email}) is already registered. Please use a different email or sign in.`),
+          { code: 'auth/email-already-in-use' }
+        );
+      }
+    }
+    throw firebaseErr;
+  }
+
   const idToken = await credential.user.getIdToken();
 
   // Step 2: Send to backend
@@ -92,7 +115,7 @@ export async function registerWithEmail(formData) {
       emailForAuth,
     }),
   });
-  
+
   const data = await res.json();
 
   if (!res.ok) {

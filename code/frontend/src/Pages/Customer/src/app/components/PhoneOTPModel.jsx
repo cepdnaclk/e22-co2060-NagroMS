@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
-import { auth } from '../firebase';
+import { auth } from '../../../../../utils/firebase.js';
 
 export function PhoneOTPModel({ phoneNumber, onVerified, onClose }) {
   const [otp, setOtp] = useState('');

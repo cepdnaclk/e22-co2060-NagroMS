@@ -33,7 +33,7 @@ import {
 } 
 from 'lucide-react';
 
-import { auth } from '../firebase';
+import { auth } from '../../../../../utils/firebase.js';
 import { onAuthStateChanged } from 'firebase/auth';
 import { 
   loadCustomerProfile, 
@@ -45,8 +45,8 @@ import {
   loadCart
 } from '../services/firestoreService';
 
-import { ImageWithFallback } from '@/app/components/figma/ImageWithFallback';
-import { RoleSwitcher } from './RoleSwitcher';
+import { ImageWithFallback } from './figma/ImageWithFallback';
+import { RoleSwitcher } from '../../../../../components/RoleSwitcher';
 import { Chatbot } from './Chatbot';
 import { NotificationCenter } from './NotificationCenter';
 import { EnhancedCheckoutSection } from './EnhancedCheckout';

@@ -14,7 +14,7 @@ import {
   X,
   AlertTriangle
 } from 'lucide-react';
-import { db } from '../firebase';
+import { db } from '../../../../../utils/firebase.js';
 import { 
   collection, addDoc, getDocs, query, 
   where, doc, updateDoc, onSnapshot 

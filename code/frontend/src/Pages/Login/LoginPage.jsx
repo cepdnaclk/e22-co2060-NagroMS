@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Phone, CreditCard, ArrowRight, AlertCircle } from 'lucide-react';
-import { loginWithEmail, loginWithGoogle, loginWithFacebook } from '../utils/firebase';
+import { loginWithEmail, loginWithGoogle, loginWithFacebook } from '../../utils/firebase.js';
 
 function GoogleIcon() {
   return (

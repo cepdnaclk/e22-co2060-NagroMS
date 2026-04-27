@@ -2,8 +2,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 
 // Auth pages
 import LandingPage from './pages/Landingpage/Landingpage.jsx';
-import { LoginPage } from './pages/LoginPage.jsx';
-import { SignUpPage } from './pages/SignUpPage.jsx';
+import { LoginPage } from './pages/Login/LoginPage.jsx';
+import { SignUpPage } from './pages/Login/SignUpPage.jsx';
 import { ForgotPasswordPage } from './pages/Login/ForgotPasswordPage.jsx';
 
 // Expert dashboard components
@@ -14,6 +14,12 @@ import QAForum from './pages/expert/QAForum.jsx';
 import KnowledgeBase from './pages/expert/Knowledgebase.jsx';
 import MyFarmers from './pages/expert/MyFarmers.jsx';
 import Settings from './pages/expert/Settings.jsx';
+
+// Farmer dashboard
+import { FarmerDashboard } from './pages/farmer/farmerDashboard.jsx';
+
+// Customer dashboard
+import { CustomerDashboard } from './pages/Customer/src/app/components/CustomerDashboard.jsx';
 
 // Placeholder dashboards for other roles
 function PlaceholderDashboard({ role }) {
@@ -53,9 +59,14 @@ export default function App() {
           <Route path="settings" element={<Settings />} />
         </Route>
 
+        {/* Farmer Dashboard Route */}
+        <Route path="/farmer-dashboard" element={<FarmerDashboard onNavigate={() => {}} />} />
+
         {/* Placeholder Routes for other roles */}
-        <Route path="/farmer-dashboard" element={<PlaceholderDashboard role="farmer" />} />
-        <Route path="/customer-dashboard" element={<PlaceholderDashboard role="customer" />} />
+        {/* Customer Dashboard Route */}
+        <Route path="/customer-dashboard" element={<CustomerDashboard onNavigate={(path) => { if (path === 'landing') window.location.href = '/'; }} />} />
+
+        {/* Placeholder Routes for other roles */}
         <Route path="/service-provider-dashboard" element={<PlaceholderDashboard role="service-provider" />} />
 
         {/* Fallback */}
