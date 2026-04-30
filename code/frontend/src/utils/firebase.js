@@ -105,22 +105,30 @@ export async function registerWithEmail(formData) {
 
   const idToken = await credential.user.getIdToken();
 
-  // Step 2: Send to backend
-  const res = await fetch(`${API}/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      idToken,
-      ...formData,
-      emailForAuth,
-    }),
-  });
-
-  const data = await res.json();
+  let res;
+  let data;
+  try {
+    // Step 2: Send to backend
+    res = await fetch(`${API}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        idToken,
+        ...formData,
+        emailForAuth,
+      }),
+    });
+    
+    data = await res.json();
+  } catch (err) {
+    // Network error (e.g., Failed to fetch) or invalid JSON
+    await credential.user.delete();
+    throw new Error('Network error: Could not connect to the server.');
+  }
 
   if (!res.ok) {
     await credential.user.delete(); // cleanup Firebase if backend fails
-    throw new Error(data.message || 'Registration failed');
+    throw new Error(data?.message || 'Registration failed');
   }
 
   localStorage.setItem('nagroms_token', idToken);

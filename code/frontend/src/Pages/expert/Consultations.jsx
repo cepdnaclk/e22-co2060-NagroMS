@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Video, MessageSquare, Phone, Clock, Calendar, User, MapPin, CheckCircle, XCircle, RotateCcw, PlayCircle } from 'lucide-react';
 import { useExpertData } from './hooks/useExpertData';
 import { updateConsultationStatus } from '../../services/expertService';
-import '../../Styles/expertDashboard.css';
+import '../../styles/expertDashboard.css';
 
 const typeIcon = (type) => {
     const p = { size: 16, color: 'var(--exp-green)', strokeWidth: 1.8 };
