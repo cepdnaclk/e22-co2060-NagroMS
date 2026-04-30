@@ -33,6 +33,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { RoleSwitcher } from "../../components/RoleSwitcher.jsx";
+import { logout } from "../../utils/firebase";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "./InputOTP";
 import CommunityNetwork from "../../components/Network/CommunityNetwork";
 import './farmerDashboard.css';
@@ -665,15 +666,10 @@ export function FarmerDashboard({ onNavigate }) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header with Menu Button - Always Visible */}
-      <div className="bg-white border-b border-green-200 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="bg-primary rounded-lg p-1.5">
-            <Sprout className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-primary font-semibold">NagroMS</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <RoleSwitcher currentRole="farmer" onNavigate={onNavigate} />
+      <div 
+        className={`bg-white border-b border-green-200 px-4 py-3 flex items-center justify-between transition-all duration-300 ${sidebarOpen ? 'pl-64' : 'pl-0'}`}
+      >
+        <div className="flex items-center gap-4">
           <button
             type="button"
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -682,16 +678,19 @@ export function FarmerDashboard({ onNavigate }) {
           >
             {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
+          <div className="flex items-center gap-2">
+            <div className="bg-primary rounded-lg p-1.5">
+              <Sprout className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-primary font-semibold">NagroMS</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <RoleSwitcher currentRole="farmer" onNavigate={onNavigate} />
         </div>
       </div>
 
-      {/* Overlay - Click to close sidebar */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+
 
       {/* Sidebar - Hidden by default, shows on menu click */}
       <aside className={`
@@ -847,7 +846,10 @@ export function FarmerDashboard({ onNavigate }) {
               </div>
             </button>
             <button
-              onClick={() => onNavigate('landing')}
+              onClick={async () => {
+                await logout();
+                window.location.href = '/';
+              }}
               className="w-full flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
             >
               <LogOut className="w-4 h-4" />
@@ -858,7 +860,7 @@ export function FarmerDashboard({ onNavigate }) {
       </aside>
 
       {/* Main Content */}
-      <main className="min-h-screen">
+      <main className={`min-h-screen transition-all duration-300 ${sidebarOpen ? 'pl-64' : 'pl-0'}`}>
         <div className="p-4 lg:p-8">
           {renderContent()}
         </div>
