@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { RoleSwitcher } from "../../components/RoleSwitcher.jsx";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "./InputOTP";
+import CommunityNetwork from "../../components/Network/CommunityNetwork";
 import './farmerDashboard.css';
 import {
   fetchFarmerProfile,
@@ -637,6 +638,8 @@ export function FarmerDashboard({ onNavigate }) {
         />;
       case 'chatbot':
         return <ChatbotContent userLocation={userLocation} />;
+      case 'community':
+        return <CommunityNetwork currentUserRole="farmer" />;
       case 'settings':
         return (
           <SettingsContent
@@ -806,6 +809,15 @@ export function FarmerDashboard({ onNavigate }) {
               active={activeNav === 'chatbot'}
               onClick={() => {
                 setActiveNav('chatbot');
+                setSidebarOpen(false);
+              }}
+            />
+            <NavButton
+              icon="🤝"
+              label="Community"
+              active={activeNav === 'community'}
+              onClick={() => {
+                setActiveNav('community');
                 setSidebarOpen(false);
               }}
             />

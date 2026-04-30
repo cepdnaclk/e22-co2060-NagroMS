@@ -51,6 +51,7 @@ import { Chatbot } from './Chatbot';
 import { NotificationCenter } from './NotificationCenter';
 import { EnhancedCheckoutSection } from './EnhancedCheckout';
 import { EnhancedOrdersSection } from './EnhancedOrders';
+import CommunityNetwork from '../../../../../components/Network/CommunityNetwork';
 
 // ─── FALLBACK PRODUCTS (shown if Firestore has no products yet) ───────────────
 const FALLBACK_PRODUCTS = [
@@ -512,6 +513,8 @@ export function CustomerDashboard({ onNavigate }) {
         />;
       case 'orders':
         return <EnhancedOrdersSection pastOrders={ordersToShow} uid={uid} />;
+      case 'community':
+        return <CommunityNetwork currentUserRole="customer" />;
       default:
         return null;
     }
@@ -598,6 +601,12 @@ export function CustomerDashboard({ onNavigate }) {
               label="Past Orders"
               active={activeSection === 'orders'}
               onClick={() => { setActiveSection('orders'); setSidebarOpen(false); }}
+            />
+            <NavButton
+              icon={<User className="w-5 h-5" />}
+              label="Community"
+              active={activeSection === 'community'}
+              onClick={() => { setActiveSection('community'); setSidebarOpen(false); }}
             />
           </nav>
 
