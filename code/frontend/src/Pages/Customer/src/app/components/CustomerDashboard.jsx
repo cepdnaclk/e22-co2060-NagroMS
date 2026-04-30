@@ -523,12 +523,24 @@ export function CustomerDashboard({ onNavigate }) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-green-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
-        <div className="flex items-center gap-2">
-          <div className="bg-primary rounded-lg p-1.5">
-            <Sprout className="w-5 h-5 text-white" />
+      <div 
+        className={`bg-white border-b border-green-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30 transition-all duration-300 ${sidebarOpen ? 'pl-64' : 'pl-0'}`}
+      >
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="text-foreground hover:bg-green-50 p-2 rounded-lg transition-colors"
+            aria-label="Toggle menu"
+          >
+            {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="bg-primary rounded-lg p-1.5">
+              <Sprout className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-primary font-semibold">NagroMS</span>
           </div>
-          <span className="text-primary font-semibold">NagroMS</span>
         </div>
         <div className="flex items-center gap-2">
           <NotificationCenter />
@@ -540,24 +552,10 @@ export function CustomerDashboard({ onNavigate }) {
             <LogOut className="w-4 h-4" />
             <span className="hidden sm:inline">Logout</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-foreground hover:bg-green-50 p-2 rounded-lg transition-colors"
-            aria-label="Toggle menu"
-          >
-            {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
         </div>
       </div>
 
-      {/* Overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+
 
       {/* Sidebar */}
       <aside className={`
@@ -623,7 +621,7 @@ export function CustomerDashboard({ onNavigate }) {
       </aside>
 
       {/* Main Content */}
-      <main className="min-h-screen pb-20">
+      <main className={`min-h-screen pb-20 transition-all duration-300 ${sidebarOpen ? 'pl-64' : 'pl-0'}`}>
         <div className="p-4 lg:p-8">
           {renderContent()}
         </div>
