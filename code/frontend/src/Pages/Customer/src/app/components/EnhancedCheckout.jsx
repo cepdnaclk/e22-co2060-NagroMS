@@ -9,11 +9,12 @@ import {
   X,
   AlertCircle
 } from 'lucide-react';
+import { saveOrder } from '../services/firestoreService';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { PhoneOTPModel } from './PhoneOTPModel';
 
 // Enhanced Checkout Section with Payment Receipt Upload
-export function EnhancedCheckoutSection({ cart, profile, getCartTotal, getTotalDeliveryFee, setActiveSection, setCart, PRODUCTS }) {
+export function EnhancedCheckoutSection({ uid, cart, profile, getCartTotal, getTotalDeliveryFee, setActiveSection, setCart, PRODUCTS }) {
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('cod');
   const [paymentReceipt, setPaymentReceipt] = useState(null);
@@ -69,27 +70,102 @@ export function EnhancedCheckoutSection({ cart, profile, getCartTotal, getTotalD
     placeOrder();
   };
 
-  const placeOrder = () => {
-    const orderData = {
-      cart,
-      profile,
-      paymentMethod,
-      paymentReceipt: paymentReceipt?.name,
-      deliveryNotes,
-      contactNumber,
-      totalAmount,
-      deliveryFee,
-      orderDate: new Date().toISOString()
-    };
+  const placeOrder = async () => {
+    if (!uid) {
+      alert("Error: User not authenticated.");
+      return;
+    }
 
-    console.log('Order placed:', orderData);
+    // Group items by farmerId
+    const ordersByFarmer = {};
+    
+    cart.forEach(item => {
+      const productInfo = PRODUCTS.find(p => String(p.id) === String(item.id));
+      if (!productInfo) return;
+      
+      const farmerId = productInfo.farmerId || 'unknown_farmer';
+      if (!ordersByFarmer[farmerId]) {
+        ordersByFarmer[farmerId] = [];
+      }
+      
+      // Calculate item price
+      let itemPrice = productInfo.price;
+      if (productInfo.availableUnits && item.unit) {
+        const unitInfo = productInfo.availableUnits.find(u => u.unit === item.unit);
+        if (unitInfo) itemPrice = unitInfo.price;
+      }
 
-    setOrderPlaced(true);
-    setTimeout(() => {
-      setCart([]);
-      setOrderPlaced(false);
-      setActiveSection('orders');
-    }, 3000);
+      ordersByFarmer[farmerId].push({
+        id: item.id,
+        productId: item.id,
+        productName: productInfo.name,
+        productImage: productInfo.image,
+        quantity: item.quantity,
+        unit: item.unit || productInfo.unit,
+        price: itemPrice,
+        status: 'pending'
+      });
+    });
+
+    try {
+      // Create an order for each farmer
+      const orderPromises = Object.entries(ordersByFarmer).map(([farmerId, products]) => {
+        const farmerTotal = products.reduce((sum, p) => sum + (p.price * p.quantity), 0);
+        
+        const formattedProducts = products.map(p => ({
+          id: String(p.id),
+          productId: String(p.id),
+          name: p.name || p.productName,
+          productName: p.name || p.productName,
+          quantity: p.quantity,
+          price: p.price,
+          unit: p.unit,
+          status: 'pending'
+        }));
+
+        const orderData = {
+          farmerId,
+          customerId: uid,
+          customerName: profile.name || 'Customer',
+          customerPhone: contactNumber || profile.phone || '',
+          location: `${profile.addressLine1}, ${profile.city}`,
+          phone: contactNumber,
+          paymentMethod,
+          paymentReceipt: paymentReceipt?.name || null,
+          deliveryNotes,
+          totalAmount: farmerTotal,
+          deliveryFee: 0,
+          orderDate: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          status: 'pending',
+          products: formattedProducts,
+          items: formattedProducts,
+          total: farmerTotal,
+          date: new Date().toISOString().split('T')[0]
+        };
+
+        return saveOrder(uid, orderData);
+      });
+
+      if (orderPromises.length === 0) {
+        console.error('No orders created. Cart might be invalid or products not found.');
+        alert('Could not process order items. Please try again.');
+        return;
+      }
+
+      console.log(`Placing ${orderPromises.length} orders for farmer(s)...`);
+      await Promise.all(orderPromises);
+
+      setOrderPlaced(true);
+      setTimeout(() => {
+        setCart([]);
+        setOrderPlaced(false);
+        setActiveSection('orders');
+      }, 3000);
+    } catch (error) {
+      console.error('Error placing orders:', error);
+      alert('Failed to place order. Please try again.');
+    }
   };
 
   if (orderPlaced) {
@@ -400,7 +476,7 @@ export function EnhancedCheckoutSection({ cart, profile, getCartTotal, getTotalD
         <h2 className="text-2xl text-primary mb-6">🛒 Order Items</h2>
         <div className="space-y-3">
           {cart.map(item => {
-            const product = PRODUCTS.find(p => p.id === item.id);
+            const product = PRODUCTS.find(p => String(p.id) === String(item.id));
             if (!product) return null;
 
             let itemPrice = product.price;

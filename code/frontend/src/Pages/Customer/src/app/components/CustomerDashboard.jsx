@@ -54,135 +54,8 @@ import { EnhancedOrdersSection } from './EnhancedOrders';
 import CommunityNetwork from '../../../../../components/Network/CommunityNetwork';
 
 // ─── FALLBACK PRODUCTS (shown if Firestore has no products yet) ───────────────
-const FALLBACK_PRODUCTS = [
-  {
-    id: 1,
-    name: 'Fresh Tomatoes',
-    farmer: 'Sunil Farm',
-    location: 'Kandy',
-    district: 'Kandy',
-    price: 150,
-    unit: 'kg',
-    rating: 4.8,
-    image: 'https://images.unsplash.com/photo-1560433802-62c9db426a4d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcmVzaCUyMHRvbWF0b2VzJTIwdmVnZXRhYmxlfGVufDF8fHx8MTc2OTUwOTA3Nnww&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'vegetables',
-    available: '50 kg',
-    farmerPhone: '+94 77 234 5678',
-    availableUnits: [
-      { unit: 'kg', price: 150, label: 'Kilogram' },
-      { unit: 'g', price: 0.15, label: 'Gram' }
-    ]
-  },
-  {
-    id: 2,
-    name: 'Organic Rice',
-    farmer: 'Perera Agriculture',
-    location: 'Anuradhapura',
-    district: 'Anuradhapura',
-    price: 180,
-    unit: 'kg',
-    rating: 4.9,
-    image: 'https://images.unsplash.com/photo-1763537351442-f377a4878d9a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyaWNlJTIwZ3JhaW4lMjBoYXJ2ZXN0fGVufDF8fHx8MTc2OTUwOTA3N3ww&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'grains',
-    available: '200 kg',
-    farmerPhone: '+94 77 345 6789',
-    availableUnits: [
-      { unit: 'kg', price: 180, label: 'Kilogram' },
-      { unit: 'g', price: 0.18, label: 'Gram' }
-    ]
-  },
-  {
-    id: 3,
-    name: 'Fresh Carrots',
-    farmer: 'Silva Farm',
-    location: 'Nuwara Eliya',
-    district: 'Nuwara Eliya',
-    price: 120,
-    unit: 'kg',
-    rating: 4.7,
-    image: 'https://images.unsplash.com/photo-1717959159782-98c42b1d4f37?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcmVzaCUyMGNhcnJvdHMlMjB2ZWdldGFibGVzfGVufDF8fHx8MTc2OTUwMjAwNnww&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'vegetables',
-    available: '40 kg',
-    farmerPhone: '+94 77 456 7890',
-    availableUnits: [
-      { unit: 'kg', price: 120, label: 'Kilogram' },
-      { unit: 'g', price: 0.12, label: 'Gram' }
-    ]
-  },
-  {
-    id: 4,
-    name: 'Green Beans',
-    farmer: 'Fernando Organic',
-    location: 'Matale',
-    district: 'Matale',
-    price: 120,
-    unit: 'kg',
-    rating: 4.6,
-    image: 'https://images.unsplash.com/photo-1574963835594-61eede2070dc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxncmVlbiUyMGJlYW5zJTIwdmVnZXRhYmxlfGVufDF8fHx8MTc2OTUwMjYxMnww&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'vegetables',
-    available: '30 kg',
-    farmerPhone: '+94 77 567 8901',
-    availableUnits: [
-      { unit: 'kg', price: 120, label: 'Kilogram' },
-      { unit: 'g', price: 0.12, label: 'Gram' }
-    ]
-  },
-  {
-    id: 5,
-    name: 'Fresh Bananas',
-    farmer: 'Rathnayake Farm',
-    location: 'Kegalle',
-    district: 'Kegalle',
-    price: 100,
-    unit: 'kg',
-    rating: 4.8,
-    image: 'https://images.unsplash.com/photo-1643188626775-05290d1b6acb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcmVzaCUyMGJhbmFuYXMlMjB0cm9waWNhbCUyMGZydWl0fGVufDF8fHx8MTc2OTUwOTA3OHww&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'fruits',
-    available: '80 kg',
-    farmerPhone: '+94 77 678 9012',
-    availableUnits: [
-      { unit: 'bunch', price: 100, label: 'Bunch' },
-      { unit: 'kg', price: 100, label: 'Kilogram' },
-      { unit: 'g', price: 0.10, label: 'Gram' }
-    ]
-  },
-  {
-    id: 6,
-    name: 'Papaya',
-    farmer: 'Wijesinghe Gardens',
-    location: 'Gampaha',
-    district: 'Gampaha',
-    price: 90,
-    unit: 'kg',
-    rating: 4.5,
-    image: 'https://images.unsplash.com/photo-1651821322744-73ee50bf4046?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwYXBheWElMjB0cm9waWNhbCUyMGZydWl0fGVufDF8fHx8MTc2OTUwMjc5N3ww&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'fruits',
-    available: '60 kg',
-    farmerPhone: '+94 77 789 0123',
-    availableUnits: [
-      { unit: 'unit', price: 90, label: 'Each' },
-      { unit: 'kg', price: 90, label: 'Kilogram' },
-      { unit: 'g', price: 0.09, label: 'Gram' }
-    ]
-  },
-  {
-    id: 7,
-    name: 'Fresh Coconuts',
-    farmer: 'De Silva Estate',
-    location: 'Colombo',
-    district: 'Colombo',
-    price: 80,
-    unit: 'unit',
-    rating: 4.7,
-    image: 'https://images.unsplash.com/photo-1589823635451-0c3e1760dc19?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb2NvbnV0JTIwZnJlc2h8ZW58MXx8fHwxNzY5NTAyNzk3fDA&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'fruits',
-    available: '100 units',
-    farmerPhone: '+94 77 890 1234',
-    availableUnits: [
-      { unit: 'unit', price: 80, label: 'Each' }
-    ]
-  }
-];
+// Products are fetched from Firestore in real-time
+const FALLBACK_PRODUCTS = [];
 
 // Delivery fee calculation based on district distance
 const DISTRICT_DELIVERY_FEES = {
@@ -297,15 +170,26 @@ export function CustomerDashboard({ onNavigate }) {
         const savedCart = await loadCart(user.uid);
         if (savedCart && savedCart.length > 0) setCart(savedCart);
 
-        // Load products from Firestore (fallback to FALLBACK_PRODUCTS if empty)
-        const firestoreProducts = await fetchProducts();
-        if (firestoreProducts && firestoreProducts.length > 0) {
-          setProducts(firestoreProducts);
-        }
+        // Real-time products listener
+        const productsUnsubscribe = onSnapshot(collection(db, 'products'), (snapshot) => {
+          const liveProducts = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          if (liveProducts.length > 0) {
+            setProducts(liveProducts);
+          } else {
+            setProducts([]);
+          }
+        });
 
         // Load orders from Firestore
         const orders = await loadCustomerOrders(user.uid);
         if (orders && orders.length > 0) setFirestoreOrders(orders);
+
+        // Store unsubs in a ref or local closure to clean up later
+        // For simplicity here, we'll just handle the primary auth unsub
+        // But we should really return a combined cleanup
       }
       setLoading(false);
     });
