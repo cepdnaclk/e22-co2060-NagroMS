@@ -8,85 +8,79 @@ NagroMS is a digital platform designed to connect farmers, retail shops, and dir
 
 In Sri Lanka, many farmers face challenges such as:
       
-Heavy dependence on middle vendors → Reduced profit margins
+=>Heavy dependence on middle vendors → Reduced profit margins
 
-Lack of direct access to bulk buyers (Food cities, grocery shops)
+=>Lack of direct access to bulk buyers (Food cities, grocery shops)
 
-Fragmented agricultural services
+=>Fragmented agricultural services
 
-Limited access to real-time information
+=>Limited access to real-time information
 
 **NagroMS provides a unified digital platform that:**
 
-Connects farmers directly with retailers and customers
-
-Enables bulk purchasing from business hubs
-
-Improves transparency in pricing
-
-Supports better communication between stakeholders
+Connects farmers directly with retailers and customers ; Enables bulk purchasing from business hubs ; Improves transparency in pricing ; Supports better communication between stakeholders
 
 
 **Main Objectives**
 
-Provide fair market access for farmers
+->Provide fair market access for farmers
 
-Reduce the influence of unnecessary middle vendors
+->Reduce the influence of unnecessary middle vendors
 
-Enable bulk business connections (retail shops, grocery stores)
+->Enable bulk business connections (retail shops, grocery stores)
 
-Build a scalable and user-friendly agricultural management platform
+->Build a scalable and user-friendly agricultural management platform
 
 
 **Target Users**
 
-Farmers
+--Farmers
 
-Retail Shops / Grocery Stores
+--Retail Shops / Grocery Stores
 
-Direct Customers
+--Direct Customers
 
-Agricultural Experts
+--Agricultural Experts
 
-Service Providers
+--Service Providers
 
-System Administrators
+--System Administrators
 
 **System Architecture**
 
 **Frontend → Backend → Database**
 
-Frontend — User Interface for Farmers, Retailers, Customers (React.js)
-
-Backend — Handles business logic and API services (Node.js + Express.js)
-
-Database — Stores user data, product data, transactions (Firebase Firestore)
+      Frontend — User Interface for Farmers, Retailers, Customers (React.js)
+      
+      Backend — Handles business logic and API services (Node.js + Express.js)
+      
+      Database — Stores user data, product data, transactions (Firebase Firestore)
 
 **LayerTechnology**
 
-Frontend - React.js + CSS3 
-
-Backend - Node.js + Express.js
-
-Database - Firebase Firestore 
-
-Authentication - Firebase Auth + JWT
-
-Email Service - NodeMailer + Gmail SMTP
-
-Real-Time - Firestore onSnapshot listeners
-
-Version Control - Git + GitHub
+      Frontend - React.js + CSS3 
+      
+      Backend - Node.js + Express.js
+      
+      Database - Firebase Firestore 
+      
+      Authentication - Firebase Auth + JWT
+      
+      Email Service - NodeMailer + Gmail SMTP
+      
+      Real-Time - Firestore onSnapshot listeners
+      
+      Version Control - Git + GitHub
 
 **Prerequisites**
 
-Node.js >= 18
-
-npm >= 9
-
-Firebase project (Firestore + Authentication enabled)
-
-Gmail account with App Password (for OTP emails)
+      Node.js >= 18
+      
+      npm >= 9
+      
+      Firebase project (Firestore + Authentication enabled)
+      
+      Gmail account with App Password (for OTP emails)
 
 **Setup Instructions**
 
