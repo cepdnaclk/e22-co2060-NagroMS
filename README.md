@@ -6,15 +6,15 @@ NagroMS is a digital platform designed to connect farmers, retail shops, and dir
 
 **Problem Statement**
 
-In Sri Lanka, many farmers face challenges such as:
+   In Sri Lanka, many farmers face challenges such as:
+      
+      Heavy dependence on middle vendors → Reduced profit margins
 
-Heavy dependence on middle vendors → Reduced profit margins
+      Lack of direct access to bulk buyers (Food cities, grocery shops)
 
-Lack of direct access to bulk buyers (Food cities, grocery shops)
+      Fragmented agricultural services
 
-Fragmented agricultural services
-
-Limited access to real-time information
+      Limited access to real-time information
 
 **NagroMS provides a unified digital platform that:**
 
@@ -162,84 +162,84 @@ POST /api/auth/reset-password         Reset password
 
 Authentication (Protected)
 
-GET  /api/auth/profile                Get current user profile
-PUT  /api/auth/roles                  Update user roles
-Farmer (Protected — Farmer role required)
-GET    /api/farmer/profile            Get farmer profile
-PUT    /api/farmer/profile            Update profile
-GET    /api/farmer/products           Get products
-POST   /api/farmer/products           Add product
-PUT    /api/farmer/products/:id       Update product
-DELETE /api/farmer/products/:id       Delete product
-GET    /api/farmer/orders             Get orders
-PUT    /api/farmer/orders/:id         Update order status
-GET    /api/farmer/equipment          Get equipment
-POST   /api/farmer/equipment          Add equipment
-DELETE /api/farmer/equipment/:id      Delete equipment
-GET    /api/farmer/inventory          Get inventory
-POST   /api/farmer/inventory          Add inventory item
-PUT    /api/farmer/inventory/:id      Update inventory
-DELETE /api/farmer/inventory/:id      Delete inventory item
-GET    /api/farmer/sales              Get sales records
-GET    /api/farmer/expenses           Get expenses
-POST   /api/farmer/expenses           Add expense
-GET    /api/farmer/loans              Get loans
-POST   /api/farmer/loans              Add loan
+      GET  /api/auth/profile                Get current user profile
+      PUT  /api/auth/roles                  Update user roles
+      Farmer (Protected — Farmer role required)
+      GET    /api/farmer/profile            Get farmer profile
+      PUT    /api/farmer/profile            Update profile
+      GET    /api/farmer/products           Get products
+      POST   /api/farmer/products           Add product
+      PUT    /api/farmer/products/:id       Update product
+      DELETE /api/farmer/products/:id       Delete product
+      GET    /api/farmer/orders             Get orders
+      PUT    /api/farmer/orders/:id         Update order status
+      GET    /api/farmer/equipment          Get equipment
+      POST   /api/farmer/equipment          Add equipment
+      DELETE /api/farmer/equipment/:id      Delete equipment
+      GET    /api/farmer/inventory          Get inventory
+      POST   /api/farmer/inventory          Add inventory item
+      PUT    /api/farmer/inventory/:id      Update inventory
+      DELETE /api/farmer/inventory/:id      Delete inventory item
+      GET    /api/farmer/sales              Get sales records
+      GET    /api/farmer/expenses           Get expenses
+      POST   /api/farmer/expenses           Add expense
+      GET    /api/farmer/loans              Get loans
+      POST   /api/farmer/loans              Add loan
+      
 
-
-e22-co2060-NagroMS/
-├── code/
-│   ├── backend/
-│   │   ├── config/
-│   │   │   └── firebase.js           # Firebase Admin SDK init
-│   │   ├── controllers/
-│   │   │   ├── authController.js     # Auth logic + OTP
-│   │   │   ├── farmerController.js   # Farmer dashboard API
-│   │   │   └── expertController.js   # Expert API
-│   │   ├── middleware/
-│   │   │   └── authMiddleware.js     # JWT verify + role check
-│   │   ├── models/
-│   │   │   ├── userModel.js          # User Firestore CRUD
-│   │   │   ├── productModel.js       # Products
-│   │   │   ├── orderModel.js         # Orders
-│   │   │   ├── equipmentModel.js     # Equipment rentals
-│   │   │   ├── inventoryModel.js     # Farm inventory
-│   │   │   ├── saleModel.js          # Sales records
-│   │   │   └── expenseModel.js       # Expenses
-│   │   ├── routes/
-│   │   │   ├── authRoutes.js         # Auth endpoints
-│   │   │   └── farmerRoutes.js       # Farmer endpoints
-│   │   ├── server.js                 # Express app entry point
-│   │   ├── package.json
-│   │   └── .env                      # Not committed — see .env.example
-│   │
-│   └── frontend/
-│       ├── public/
-│       │   ├── index.html
-│       │   └── manifest.json
-│       ├── src/
-│       │   ├── components/
-│       │   │   └── Network/
-│       │   │       ├── CommunityNetwork.jsx
-│       │   │       └── RoleSwitcher.jsx
-│       │   ├── pages/
-│       │   │   ├── Login/            # LoginPage, SignUpPage, ForgotPasswordPage
-│       │   │   ├── Landingpage/      # Landing page
-│       │   │   ├── farmer/           # Farmer dashboard
-│       │   │   ├── Customer/         # Customer dashboard
-│       │   │   └── expert/           # Expert dashboard
-│       │   ├── services/             # API service functions
-│       │   ├── styles/               # Global CSS
-│       │   ├── utils/
-│       │   │   └── firebase.js       # Firebase client + auth functions
-│       │   ├── App.js                # Routes and navigation
-│       │   └── index.js              # React entry point
-│       ├── package.json
-│       └── .env                      # Not committed — see .env.example
-│
-└── docs/                             # GitHub project page
-
-
-
-
-
+      e22-co2060-NagroMS/
+      ├── code/
+      │   ├── backend/
+      │   │   ├── config/
+      │   │   │   └── firebase.js           # Firebase Admin SDK init
+      │   │   ├── controllers/
+      │   │   │   ├── authController.js     # Auth logic + OTP
+      │   │   │   ├── farmerController.js   # Farmer dashboard API
+      │   │   │   └── expertController.js   # Expert API
+      │   │   ├── middleware/
+      │   │   │   └── authMiddleware.js     # JWT verify + role check
+      │   │   ├── models/
+      │   │   │   ├── userModel.js          # User Firestore CRUD
+      │   │   │   ├── productModel.js       # Products
+      │   │   │   ├── orderModel.js         # Orders
+      │   │   │   ├── equipmentModel.js     # Equipment rentals
+      │   │   │   ├── inventoryModel.js     # Farm inventory
+      │   │   │   ├── saleModel.js          # Sales records
+      │   │   │   └── expenseModel.js       # Expenses
+      │   │   ├── routes/
+      │   │   │   ├── authRoutes.js         # Auth endpoints
+      │   │   │   └── farmerRoutes.js       # Farmer endpoints
+      │   │   ├── server.js                 # Express app entry point
+      │   │   ├── package.json
+      │   │   └── .env                      # Not committed — see .env.example
+      │   │
+      │   └── frontend/
+      │       ├── public/
+      │       │   ├── index.html
+      │       │   └── manifest.json
+      │       ├── src/
+      │       │   ├── components/
+      │       │   │   └── Network/
+      │       │   │       ├── CommunityNetwork.jsx
+      │       │   │       └── RoleSwitcher.jsx
+      │       │   ├── pages/
+      │       │   │   ├── Login/            # LoginPage, SignUpPage, ForgotPasswordPage
+      │       │   │   ├── Landingpage/      # Landing page
+      │       │   │   ├── farmer/           # Farmer dashboard
+      │       │   │   ├── Customer/         # Customer dashboard
+      │       │   │   └── expert/           # Expert dashboard
+      │       │   ├── services/             # API service functions
+      │       │   ├── styles/               # Global CSS
+      │       │   ├── utils/
+      │       │   │   └── firebase.js       # Firebase client + auth functions
+      │       │   ├── App.js                # Routes and navigation
+      │       │   └── index.js              # React entry point
+      │       ├── package.json
+      │       └── .env                      # Not committed — see .env.example
+      │
+      └── docs/                             # GitHub project page
+      
+      
+      
+      
+      
