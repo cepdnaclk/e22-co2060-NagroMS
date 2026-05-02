@@ -85,11 +85,11 @@ export async function fetchOrders() {
   return res.json();
 }
 
-export async function updateOrderStatus(id, status) {
+export async function updateOrderStatus(id, status, productId = null) {
   const res = await fetch(`${BASE_URL}/api/farmer/orders/${id}`, {
     method: 'PUT',
     headers: authHeaders(),
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({ status, productId }),
   });
   return res.json();
 }

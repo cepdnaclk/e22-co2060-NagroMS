@@ -54,9 +54,12 @@ import {
   addInventory as apiAddInventory,
   updateInventory as apiUpdateInventory,
   deleteInventory as apiDeleteInventory,
+  updateOrderStatus
 } from '../../services/farmerApi';
 
-
+// Real-time Firestore imports
+import { db } from '../../utils/firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 
 import tomatoImg from "./images/products/tomato.png";
@@ -140,8 +143,10 @@ export function FarmerDashboard({ onNavigate }) {
       try {
         // Fetch profile
         const profileRes = await fetchFarmerProfile();
+        let currentFarmerUid = null;
         if (profileRes.success && profileRes.data) {
           const p = profileRes.data;
+          currentFarmerUid = p.uid || p.id;
           if (p.fullName) { setUserName(p.fullName); localStorage.setItem('userName', p.fullName); }
           if (p.email) { setUserEmail(p.email); localStorage.setItem('userEmail', p.email); }
           if (p.phone) { setUserPhone(p.phone); localStorage.setItem('userPhone', p.phone); }
@@ -153,11 +158,24 @@ export function FarmerDashboard({ onNavigate }) {
         if (productsRes.success && productsRes.data) {
           setProducts(productsRes.data);
         }
-        // Fetch orders
-        const ordersRes = await apiFetchOrders();
-        if (ordersRes.success && ordersRes.data && ordersRes.data.length > 0) {
-          setOrders(ordersRes.data);
+        
+        // ── REAL-TIME ORDER LISTENER ──────────────────────────
+        let unsubscribeOrders = () => {};
+        if (currentFarmerUid) {
+          const q = query(
+            collection(db, 'orders'),
+            where('farmerId', '==', currentFarmerUid)
+          );
+          unsubscribeOrders = onSnapshot(q, (snapshot) => {
+            const liveOrders = snapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+            setOrders(liveOrders);
+            setOrdersList(liveOrders);
+          });
         }
+
         // Fetch sales
         const salesRes = await apiFetchSales();
         if (salesRes.success && salesRes.data && salesRes.data.length > 0) {
@@ -342,6 +360,8 @@ export function FarmerDashboard({ onNavigate }) {
     name: '',
     quantity: '',
     price: '',
+    category: 'vegetables',
+    image: '',
     status: 'In Stock'
   });
 
@@ -475,6 +495,8 @@ export function FarmerDashboard({ onNavigate }) {
         name: newProduct.name,
         quantity: newProduct.quantity,
         price: newProduct.price,
+        image: newProduct.image || '',
+        category: newProduct.category || 'vegetables',
         status: newProduct.status || 'In Stock',
       });
       if (res.success && res.data) {
@@ -488,7 +510,7 @@ export function FarmerDashboard({ onNavigate }) {
       alert('Network error. Adding locally. Error: ' + err.message);
       setProducts([...products, { id: Date.now(), ...newProduct }]);
     }
-    setNewProduct({ name: '', quantity: '', price: '', status: 'In Stock' });
+    setNewProduct({ name: '', quantity: '', price: '', image: '', category: 'vegetables', status: 'In Stock' });
     setShowAddProduct(false);
   };
 
@@ -2053,6 +2075,11 @@ function ImageWithFallback({ src, alt, className }) {
 function OrdersContent({ orders }) {
   const [ordersList, setOrdersList] = useState(orders);
 
+  // Sync ordersList with prop when it changes
+  useEffect(() => {
+    setOrdersList(orders);
+  }, [orders]);
+
   // Auto-delete completed orders after 1 day
   useEffect(() => {
     const checkAndCleanOrders = () => {
@@ -2082,17 +2109,17 @@ function OrdersContent({ orders }) {
   }, []);
 
   // Toggle order status (pending <-> completed)
-  const toggleProductStatus = async (customerId, productId) => {
+  const toggleProductStatus = async (orderId, productId) => {
     // Find the new status first
-    const customer = ordersList.find(c => c.id === customerId);
+    const customer = ordersList.find(c => c.id === orderId);
     const product = customer?.products.find(p => p.id === productId);
     if (!product) return;
 
     const newStatus = product.status === 'pending' ? 'completed' : 'pending';
 
     // Update UI immediately (optimistic update)
-    setOrdersList(ordersList.map(customer => {
-      if (customer.id === customerId) {
+    const updatedOrdersList = ordersList.map(customer => {
+      if (customer.id === orderId) {
         const updatedProducts = customer.products.map(p => {
           if (p.id === productId) {
             return { ...p, status: newStatus };
@@ -2106,16 +2133,19 @@ function OrdersContent({ orders }) {
         return {
           ...customer,
           products: updatedProducts,
-          completedAt: allCompleted ? new Date().toISOString() : null
+          completedAt: allCompleted ? new Date().toISOString() : null,
+          status: allCompleted ? 'completed' : 'pending' // Also update overall status if needed
         };
       }
       return customer;
-    }));
+    });
+    
+    setOrdersList(updatedOrdersList);
 
     // Sync to backend
     try {
       const { updateOrderStatus } = await import('../../services/farmerApi');
-      await updateOrderStatus(productId, newStatus);
+      await updateOrderStatus(orderId, newStatus, productId);
     } catch (err) {
       console.warn('Backend unavailable, order status updated locally only:', err.message);
     }
@@ -4382,6 +4412,20 @@ function AddProductModal({ product, onChange, onSave, onCancel }) {
 
 
 
+          {/* Category */}
+          <div>
+            <label className="block text-sm text-muted-foreground mb-1">Category</label>
+            <select
+              value={product.category || 'vegetables'}
+              onChange={e => onChange('category', e.target.value)}
+              className="w-full p-3 border rounded-lg text-lg bg-white"
+            >
+              <option value="vegetables">Vegetables</option>
+              <option value="fruits">Fruits</option>
+              <option value="grains">Grains</option>
+            </select>
+          </div>
+
           {/* Name */}
           <div>
             <label className="block text-sm text-muted-foreground mb-1">Name</label>
@@ -4390,6 +4434,18 @@ function AddProductModal({ product, onChange, onSave, onCancel }) {
               placeholder="e.g. Fresh Tomatoes"
               value={product.name}
               onChange={e => onChange('name', e.target.value)}
+              className="w-full p-3 border rounded-lg text-lg"
+            />
+          </div>
+
+          {/* Image URL */}
+          <div>
+            <label className="block text-sm text-muted-foreground mb-1">Image URL (Optional)</label>
+            <input
+              type="text"
+              placeholder="https://images.unsplash.com/..."
+              value={product.image || ''}
+              onChange={e => onChange('image', e.target.value)}
               className="w-full p-3 border rounded-lg text-lg"
             />
           </div>
