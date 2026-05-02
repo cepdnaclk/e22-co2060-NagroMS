@@ -6,15 +6,15 @@ NagroMS is a digital platform designed to connect farmers, retail shops, and dir
 
 **Problem Statement**
 
-   In Sri Lanka, many farmers face challenges such as:
+In Sri Lanka, many farmers face challenges such as:
       
-      Heavy dependence on middle vendors → Reduced profit margins
+Heavy dependence on middle vendors → Reduced profit margins
 
-      Lack of direct access to bulk buyers (Food cities, grocery shops)
+Lack of direct access to bulk buyers (Food cities, grocery shops)
 
-      Fragmented agricultural services
+Fragmented agricultural services
 
-      Limited access to real-time information
+Limited access to real-time information
 
 **NagroMS provides a unified digital platform that:**
 
@@ -54,7 +54,7 @@ System Administrators
 
 **System Architecture**
 
-Frontend → Backend → Database
+**Frontend → Backend → Database**
 
 Frontend — User Interface for Farmers, Retailers, Customers (React.js)
 
@@ -92,41 +92,29 @@ Gmail account with App Password (for OTP emails)
 
 **1. Clone the Repository**
    
-git clone https://github.com/cepdnaclk/e22-co2060-NagroMS.git
-
-cd e22-co2060-NagroMS/code
+      git clone https://github.com/cepdnaclk/e22-co2060-NagroMS.git
+      cd e22-co2060-NagroMS/code
 
 **2. Backend Setup**
 
-cd backend
-
-#Create .env file with your credentials
-
-cp .env.example .env
-
-#Edit .env with your Firebase Admin SDK credentials and Gmail details
-
-npm install
-
-npm start
-
-Backend runs on: http://localhost:5000
+      cd backend
+      #Create .env file with your credentials
+      cp .env.example .env
+      #Edit .env with your Firebase Admin SDK credentials and Gmail details
+      npm install
+      npm start
+      Backend runs on: http://localhost:5000
 
 Health check: http://localhost:5000/health
 
 **3. Frontend Setup**
 
-cd frontend
-
-#Create .env file
-
-cp .env.example .env
-
-#Edit .env with your Firebase client credentials
-
-npm install
-
-npm start
+      cd frontend
+      #Create .env file
+      cp .env.example .env
+      #Edit .env with your Firebase client credentials
+      npm install
+      npm start
 
 Frontend runs on: http://localhost:3000
 
@@ -142,25 +130,25 @@ Agricultural Expert - Offer advice and consultations to farmers
 
 Service Provider  - Offer equipment rentals and agricultural services
 
-API Documentation
+**API Documentation**
 
 Base URL: http://localhost:5000/api
 
-Health
+**Health**
 
-GET  /health                          Server health check
+      GET  /health                          Server health check
 
-Authentication (Public)
+**Authentication (Public)**
 
-POST /api/auth/register               Register new user
-POST /api/auth/login                  Verify token and get profile
-POST /api/auth/social-login           Google / Facebook login
-POST /api/auth/find-user              Look up email by phone or NIC
-POST /api/auth/send-otp               Send OTP to email
-POST /api/auth/verify-otp             Verify OTP code
-POST /api/auth/reset-password         Reset password
+      POST /api/auth/register               Register new user
+      POST /api/auth/login                  Verify token and get profile
+      POST /api/auth/social-login           Google / Facebook login
+      POST /api/auth/find-user              Look up email by phone or NIC
+      POST /api/auth/send-otp               Send OTP to email
+      POST /api/auth/verify-otp             Verify OTP code
+      POST /api/auth/reset-password         Reset password
 
-Authentication (Protected)
+**Authentication (Protected)**
 
       GET  /api/auth/profile                Get current user profile
       PUT  /api/auth/roles                  Update user roles
@@ -186,6 +174,7 @@ Authentication (Protected)
       GET    /api/farmer/loans              Get loans
       POST   /api/farmer/loans              Add loan
       
+**Project Structure**
 
       e22-co2060-NagroMS/
       ├── code/
@@ -238,6 +227,33 @@ Authentication (Protected)
       │       └── .env                      # Not committed — see .env.example
       │
       └── docs/                             # GitHub project page
+
+**Security**
+
+Firebase ID token verification on all protected routes
+
+Role-based access control — users can only access their own data
+
+OTP expiry — 10 minutes, single use only
+
+Rate limiting — 20 requests per 15 minutes on auth endpoints
+
+All secrets in .env — never committed to GitHub
+
+Firebase Admin SDK used on backend only
+
+**Team**
+
+Monisha - Farmer Dashboard + Backend Models
+
+Sathurjika - Authentication System + Landing Page
+
+Nithilaa - Customer Dashboard
+
+Shathursima - Expert / Service Provider Dashboard
+
+
+
       
       
       
