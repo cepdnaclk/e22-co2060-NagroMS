@@ -53,9 +53,136 @@ import { EnhancedCheckoutSection } from './EnhancedCheckout';
 import { EnhancedOrdersSection } from './EnhancedOrders';
 import CommunityNetwork from '../../../../../components/Network/CommunityNetwork';
 
-// ─── FALLBACK PRODUCTS (shown if Firestore has no products yet) ───────────────
-// Products are fetched from Firestore in real-time
-const FALLBACK_PRODUCTS = [];
+// ÔöÇÔöÇÔöÇ FALLBACK PRODUCTS (shown if Firestore has no products yet) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+const FALLBACK_PRODUCTS = [
+  {
+    id: 1,
+    name: 'Fresh Tomatoes',
+    farmer: 'Sunil Farm',
+    location: 'Kandy',
+    district: 'Kandy',
+    price: 150,
+    unit: 'kg',
+    rating: 4.8,
+    image: 'https://images.unsplash.com/photo-1560433802-62c9db426a4d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcmVzaCUyMHRvbWF0b2VzJTIwdmVnZXRhYmxlfGVufDF8fHx8MTc2OTUwOTA3Nnww&ixlib=rb-4.1.0&q=80&w=1080',
+    category: 'vegetables',
+    available: '50 kg',
+    farmerPhone: '+94 77 234 5678',
+    availableUnits: [
+      { unit: 'kg', price: 150, label: 'Kilogram' },
+      { unit: 'g', price: 0.15, label: 'Gram' }
+    ]
+  },
+  {
+    id: 2,
+    name: 'Organic Rice',
+    farmer: 'Perera Agriculture',
+    location: 'Anuradhapura',
+    district: 'Anuradhapura',
+    price: 180,
+    unit: 'kg',
+    rating: 4.9,
+    image: 'https://images.unsplash.com/photo-1763537351442-f377a4878d9a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyaWNlJTIwZ3JhaW4lMjBoYXJ2ZXN0fGVufDF8fHx8MTc2OTUwOTA3N3ww&ixlib=rb-4.1.0&q=80&w=1080',
+    category: 'grains',
+    available: '200 kg',
+    farmerPhone: '+94 77 345 6789',
+    availableUnits: [
+      { unit: 'kg', price: 180, label: 'Kilogram' },
+      { unit: 'g', price: 0.18, label: 'Gram' }
+    ]
+  },
+  {
+    id: 3,
+    name: 'Fresh Carrots',
+    farmer: 'Silva Farm',
+    location: 'Nuwara Eliya',
+    district: 'Nuwara Eliya',
+    price: 120,
+    unit: 'kg',
+    rating: 4.7,
+    image: 'https://images.unsplash.com/photo-1717959159782-98c42b1d4f37?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcmVzaCUyMGNhcnJvdHMlMjB2ZWdldGFibGVzfGVufDF8fHx8MTc2OTUwMjAwNnww&ixlib=rb-4.1.0&q=80&w=1080',
+    category: 'vegetables',
+    available: '40 kg',
+    farmerPhone: '+94 77 456 7890',
+    availableUnits: [
+      { unit: 'kg', price: 120, label: 'Kilogram' },
+      { unit: 'g', price: 0.12, label: 'Gram' }
+    ]
+  },
+  {
+    id: 4,
+    name: 'Green Beans',
+    farmer: 'Fernando Organic',
+    location: 'Matale',
+    district: 'Matale',
+    price: 120,
+    unit: 'kg',
+    rating: 4.6,
+    image: 'https://images.unsplash.com/photo-1574963835594-61eede2070dc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxncmVlbiUyMGJlYW5zJTIwdmVnZXRhYmxlfGVufDF8fHx8MTc2OTUwMjYxMnww&ixlib=rb-4.1.0&q=80&w=1080',
+    category: 'vegetables',
+    available: '30 kg',
+    farmerPhone: '+94 77 567 8901',
+    availableUnits: [
+      { unit: 'kg', price: 120, label: 'Kilogram' },
+      { unit: 'g', price: 0.12, label: 'Gram' }
+    ]
+  },
+  {
+    id: 5,
+    name: 'Fresh Bananas',
+    farmer: 'Rathnayake Farm',
+    location: 'Kegalle',
+    district: 'Kegalle',
+    price: 100,
+    unit: 'kg',
+    rating: 4.8,
+    image: 'https://images.unsplash.com/photo-1643188626775-05290d1b6acb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcmVzaCUyMGJhbmFuYXMlMjB0cm9waWNhbCUyMGZydWl0fGVufDF8fHx8MTc2OTUwOTA3OHww&ixlib=rb-4.1.0&q=80&w=1080',
+    category: 'fruits',
+    available: '80 kg',
+    farmerPhone: '+94 77 678 9012',
+    availableUnits: [
+      { unit: 'bunch', price: 100, label: 'Bunch' },
+      { unit: 'kg', price: 100, label: 'Kilogram' },
+      { unit: 'g', price: 0.10, label: 'Gram' }
+    ]
+  },
+  {
+    id: 6,
+    name: 'Papaya',
+    farmer: 'Wijesinghe Gardens',
+    location: 'Gampaha',
+    district: 'Gampaha',
+    price: 90,
+    unit: 'kg',
+    rating: 4.5,
+    image: 'https://images.unsplash.com/photo-1651821322744-73ee50bf4046?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwYXBheWElMjB0cm9waWNhbCUyMGZydWl0fGVufDF8fHx8MTc2OTUwMjc5N3ww&ixlib=rb-4.1.0&q=80&w=1080',
+    category: 'fruits',
+    available: '60 kg',
+    farmerPhone: '+94 77 789 0123',
+    availableUnits: [
+      { unit: 'unit', price: 90, label: 'Each' },
+      { unit: 'kg', price: 90, label: 'Kilogram' },
+      { unit: 'g', price: 0.09, label: 'Gram' }
+    ]
+  },
+  {
+    id: 7,
+    name: 'Fresh Coconuts',
+    farmer: 'De Silva Estate',
+    location: 'Colombo',
+    district: 'Colombo',
+    price: 80,
+    unit: 'unit',
+    rating: 4.7,
+    image: 'https://images.unsplash.com/photo-1589823635451-0c3e1760dc19?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb2NvbnV0JTIwZnJlc2h8ZW58MXx8fHwxNzY5NTAyNzk3fDA&ixlib=rb-4.1.0&q=80&w=1080',
+    category: 'fruits',
+    available: '100 units',
+    farmerPhone: '+94 77 890 1234',
+    availableUnits: [
+      { unit: 'unit', price: 80, label: 'Each' }
+    ]
+  }
+];
 
 // Delivery fee calculation based on district distance
 const DISTRICT_DELIVERY_FEES = {
@@ -129,7 +256,7 @@ export function CustomerDashboard({ onNavigate }) {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('all');
 
-  // ── CART: start empty, loaded from Firestore ──
+  // ÔöÇÔöÇ CART: start empty, loaded from Firestore ÔöÇÔöÇ
   const [cart, setCart] = useState([]);
 
   const [activeSection, setActiveSection] = useState('browse');
@@ -138,13 +265,13 @@ export function CustomerDashboard({ onNavigate }) {
   const [showMessageFarmerModal, setShowMessageFarmerModal] = useState(false);
   const [selectedFarmer, setSelectedFarmer] = useState(null);
 
-  // ── FIREBASE STATE ────────────────────────────
+  // ÔöÇÔöÇ FIREBASE STATE ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
   const [uid, setUid] = useState(null);
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState(FALLBACK_PRODUCTS);
   const [firestoreOrders, setFirestoreOrders] = useState([]);
 
-  // ── PROFILE: default values, overwritten by Firestore ──
+  // ÔöÇÔöÇ PROFILE: default values, overwritten by Firestore ÔöÇÔöÇ
   const [profile, setProfile] = useState({
     name: '',
     email: '',
@@ -156,7 +283,7 @@ export function CustomerDashboard({ onNavigate }) {
     postalCode: ''
   });
 
-  // ── LOAD DATA FROM FIREBASE ON LOGIN ─────────
+  // ÔöÇÔöÇ LOAD DATA FROM FIREBASE ON LOGIN ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -170,26 +297,15 @@ export function CustomerDashboard({ onNavigate }) {
         const savedCart = await loadCart(user.uid);
         if (savedCart && savedCart.length > 0) setCart(savedCart);
 
-        // Real-time products listener
-        const productsUnsubscribe = onSnapshot(collection(db, 'products'), (snapshot) => {
-          const liveProducts = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-          if (liveProducts.length > 0) {
-            setProducts(liveProducts);
-          } else {
-            setProducts([]);
-          }
-        });
+        // Load products from Firestore (fallback to FALLBACK_PRODUCTS if empty)
+        const firestoreProducts = await fetchProducts();
+        if (firestoreProducts && firestoreProducts.length > 0) {
+          setProducts(firestoreProducts);
+        }
 
         // Load orders from Firestore
         const orders = await loadCustomerOrders(user.uid);
         if (orders && orders.length > 0) setFirestoreOrders(orders);
-
-        // Store unsubs in a ref or local closure to clean up later
-        // For simplicity here, we'll just handle the primary auth unsub
-        // But we should really return a combined cleanup
       }
       setLoading(false);
     });
@@ -197,20 +313,20 @@ export function CustomerDashboard({ onNavigate }) {
     return () => unsubscribe();
   }, []);
 
-  // ── AUTO-SAVE CART TO FIRESTORE WHEN IT CHANGES ──
+  // ÔöÇÔöÇ AUTO-SAVE CART TO FIRESTORE WHEN IT CHANGES ÔöÇÔöÇ
   useEffect(() => {
     if (uid) {
       saveCart(uid, cart);
     }
   }, [cart, uid]);
 
-  // ── DEMO NOTIFICATIONS ────────────────────────
+  // ÔöÇÔöÇ DEMO NOTIFICATIONS ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
   useEffect(() => {
     const demoNotifications = [
       {
         id: Date.now() + 1,
         type: 'product-available',
-        title: '✅ Your Requested Product is Now Available!',
+        title: 'Ô£à Your Requested Product is Now Available!',
         message: 'Fresh Mangoes (Organic) that you requested is now available from Farmer Pradeep in Anuradhapura',
         productName: 'Fresh Mangoes (Organic)',
         farmerName: 'Farmer Pradeep',
@@ -221,7 +337,7 @@ export function CustomerDashboard({ onNavigate }) {
       {
         id: Date.now() + 2,
         type: 'product-available',
-        title: '✅ Product Available',
+        title: 'Ô£à Product Available',
         message: 'Organic Carrots that you requested is now available from Farmer Nimal in Kandy',
         productName: 'Organic Carrots',
         farmerName: 'Farmer Nimal',
@@ -236,7 +352,7 @@ export function CustomerDashboard({ onNavigate }) {
     }
   }, []);
 
-  // ── SHOW LOADING SCREEN WHILE FIREBASE LOADS ──
+  // ÔöÇÔöÇ SHOW LOADING SCREEN WHILE FIREBASE LOADS ÔöÇÔöÇ
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -340,7 +456,7 @@ export function CustomerDashboard({ onNavigate }) {
     setShowMessageFarmerModal(true);
   };
 
-  // ── SAVE PROFILE TO FIRESTORE ─────────────────
+  // ÔöÇÔöÇ SAVE PROFILE TO FIRESTORE ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
   const handleSaveProfile = async (updatedProfile) => {
     setProfile(updatedProfile);
     if (uid) {
@@ -371,7 +487,7 @@ export function CustomerDashboard({ onNavigate }) {
       case 'profile':
         return <ProfileSection 
           profile={profile} 
-          setProfile={handleSaveProfile}  // ← saves to Firestore
+          setProfile={handleSaveProfile}  // ÔåÉ saves to Firestore
         />;
       case 'cart':
         return <CartSection 
@@ -386,7 +502,7 @@ export function CustomerDashboard({ onNavigate }) {
         />;
       case 'checkout':
         return <EnhancedCheckoutSection 
-          uid={uid}                        // ← Firebase uid for saving orders
+          uid={uid}                        // ÔåÉ Firebase uid for saving orders
           cart={cart}
           profile={profile}
           getCartTotal={getCartTotal}
@@ -407,109 +523,57 @@ export function CustomerDashboard({ onNavigate }) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div 
-        className={`bg-white border-b border-green-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30 transition-all duration-300 ${sidebarOpen ? 'pl-64' : 'pl-0'}`}
-      >
-        <div className="flex items-center gap-4">
-          <button
-            type="button"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-foreground hover:bg-green-50 p-2 rounded-lg transition-colors"
-            aria-label="Toggle menu"
-          >
-            {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-          <div className="flex items-center gap-2">
-            <div className="bg-primary rounded-lg p-1.5">
-              <Sprout className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-primary font-semibold">NagroMS</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <NotificationCenter />
-          <RoleSwitcher currentRole="customer" onNavigate={onNavigate} />
-          <button
-            onClick={() => onNavigate('landing')}
-            className="flex items-center gap-1 px-3 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-green-50 rounded-lg transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            <span className="hidden sm:inline">Logout</span>
-          </button>
-        </div>
-      </div>
-
-
-
-      {/* Sidebar */}
-      <aside className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-green-200
-        transform transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
-        <div className="h-full flex flex-col">
-          <div className="flex items-center gap-2 p-6 border-b border-green-200">
-            <div className="bg-primary rounded-lg p-2">
-              <Sprout className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h2 className="text-lg text-primary font-semibold">NagroMS</h2>
-              <p className="text-xs text-muted-foreground">Customer Portal</p>
-            </div>
-          </div>
-
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            <NavButton
-              icon={<Home className="w-5 h-5" />}
-              label="Browse Products"
-              active={activeSection === 'browse'}
-              onClick={() => { setActiveSection('browse'); setSidebarOpen(false); }}
-            />
-            <NavButton
-              icon={<UserCircle className="w-5 h-5" />}
-              label="My Profile"
-              active={activeSection === 'profile'}
-              onClick={() => { setActiveSection('profile'); setSidebarOpen(false); }}
-            />
-            <NavButton
-              icon={<ShoppingCart className="w-5 h-5" />}
-              label={`Cart (${getCartItemsCount()})`}
-              active={activeSection === 'cart'}
-              onClick={() => { setActiveSection('cart'); setSidebarOpen(false); }}
-              badge={getCartItemsCount() > 0 ? getCartItemsCount() : null}
-            />
-            <NavButton
-              icon={<FileText className="w-5 h-5" />}
-              label="Past Orders"
-              active={activeSection === 'orders'}
-              onClick={() => { setActiveSection('orders'); setSidebarOpen(false); }}
-            />
-            <NavButton
-              icon={<User className="w-5 h-5" />}
-              label="Community"
-              active={activeSection === 'community'}
-              onClick={() => { setActiveSection('community'); setSidebarOpen(false); }}
-            />
-          </nav>
-
-          <div className="p-4 border-t border-green-200 space-y-2">
-            <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-              <UserCircle className="w-10 h-10 text-primary" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-foreground truncate">{profile.name || 'Customer'}</p>
-                <p className="text-xs text-muted-foreground truncate">{profile.email}</p>
+      {/* Header - Always Visible */}
+      <header className="sticky top-0 z-50 bg-white border-b border-green-200 shadow-sm">
+        <div className="px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="bg-primary rounded-lg p-1.5">
+                <Sprout className="w-5 h-5 text-white" />
               </div>
+              <span className="text-primary font-semibold text-xl">NagroMS</span>
             </div>
           </div>
+          <div className="flex items-center gap-2">
+            <NotificationCenter />
+            <RoleSwitcher currentRole="customer" onNavigate={onNavigate} />
+            <button
+              onClick={() => onNavigate('landing')}
+              className="hidden sm:flex items-center gap-2 text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="text-sm font-medium">Logout</span>
+            </button>
+          </div>
         </div>
-      </aside>
+
+        {/* Top Navigation Bar */}
+        <nav className="glass-nav overflow-x-auto shadow-sm border-t border-green-50 flex justify-center">
+          <div className="flex items-center gap-2 px-4 py-1 min-w-max">
+            <NavButton icon={<Home className="w-5 h-5" />} label="Browse" active={activeSection === 'browse'} onClick={() => setActiveSection('browse')} />
+            <NavButton icon={<UserCircle className="w-5 h-5" />} label="Profile" active={activeSection === 'profile'} onClick={() => setActiveSection('profile')} />
+            <NavButton icon={<ShoppingCart className="w-5 h-5" />} label="Cart" active={activeSection === 'cart'} onClick={() => setActiveSection('cart')} badge={getCartItemsCount() > 0 ? getCartItemsCount() : null} />
+            <NavButton icon={<FileText className="w-5 h-5" />} label="Orders" active={activeSection === 'orders'} onClick={() => setActiveSection('orders')} />
+            <NavButton icon={<User className="w-5 h-5" />} label="Community" active={activeSection === 'community'} onClick={() => setActiveSection('community')} />
+            <div className="sm:hidden ml-2 border-l border-green-200 pl-2">
+              <NavButton icon={<LogOut className="w-5 h-5" />} label="Logout" active={false} onClick={() => onNavigate('landing')} />
+            </div>
+          </div>
+        </nav>
+      </header>
+
+
+
+      {/* Sidebar removed, replaced by bottom navigation */}
 
       {/* Main Content */}
-      <main className={`min-h-screen pb-20 transition-all duration-300 ${sidebarOpen ? 'pl-64' : 'pl-0'}`}>
+      <main className="min-h-screen transition-all duration-300">
         <div className="p-4 lg:p-8">
           {renderContent()}
         </div>
       </main>
+
+
 
       <Chatbot />
 
@@ -530,34 +594,34 @@ export function CustomerDashboard({ onNavigate }) {
   );
 }
 
-// ─── NAV BUTTON ──────────────────────────────────────────────────────────────
+// ÔöÇÔöÇÔöÇ NAV BUTTON ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 function NavButton({ icon, label, active, onClick, badge }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors relative ${
+      className={`relative flex flex-col items-center justify-center min-w-[72px] px-2 py-2 rounded-xl transition-all ${
         active
-          ? 'bg-primary text-white'
-          : 'text-muted-foreground hover:bg-green-50 hover:text-primary'
+          ? 'text-primary bg-green-50 shadow-inner'
+          : 'text-gray-400 hover:text-primary hover:bg-gray-50'
       }`}
     >
-      {icon}
-      <span className="text-sm font-medium">{label}</span>
-      {badge && !active && (
-        <span className="ml-auto bg-primary text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-          {badge}
+      <span className="mb-1">{icon}</span>
+      <span className="text-[10px] font-semibold leading-none whitespace-nowrap tracking-wide">{label}</span>
+      {badge && (
+        <span className="absolute top-1 right-2 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold shadow-sm">
+          {badge > 9 ? '9+' : badge}
         </span>
       )}
     </button>
   );
 }
 
-// ─── BROWSE PRODUCTS ─────────────────────────────────────────────────────────
+// ÔöÇÔöÇÔöÇ BROWSE PRODUCTS ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 function BrowseProducts({ searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, selectedLocation, setSelectedLocation, uniqueLocations, filteredProducts, cart, addToCart, updateQuantity, changeUnit, removeFromCart, onMessageFarmer, onRequestProduct }) {
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-green-600 to-green-500 rounded-2xl p-8" style={{color: '#ffffff'}}>
-        <h1 className="text-3xl mb-2" style={{color: '#ffffff'}}>🛒 Browse Products</h1>
+        <h1 className="text-3xl mb-2" style={{color: '#ffffff'}}>Browse Products</h1>
         <p className="text-lg" style={{color: '#ffffff', opacity: 0.95}}>Fresh products directly from local farmers</p>
       </div>
 
@@ -653,7 +717,7 @@ function BrowseProducts({ searchQuery, setSearchQuery, selectedCategory, setSele
   );
 }
 
-// ─── PROFILE SECTION ─────────────────────────────────────────────────────────
+// ÔöÇÔöÇÔöÇ PROFILE SECTION ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 function ProfileSection({ profile, setProfile }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState(profile);
@@ -674,7 +738,9 @@ function ProfileSection({ profile, setProfile }) {
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl p-8" style={{color: '#ffffff'}}>
-        <h1 className="text-3xl mb-2" style={{color: '#ffffff'}}>👤 My Profile</h1>
+        <h1 className="text-3xl mb-2 flex items-center gap-3" style={{color: '#ffffff'}}>
+          <UserCircle className="w-8 h-8" /> My Profile
+        </h1>
         <p className="text-lg" style={{color: '#ffffff', opacity: 0.95}}>Manage your personal information and delivery address</p>
       </div>
 
@@ -738,13 +804,15 @@ function ProfileSection({ profile, setProfile }) {
   );
 }
 
-// ─── CART SECTION ─────────────────────────────────────────────────────────────
+// ÔöÇÔöÇÔöÇ CART SECTION ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 function CartSection({ cart, updateQuantity, removeFromCart, getCartTotal, getTotalDeliveryFee, setActiveSection, customerDistrict, products }) {
   if (cart.length === 0) {
     return (
       <div className="space-y-6">
         <div className="bg-gradient-to-r from-orange-600 to-orange-500 rounded-2xl p-8 text-white">
-          <h1 className="text-3xl mb-2">🛒 Shopping Cart</h1>
+          <h1 className="text-3xl mb-2 flex items-center gap-3">
+            <ShoppingCart className="w-8 h-8" /> Shopping Cart
+          </h1>
           <p className="text-orange-100 text-lg">Review your items and proceed to checkout</p>
         </div>
         <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-16 text-center">
@@ -768,7 +836,9 @@ function CartSection({ cart, updateQuantity, removeFromCart, getCartTotal, getTo
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-orange-600 to-orange-500 rounded-2xl p-8 text-white">
-        <h1 className="text-3xl mb-2">🛒 Shopping Cart</h1>
+        <h1 className="text-3xl mb-2 flex items-center gap-3">
+          <ShoppingCart className="w-8 h-8" /> Shopping Cart
+        </h1>
         <p className="text-orange-100 text-lg">{cart.length} {cart.length === 1 ? 'item' : 'items'} in your cart</p>
       </div>
 
@@ -794,7 +864,7 @@ function CartSection({ cart, updateQuantity, removeFromCart, getCartTotal, getTo
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg text-foreground font-medium mb-1">{product.name}</h3>
-                    <p className="text-sm text-muted-foreground mb-2">{product.farmer} • {product.location}</p>
+                    <p className="text-sm text-muted-foreground mb-2">{product.farmer} ÔÇó {product.location}</p>
                     <p className="text-lg text-primary font-semibold">LKR {itemPrice} / {itemUnit}</p>
                     <p className="text-xs text-muted-foreground mt-1">Delivery: {itemDeliveryFee === 0 ? 'FREE' : `LKR ${itemDeliveryFee}`}</p>
                   </div>
@@ -846,7 +916,7 @@ function CartSection({ cart, updateQuantity, removeFromCart, getCartTotal, getTo
             className="w-full px-8 py-6 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-2xl hover:from-green-700 hover:to-green-600 transition-all text-2xl font-bold flex items-center justify-center gap-3 shadow-2xl border-4 border-green-300 transform hover:scale-105"
           >
             <CreditCard className="w-8 h-8" />
-            🎯 PROCEED TO CHECKOUT
+            PROCEED TO CHECKOUT
           </button>
         </div>
       </div>
@@ -854,7 +924,7 @@ function CartSection({ cart, updateQuantity, removeFromCart, getCartTotal, getTo
   );
 }
 
-// ─── REQUEST PRODUCT MODAL ────────────────────────────────────────────────────
+// ÔöÇÔöÇÔöÇ REQUEST PRODUCT MODAL ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 function RequestProductModal({ onClose }) {
   const [productName, setProductName] = useState('');
   const [description, setDescription] = useState('');
@@ -920,7 +990,7 @@ function RequestProductModal({ onClose }) {
   );
 }
 
-// ─── MESSAGE FARMER MODAL ─────────────────────────────────────────────────────
+// ÔöÇÔöÇÔöÇ MESSAGE FARMER MODAL ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 function MessageFarmerModal({ farmer, onClose }) {
   const [message, setMessage] = useState('');
   const [sent, setSent] = useState(false);
@@ -983,7 +1053,7 @@ function MessageFarmerModal({ farmer, onClose }) {
   );
 }
 
-// ─── CATEGORY BUTTON ──────────────────────────────────────────────────────────
+// ÔöÇÔöÇÔöÇ CATEGORY BUTTON ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 function CategoryButton({ label, active, onClick }) {
   return (
     <button
@@ -999,7 +1069,7 @@ function CategoryButton({ label, active, onClick }) {
   );
 }
 
-// ─── PRODUCT CARD ─────────────────────────────────────────────────────────────
+// ÔöÇÔöÇÔöÇ PRODUCT CARD ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 function ProductCard({ product, onAddToCart, onMessageFarmer, inCart, cart, onUpdateQuantity, onChangeUnit, onRemoveFromCart }) {
   const cartItem = cart.find(item => item.id === product.id);
   const quantity = cartItem ? cartItem.quantity : 1;
