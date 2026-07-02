@@ -101,7 +101,7 @@ export const getImageForName = (name) => {
   const n = name.toLowerCase();
 
   // Products
-  if (n.includes('tomato')) return tomatoImg;
+  if (n.includes('tomato') || n.includes('tomoto')) return tomatoImg;
   if (n.includes('rice')) return riceImg;
   if (n.includes('bean')) return beansImg;
   if (n.includes('carrot')) return carrotsImg;
@@ -361,6 +361,7 @@ export function FarmerDashboard({ onNavigate }) {
     quantity: '',
     price: '',
     category: 'vegetables',
+    unit: 'kg',
     image: '',
     status: 'In Stock'
   });
@@ -450,7 +451,11 @@ export function FarmerDashboard({ onNavigate }) {
 
   // Handlers for products
   const handleEditProduct = (product) => {
-    setEditingProduct({ ...product });
+    setEditingProduct({
+      ...product,
+      quantity: product.quantity !== undefined && product.quantity !== null ? String(product.quantity) : '',
+      price: product.price !== undefined && product.price !== null ? String(product.price) : '',
+    });
   };
 
   const handleSaveProduct = async () => {
@@ -495,6 +500,7 @@ export function FarmerDashboard({ onNavigate }) {
         name: newProduct.name,
         quantity: newProduct.quantity,
         price: newProduct.price,
+        unit: newProduct.unit || 'kg',
         image: newProduct.image || '',
         category: newProduct.category || 'vegetables',
         status: newProduct.status || 'In Stock',
@@ -510,7 +516,7 @@ export function FarmerDashboard({ onNavigate }) {
       alert('Network error. Adding locally. Error: ' + err.message);
       setProducts([...products, { id: Date.now(), ...newProduct }]);
     }
-    setNewProduct({ name: '', quantity: '', price: '', image: '', category: 'vegetables', status: 'In Stock' });
+    setNewProduct({ name: '', quantity: '', price: '', unit: 'kg', image: '', category: 'vegetables', status: 'In Stock' });
     setShowAddProduct(false);
   };
 
@@ -687,202 +693,61 @@ export function FarmerDashboard({ onNavigate }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header with Menu Button - Always Visible */}
-      <div 
-        className={`bg-white border-b border-green-200 px-4 py-3 flex items-center justify-between transition-all duration-300 ${sidebarOpen ? 'pl-64' : 'pl-0'}`}
-      >
-        <div className="flex items-center gap-4">
-          <button
-            type="button"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-foreground hover:bg-green-50 p-2 rounded-lg transition-colors"
-            aria-label="Toggle menu"
-          >
-            {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-          <div className="flex items-center gap-2">
-            <div className="bg-primary rounded-lg p-1.5">
-              <Sprout className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-primary font-semibold">NagroMS</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <RoleSwitcher currentRole="farmer" onNavigate={onNavigate} />
-        </div>
-      </div>
-
-
-
-      {/* Sidebar - Hidden by default, shows on menu click */}
-      <aside className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-green-200
-        transform transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
-        <div className="h-full flex flex-col">
-          {/* Logo */}
-          <div className="flex items-center gap-2 p-6 border-b border-green-200">
-            <div className="bg-primary rounded-lg p-2">
-              <Sprout className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h2 className="text-lg text-primary font-semibold">NagroMS</h2>
-              <p className="text-xs text-muted-foreground">Farmer Portal</p>
+      {/* Header - Always Visible */}
+      <header className="sticky top-0 z-50 bg-white border-b border-green-200 shadow-sm">
+        <div className="px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="bg-primary rounded-lg p-1.5">
+                <Sprout className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-primary font-semibold text-xl">NagroMS</span>
             </div>
           </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            <NavButton
-              icon="🏠"
-              label="dashboard"
-              active={activeNav === 'dashboard'}
-              onClick={() => {
-                setActiveNav('dashboard');
-                setSidebarOpen(false);
-              }}
-            />
-            <NavButton
-              icon="🌾"
-              label="My Products"
-              active={activeNav === 'products'}
-              onClick={() => {
-                setActiveNav('products');
-                setSidebarOpen(false);
-              }}
-            />
-            <NavButton
-              icon="💰"
-              label="Sales & Income"
-              active={activeNav === 'sales'}
-              onClick={() => {
-                setActiveNav('sales');
-                setSidebarOpen(false);
-              }}
-            />
-            <NavButton
-              icon="📉"
-              label="Expenses"
-              active={activeNav === 'expenses'}
-              onClick={() => {
-                setActiveNav('expenses');
-                setSidebarOpen(false);
-              }}
-            />
-            <NavButton
-              icon="📦"
-              label="Orders"
-              active={activeNav === 'orders'}
-              onClick={() => {
-                setActiveNav('orders');
-                setSidebarOpen(false);
-              }}
-            />
-            <NavButton
-              icon="📞"
-              label="Contacts"
-              active={activeNav === 'contacts'}
-              onClick={() => {
-                setActiveNav('contacts');
-                setSidebarOpen(false);
-              }}
-            />
-            <NavButton
-              icon="💳"
-              label="Bank Loans"
-              active={activeNav === 'loans'}
-              onClick={() => {
-                setActiveNav('loans');
-                setSidebarOpen(false);
-              }}
-            />
-            <NavButton
-              icon="🚜"
-              label="Equipment"
-              active={activeNav === 'equipment'}
-              onClick={() => {
-                setActiveNav('equipment');
-                setSidebarOpen(false);
-              }}
-            />
-            <NavButton
-              icon="⛅"
-              label="Weather"
-              active={activeNav === 'weather'}
-              onClick={() => {
-                setActiveNav('weather');
-                setSidebarOpen(false);
-              }}
-            />
-            <NavButton
-              icon="📦"
-              label="Inventory"
-              active={activeNav === 'inventory'}
-              onClick={() => {
-                setActiveNav('inventory');
-                setSidebarOpen(false);
-              }}
-            />
-            <NavButton
-              icon="💬"
-              label="Chatbot"
-              active={activeNav === 'chatbot'}
-              onClick={() => {
-                setActiveNav('chatbot');
-                setSidebarOpen(false);
-              }}
-            />
-            <NavButton
-              icon="🤝"
-              label="Community"
-              active={activeNav === 'community'}
-              onClick={() => {
-                setActiveNav('community');
-                setSidebarOpen(false);
-              }}
-            />
-          </nav>
-
-          {/* User Info & Logout */}
-          <div className="p-4 border-t border-green-200">
-            <button
-              onClick={() => {
-                setActiveNav('settings');
-                setSidebarOpen(false);
-              }}
-              className="w-full bg-green-50 rounded-xl p-4 mb-3 hover:bg-green-100 transition-all text-left shadow-sm hover:shadow-md border border-green-100"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full border-2 border-primary flex items-center justify-center bg-white text-2xl">
-                  {profilePicture}
-                </div>
-                <div className="flex-1 overflow-hidden">
-                  <p className="text-sm font-bold text-foreground truncate">{userName}</p>
-                  <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center gap-2 text-xs text-primary font-bold bg-white/50 px-2 py-1 rounded-lg">
-                <img src={settingsIcon} alt="" className="w-4 h-4 object-contain" />
-                <span>Settings & Profile</span>
-              </div>
-            </button>
+          <div className="flex items-center gap-3">
+            <RoleSwitcher currentRole="farmer" onNavigate={onNavigate} />
             <button
               onClick={async () => {
                 await logout();
                 window.location.href = '/';
               }}
-              className="w-full flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+              className="hidden sm:flex items-center gap-2 text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors"
             >
               <LogOut className="w-4 h-4" />
-              <span className="text-sm">Logout</span>
+              <span className="text-sm font-medium">Logout</span>
             </button>
           </div>
         </div>
-      </aside>
+
+        {/* Top Navigation Bar */}
+        <nav className="glass-nav overflow-x-auto shadow-sm border-t border-green-50">
+          <div className="flex items-center gap-2 px-4 py-1 min-w-max">
+            <NavButton icon="🏠" label="Dashboard" active={activeNav === 'dashboard'} onClick={() => setActiveNav('dashboard')} />
+            <NavButton icon="🌾" label="Products" active={activeNav === 'products'} onClick={() => setActiveNav('products')} />
+            <NavButton icon="💰" label="Sales" active={activeNav === 'sales'} onClick={() => setActiveNav('sales')} />
+            <NavButton icon="📉" label="Expenses" active={activeNav === 'expenses'} onClick={() => setActiveNav('expenses')} />
+            <NavButton icon="📦" label="Orders" active={activeNav === 'orders'} onClick={() => setActiveNav('orders')} />
+            <NavButton icon="📞" label="Contacts" active={activeNav === 'contacts'} onClick={() => setActiveNav('contacts')} />
+            <NavButton icon="💳" label="Loans" active={activeNav === 'loans'} onClick={() => setActiveNav('loans')} />
+            <NavButton icon="🚜" label="Equipment" active={activeNav === 'equipment'} onClick={() => setActiveNav('equipment')} />
+            <NavButton icon="⛅" label="Weather" active={activeNav === 'weather'} onClick={() => setActiveNav('weather')} />
+            <NavButton icon="📦" label="Inventory" active={activeNav === 'inventory'} onClick={() => setActiveNav('inventory')} />
+            <NavButton icon="💬" label="Chatbot" active={activeNav === 'chatbot'} onClick={() => setActiveNav('chatbot')} />
+            <NavButton icon="🤝" label="Community" active={activeNav === 'community'} onClick={() => setActiveNav('community')} />
+            <div className="w-px h-6 bg-green-200 mx-2"></div>
+            <NavButton icon="⚙️" label="Settings" active={activeNav === 'settings'} onClick={() => setActiveNav('settings')} />
+            <div className="sm:hidden">
+              <NavButton icon="🚪" label="Logout" active={false} onClick={async () => {
+                await logout();
+                window.location.href = '/';
+              }} />
+            </div>
+          </div>
+        </nav>
+      </header>      {/* Sidebar removed, replaced by bottom navigation */}
 
       {/* Main Content */}
-      <main className={`min-h-screen transition-all duration-300 ${sidebarOpen ? 'pl-64' : 'pl-0'}`}>
+      <main className="min-h-screen transition-all duration-300">
         <div className="p-4 lg:p-8">
           {renderContent()}
         </div>
@@ -990,23 +855,15 @@ function NavButton({ icon, label, active, onClick }) {
       type="button"
       onClick={onClick}
       className={`
-        w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
+        flex flex-col items-center justify-center min-w-[72px] px-2 py-2 rounded-xl transition-all
         ${active
-          ? 'bg-primary text-white'
-          : 'bg-white text-gray-700 hover:bg-green-50 hover:text-primary border border-gray-200'
+          ? 'text-primary bg-green-50 shadow-inner'
+          : 'text-gray-400 hover:text-primary hover:bg-gray-50'
         }
       `}
     >
-      {icon && (
-        <span className="w-8 h-8 flex items-center justify-center">
-          {typeof icon === 'string' && icon.length <= 4 ? (
-            <span className="text-2xl">{icon}</span>
-          ) : (
-            <img src={icon} alt="" className="w-8 h-8 object-contain" />
-          )}
-        </span>
-      )}
-      <span className="text-base font-medium">{label}</span>
+      <span className="text-2xl mb-1">{icon}</span>
+      <span className="text-[10px] font-semibold leading-none whitespace-nowrap tracking-wide">{label}</span>
     </button>
   );
 }
@@ -4438,17 +4295,6 @@ function AddProductModal({ product, onChange, onSave, onCancel }) {
             />
           </div>
 
-          {/* Image URL */}
-          <div>
-            <label className="block text-sm text-muted-foreground mb-1">Image URL (Optional)</label>
-            <input
-              type="text"
-              placeholder="https://images.unsplash.com/..."
-              value={product.image || ''}
-              onChange={e => onChange('image', e.target.value)}
-              className="w-full p-3 border rounded-lg text-lg"
-            />
-          </div>
 
           {/* Quantity & Price */}
           <div className="grid grid-cols-2 gap-4">
@@ -4472,6 +4318,22 @@ function AddProductModal({ product, onChange, onSave, onCancel }) {
                 className="w-full p-3 border rounded-lg text-lg"
               />
             </div>
+          </div>
+
+          {/* Unit */}
+          <div>
+            <label className="block text-sm text-muted-foreground mb-1">Unit of Measurement</label>
+            <select
+              value={product.unit || 'kg'}
+              onChange={e => onChange('unit', e.target.value)}
+              className="w-full p-3 border rounded-lg text-lg bg-white"
+            >
+              <option value="kg">Kilogram (kg)</option>
+              <option value="g">Gram (g)</option>
+              <option value="unit">Per Unit / Each</option>
+              <option value="bunch">Bunch</option>
+              <option value="liter">Liter</option>
+            </select>
           </div>
 
         </div>
