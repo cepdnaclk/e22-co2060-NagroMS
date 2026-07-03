@@ -15,6 +15,7 @@ import KnowledgeBase from './pages/expert/Knowledgebase.jsx';
 import MyFarmers from './pages/expert/MyFarmers.jsx';
 import Settings from './pages/expert/Settings.jsx';
 
+
 // Farmer dashboard
 import { FarmerDashboard } from './pages/farmer/farmerDashboard.jsx';
 
@@ -60,7 +61,7 @@ export default function App() {
         </Route>
 
         {/* Farmer Dashboard Route */}
-        <Route path="/farmer-dashboard" element={<FarmerDashboard onNavigate={() => {}} />} />
+        <Route path="/farmer-dashboard" element={<FarmerDashboard onNavigate={() => { }} />} />
 
         {/* Placeholder Routes for other roles */}
         {/* Customer Dashboard Route */}

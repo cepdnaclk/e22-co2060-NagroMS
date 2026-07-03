@@ -118,8 +118,9 @@ export async function registerWithEmail(formData) {
         emailForAuth,
       }),
     });
-    
+
     data = await res.json();
+
   } catch (err) {
     // Network error (e.g., Failed to fetch) or invalid JSON
     await credential.user.delete();
@@ -191,6 +192,7 @@ export async function loginWithFacebook() {
 export async function logout() {
   await signOut(auth);
   localStorage.removeItem('nagroms_token');
+  localStorage.removeItem('nagroms_uid');
   localStorage.removeItem('userRoles');
   localStorage.removeItem('userEmail');
 }
