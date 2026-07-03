@@ -1,220 +1,199 @@
 // ============================================================
-// NagroMS — controllers/authController.js
+// NagroMS — controllers/authcontroller.js
+// Handles register, login, OTP, password reset, and profile
 // ============================================================
 
 const { auth, db } = require('../config/firebase');
+const { createUser, getUserById, getUserByEmail, updateUser, updateLastLogin, updateRoles } = require('../models/userModel');
 const nodemailer = require('nodemailer');
-const {
-  createUser, getUserById, getUserByEmail,
-  updateUser, updateLastLogin, updateRoles,
-  userExists, VALID_ROLES, VALID_ACCOUNT_TYPES,
-} = require('../models/userModel');
 
-// ── In-memory OTP store (uid -> { otp, expiry }) ────────────
+// In-memory OTP store (use Redis in production)
 const otpStore = {};
 
-// ── Email transporter (Gmail) ───────────────────────────────
+// ── Email transporter ────────────────────────────────────────
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD,
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
 
-// ── Generate 6-digit OTP ────────────────────────────────────
+// Helper to generate OTP
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// ============================================================
-// REGISTER
-// POST /api/auth/register
-// ============================================================
+// Helper to sanitize user data for response
+function sanitizeUser(user) {
+  if (!user) return null;
+  const { nic, ...safe } = user;
+  return safe;
+}
+
+// Helper to get dashboard route based on roles
+function getDashboardRoute(roles) {
+  if (!roles || roles.length === 0) return 'login';
+  if (roles.includes('expert')) return 'expert-dashboard';
+  if (roles.includes('service-provider')) return 'service-provider-dashboard';
+  if (roles.includes('customer')) return 'customer-dashboard';
+  if (roles.includes('farmer')) return 'farmer-dashboard';
+  return 'login';
+}
+
+const VALID_ROLES = ['expert', 'farmer', 'customer', 'service-provider'];
+
+// ──────────────────────────────────────────────────────────────
+// register — save user profile to Firestore after client-side
+//            Firebase Auth creation (idToken proves the user exists)
+// ──────────────────────────────────────────────────────────────
 async function register(req, res) {
   try {
     const {
-      idToken, roles, accountType, fullName, nic, district,
-      phone, email, businessName, businessRegistrationNumber, contactPersonName,
+      idToken,
+      fullName, phone, nic,
+      accountType, businessName, businessRegistrationNumber,
+      contactPersonName, district, roles, emailForAuth,
     } = req.body;
-    const emailForAuth = req.body.emailForAuth;
 
-    if (!idToken)
-      return res.status(400).json({ success: false, message: 'idToken is required.' });
-    if (!roles || !Array.isArray(roles) || roles.length === 0)
-      return res.status(400).json({ success: false, message: 'At least one role is required.' });
-
-    const invalidRoles = roles.filter(r => !VALID_ROLES.includes(r));
-    if (invalidRoles.length > 0)
-      return res.status(400).json({ success: false, message: `Invalid roles: ${invalidRoles.join(', ')}` });
-
-    let decodedToken;
-    try { decodedToken = await auth.verifyIdToken(idToken); }
-    catch { return res.status(401).json({ success: false, message: 'Invalid or expired token.' }); }
-
+    // Verify the ID token from the client — this proves the Firebase
+    // user was already created successfully by the frontend SDK.
+    if (!idToken) {
+      return res.status(400).json({ success: false, message: 'ID token is required.' });
+    }
+    const decodedToken = await auth.verifyIdToken(idToken);
     const uid = decodedToken.uid;
-    if (await userExists(uid))
-      return res.status(409).json({ success: false, message: 'User already exists. Please log in.' });
 
-    const provider = decodedToken.firebase?.sign_in_provider || 'password';
-    const providerLabel = provider === 'google.com' ? 'google' : provider === 'facebook.com' ? 'facebook' : 'email';
+    // Check if a Firestore profile already exists for this UID
+    const existing = await getUserById(uid);
+    if (existing) {
+      return res.status(409).json({ success: false, message: 'An account profile already exists for this user.' });
+    }
 
-    const userData = {
-      email: req.body.emailForAuth || email || decodedToken.email || '',
+    // Save user document in Firestore
+    const userDoc = await createUser(uid, {
+      email: emailForAuth || decodedToken.email || '',
       phone: phone || '',
-      roles, accountType: accountType || 'individual',
-      district: district || '',
-      emailVerified: decodedToken.email_verified || false,
-      provider: providerLabel,
-      fullName: fullName || decodedToken.name || '',
       nic: nic || '',
+      fullName: fullName || '',
+      accountType: accountType || 'individual',
       businessName: businessName || '',
       businessRegistrationNumber: businessRegistrationNumber || '',
       contactPersonName: contactPersonName || '',
-    };
+      district: district || '',
+      roles: roles || [],
+      provider: 'email',
+      emailVerified: decodedToken.email_verified || false,
+    });
 
-    const userDoc = await createUser(uid, userData);
-    await auth.setCustomUserClaims(uid, { roles });
+    // Set custom claims for roles
+    await auth.setCustomUserClaims(uid, { roles: roles || [] });
 
-    return res.status(201).json({ success: true, message: 'Account created.', user: sanitizeUser(userDoc) });
+    return res.status(201).json({
+      success: true,
+      message: 'Account created successfully.',
+      user: sanitizeUser(userDoc),
+      dashboardRoute: getDashboardRoute(roles || []),
+    });
   } catch (error) {
     console.error('Register error:', error);
-    return res.status(500).json({ success: false, message: 'Registration failed.' });
+    if (error.code === 'auth/argument-error' || error.code === 'auth/id-token-expired') {
+      return res.status(401).json({ success: false, message: 'Invalid or expired session. Please try again.' });
+    }
+    res.status(500).json({ success: false, message: error.message });
   }
 }
 
-// ============================================================
-// LOGIN VERIFY
-// POST /api/auth/login
-// ============================================================
+// ──────────────────────────────────────────────────────────────
+// loginVerify — verify Firebase ID token from client login
+// ──────────────────────────────────────────────────────────────
 async function loginVerify(req, res) {
   try {
     const { idToken } = req.body;
-    const emailForAuth = req.body.emailForAuth;
-    if (!idToken)
-      return res.status(400).json({ success: false, message: 'idToken is required.' });
+    if (!idToken) return res.status(400).json({ success: false, message: 'ID token is required.' });
 
-    let decodedToken;
-    try { decodedToken = await auth.verifyIdToken(idToken); }
-    catch { return res.status(401).json({ success: false, message: 'Invalid or expired token.' }); }
+    const decodedToken = await auth.verifyIdToken(idToken);
+    const user = await getUserById(decodedToken.uid);
 
-    const userProfile = await getUserById(decodedToken.uid);
-    if (!userProfile)
-      return res.status(404).json({ success: false, message: 'Profile not found. Please register.' });
-    if (!userProfile.isActive)
-      return res.status(403).json({ success: false, message: 'Account deactivated.' });
+    if (!user) return res.status(404).json({ success: false, message: 'User not found. Please register first.' });
+    if (!user.isActive) return res.status(403).json({ success: false, message: 'Account is deactivated.' });
 
     await updateLastLogin(decodedToken.uid);
 
     return res.status(200).json({
       success: true,
-      message: 'Login successful.',
-      user: sanitizeUser(userProfile),
-      dashboardRoute: getDashboardRoute(userProfile.roles),
+      message: 'Login verified.',
+      user: sanitizeUser(user),
+      dashboardRoute: getDashboardRoute(user.roles),
     });
   } catch (error) {
-    console.error('Login error:', error);
-    return res.status(500).json({ success: false, message: 'Login failed.' });
+    console.error('Login verify error:', error);
+    res.status(401).json({ success: false, message: 'Token verification failed.' });
   }
 }
 
-// ============================================================
-// SOCIAL LOGIN
-// POST /api/auth/social-login
-// ============================================================
+// ──────────────────────────────────────────────────────────────
+// socialLogin — Google / Facebook OAuth
+// ──────────────────────────────────────────────────────────────
 async function socialLogin(req, res) {
   try {
-    const { idToken, roles } = req.body;
-    const emailForAuth = req.body.emailForAuth;
-    if (!idToken)
-      return res.status(400).json({ success: false, message: 'idToken is required.' });
+    const { idToken, provider } = req.body;
+    const decodedToken = await auth.verifyIdToken(idToken);
+    let user = await getUserById(decodedToken.uid);
 
-    let decodedToken;
-    try { decodedToken = await auth.verifyIdToken(idToken); }
-    catch { return res.status(401).json({ success: false, message: 'Invalid token.' }); }
-
-    const uid = decodedToken.uid;
-    const existingUser = await getUserById(uid);
-    if (existingUser) {
-      await updateLastLogin(uid);
-      return res.status(200).json({
-        success: true, message: 'Login successful.',
-        user: sanitizeUser(existingUser), isNewUser: false,
-        dashboardRoute: getDashboardRoute(existingUser.roles),
+    if (!user) {
+      user = await createUser(decodedToken.uid, {
+        email: decodedToken.email || '',
+        fullName: decodedToken.name || '',
+        provider,
+        roles: [],
+        emailVerified: true,
       });
     }
 
-    const provider = decodedToken.firebase?.sign_in_provider || 'google.com';
-    const assignedRoles = (roles && roles.length > 0)
-      ? roles.filter(r => VALID_ROLES.includes(r)) : ['customer'];
+    await updateLastLogin(decodedToken.uid);
 
-    const userData = {
-      email: decodedToken.email || '', phone: '',
-      fullName: decodedToken.name || '', roles: assignedRoles,
-      accountType: 'individual', emailVerified: decodedToken.email_verified || false,
-      provider: provider === 'facebook.com' ? 'facebook' : 'google',
-    };
-
-    const newUser = await createUser(uid, userData);
-    await auth.setCustomUserClaims(uid, { roles: assignedRoles });
-
-    return res.status(201).json({
-      success: true, message: 'Account created.',
-      user: sanitizeUser(newUser), isNewUser: true,
-      dashboardRoute: getDashboardRoute(assignedRoles),
+    return res.status(200).json({
+      success: true,
+      message: 'Social login successful.',
+      user: sanitizeUser(user),
+      dashboardRoute: getDashboardRoute(user.roles),
     });
   } catch (error) {
     console.error('Social login error:', error);
-    return res.status(500).json({ success: false, message: 'Social login failed.' });
+    res.status(401).json({ success: false, message: 'Social login failed.' });
   }
 }
 
-// ============================================================
-// SEND OTP — POST /api/auth/send-otp
-// Body: { email }
-// ============================================================
+// ──────────────────────────────────────────────────────────────
+// OTP Functions
+// ──────────────────────────────────────────────────────────────
 async function sendOTP(req, res) {
   try {
     const { email } = req.body;
-    const emailForAuth = req.body.emailForAuth;
-    if (!email)
-      return res.status(400).json({ success: false, message: 'Email is required.' });
+    if (!email) return res.status(400).json({ success: false, message: 'Email is required.' });
 
-    // Check user exists in Firebase Auth
-    let firebaseUser;
-    try { firebaseUser = await auth.getUserByEmail(email); }
-    catch {
-      // Don't reveal if email exists — just return success
-      return res.status(200).json({ success: true, message: 'If this email is registered, an OTP has been sent.' });
-    }
+    // Check user exists (to prevent sending OTP to non-existent users)
+    const user = await getUserByEmail(email);
+    if (!user) return res.status(404).json({ success: false, message: 'No account found with this email.' });
 
-    // Generate OTP and store with 10-minute expiry
-    const otp    = generateOTP();
-    const expiry = Date.now() + 10 * 60 * 1000; // 10 minutes
-    otpStore[email] = { otp, expiry };
+    const otp = generateOTP();
+    otpStore[email] = { otp, expiresAt: Date.now() + 10 * 60 * 1000 };
 
-    console.log(`OTP for ${email}: ${otp}`); // visible in backend terminal (dev only)
-
-    // Send email
     await transporter.sendMail({
-      from:    `"NagroMS" <${process.env.GMAIL_USER}>`,
-      to:      email,
-      subject: 'NagroMS — Your Password Reset OTP',
+      from: `"NagroMS" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: 'NagroMS — Password Reset OTP',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #f0fdf4; border-radius: 12px;">
-          <div style="text-align: center; margin-bottom: 24px;">
-            <h1 style="color: #16a34a; font-size: 24px; margin: 0;">🌾 NagroMS</h1>
-            <p style="color: #6b7280; font-size: 14px;">Agro Management System</p>
-          </div>
-          <div style="background: white; border-radius: 12px; padding: 28px; text-align: center;">
-            <h2 style="color: #1a3a1a; margin-bottom: 8px;">Password Reset OTP</h2>
-            <p style="color: #6b7280; margin-bottom: 24px;">Use this code to reset your password. It expires in <strong>10 minutes</strong>.</p>
-            <div style="background: #f0fdf4; border: 2px dashed #16a34a; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+          <h1 style="color: #16a34a; font-size: 24px; text-align: center;">🌾 NagroMS</h1>
+          <div style="background: white; border-radius: 12px; padding: 28px; text-align: center; margin-top: 20px;">
+            <h2 style="color: #1a3a1a;">Password Reset OTP</h2>
+            <p style="color: #6b7280;">Use this code to reset your password. It expires in 10 minutes.</p>
+            <div style="background: #f0fdf4; border: 2px dashed #16a34a; border-radius: 12px; padding: 20px; margin: 24px 0;">
               <span style="font-size: 42px; font-weight: 800; letter-spacing: 12px; color: #16a34a;">${otp}</span>
             </div>
-            <p style="color: #9ca3af; font-size: 13px;">If you did not request this, please ignore this email.</p>
           </div>
-          <p style="text-align: center; color: #9ca3af; font-size: 12px; margin-top: 20px;">© NagroMS · Sri Lanka</p>
         </div>
       `,
     });
@@ -222,176 +201,114 @@ async function sendOTP(req, res) {
     return res.status(200).json({ success: true, message: 'OTP sent to your email.' });
   } catch (error) {
     console.error('Send OTP error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to send OTP. Check Gmail config.' });
+    return res.status(500).json({ success: false, message: 'Failed to send OTP.' });
   }
 }
 
-// ============================================================
-// VERIFY OTP — POST /api/auth/verify-otp
-// Body: { email, otp }
-// ============================================================
 async function verifyOTP(req, res) {
   try {
     const { email, otp } = req.body;
-    const emailForAuth = req.body.emailForAuth;
-    if (!email || !otp)
-      return res.status(400).json({ success: false, message: 'Email and OTP are required.' });
+    const record = otpStore[email];
 
-    const stored = otpStore[email];
-    if (!stored)
-      return res.status(400).json({ success: false, message: 'No OTP found. Please request a new one.' });
-
-    if (Date.now() > stored.expiry) {
+    if (!record) return res.status(400).json({ success: false, message: 'No OTP requested for this email.' });
+    if (Date.now() > record.expiresAt) {
       delete otpStore[email];
-      return res.status(400).json({ success: false, message: 'OTP expired. Please request a new one.' });
+      return res.status(400).json({ success: false, message: 'OTP has expired.' });
     }
+    if (record.otp !== otp.toString()) return res.status(400).json({ success: false, message: 'Incorrect OTP.' });
 
-    if (stored.otp !== otp.toString())
-      return res.status(400).json({ success: false, message: 'Incorrect OTP. Please try again.' });
-
-    // OTP is valid — delete it so it can't be reused
-    delete otpStore[email];
-
-    // Generate a Firebase password reset link to return to frontend
-    const resetLink = await auth.generatePasswordResetLink(email);
-
-    return res.status(200).json({
-      success: true,
-      message: 'OTP verified.',
-      resetLink, // frontend opens this link or uses it
-    });
+    otpStore[email].verified = true;
+    return res.status(200).json({ success: true, message: 'OTP verified.' });
   } catch (error) {
-    console.error('Verify OTP error:', error);
-    return res.status(500).json({ success: false, message: 'OTP verification failed.' });
+    res.status(500).json({ success: false, message: error.message });
   }
 }
 
-// ============================================================
-// RESET PASSWORD — POST /api/auth/reset-password
-// Body: { email, newPassword }
-// Uses Firebase Admin to update password directly
-// ============================================================
 async function resetPassword(req, res) {
   try {
     const { email, newPassword } = req.body;
-    const emailForAuth = req.body.emailForAuth;
-    if (!email || !newPassword)
-      return res.status(400).json({ success: false, message: 'Email and new password are required.' });
-    if (newPassword.length < 6)
-      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
+    const record = otpStore[email];
 
-    // Get Firebase user by email
+    if (!record || !record.verified) return res.status(400).json({ success: false, message: 'Please verify OTP first.' });
+
     const firebaseUser = await auth.getUserByEmail(email);
-
-    // Update password via Admin SDK
     await auth.updateUser(firebaseUser.uid, { password: newPassword });
+    delete otpStore[email];
 
-    return res.status(200).json({ success: true, message: 'Password updated successfully.' });
+    return res.status(200).json({ success: true, message: 'Password reset successfully.' });
   } catch (error) {
     console.error('Reset password error:', error);
-    if (error.code === 'auth/user-not-found')
-      return res.status(404).json({ success: false, message: 'User not found.' });
-    return res.status(500).json({ success: false, message: 'Failed to reset password.' });
+    res.status(500).json({ success: false, message: error.message });
   }
 }
 
-// ============================================================
-// GET PROFILE — GET /api/auth/profile
-// ============================================================
+// ──────────────────────────────────────────────────────────────
+// User Profile & Roles
+// ──────────────────────────────────────────────────────────────
 async function getProfile(req, res) {
   try {
-    const userProfile = await getUserById(req.user.uid);
-    if (!userProfile)
-      return res.status(404).json({ success: false, message: 'Profile not found.' });
-    return res.status(200).json({ success: true, user: sanitizeUser(userProfile) });
+    const user = await getUserById(req.user.uid);
+    if (!user) return res.status(404).json({ success: false, message: 'Profile not found.' });
+    return res.status(200).json({ success: true, user: sanitizeUser(user) });
   } catch (error) {
-    console.error('Get profile error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to fetch profile.' });
+    res.status(500).json({ success: false, message: error.message });
   }
 }
 
-// ============================================================
-// UPDATE ROLES — PUT /api/auth/roles
-// ============================================================
 async function updateUserRoles(req, res) {
   try {
     const { roles } = req.body;
-    const emailForAuth = req.body.emailForAuth;
-    if (!roles || !Array.isArray(roles) || roles.length === 0)
-      return res.status(400).json({ success: false, message: 'roles array is required.' });
+    if (!Array.isArray(roles)) return res.status(400).json({ success: false, message: 'Roles must be an array.' });
 
-    const invalidRoles = roles.filter(r => !VALID_ROLES.includes(r));
-    if (invalidRoles.length > 0)
-      return res.status(400).json({ success: false, message: `Invalid roles: ${invalidRoles.join(', ')}` });
-
-    const updatedUser = await updateRoles(req.user.uid, roles);
+    const updated = await updateRoles(req.user.uid, roles);
     await auth.setCustomUserClaims(req.user.uid, { roles });
 
-    return res.status(200).json({ success: true, message: 'Roles updated.', user: sanitizeUser(updatedUser) });
+    return res.status(200).json({ success: true, user: sanitizeUser(updated) });
   } catch (error) {
-    console.error('Update roles error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to update roles.' });
+    res.status(500).json({ success: false, message: error.message });
   }
 }
 
-// ── Helpers ──────────────────────────────────────────────────
-function sanitizeUser(user) {
-  if (!user) return null;
-  const { nic, ...safe } = user;
-  return safe;
+// ──────────────────────────────────────────────────────────────
+// Utility Functions
+// ──────────────────────────────────────────────────────────────
+async function findUser(req, res) {
+  try {
+    const { email } = req.body;
+    const user = await getUserByEmail(email);
+    return res.status(200).json({
+      success: true,
+      exists: !!user,
+      provider: user?.provider || null,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 }
 
-function getDashboardRoute(roles) {
-  if (!roles || roles.length === 0) return 'login';
-  const map = {
-    'farmer':           'farmer-dashboard',
-    'customer':         'customer-dashboard',
-    'service-provider': 'service-provider-dashboard',
-    'expert':           'expert-dashboard',
-  };
-  return map[roles[0]] || 'login';
+async function checkAvailability(req, res) {
+  try {
+    const { email, phone, nic } = req.body;
+    if (email) {
+      const snap = await db.collection('users').where('email', '==', email).limit(1).get();
+      if (!snap.empty) return res.status(409).json({ success: false, message: 'Email already in use.' });
+    }
+    if (phone) {
+      const snap = await db.collection('users').where('phone', '==', phone).limit(1).get();
+      if (!snap.empty) return res.status(409).json({ success: false, message: 'Phone already registered.' });
+    }
+    if (nic) {
+      const snap = await db.collection('users').where('nic', '==', nic).limit(1).get();
+      if (!snap.empty) return res.status(409).json({ success: false, message: 'NIC already registered.' });
+    }
+    return res.status(200).json({ success: true, message: 'Available' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 }
 
-// NOTE: findUser added above
 module.exports = {
-  register, loginVerify, socialLogin, findUser,
+  register, loginVerify, socialLogin, findUser, checkAvailability,
   sendOTP, verifyOTP, resetPassword,
   getProfile, updateUserRoles,
 };
-
-// ============================================================
-// FIND USER BY PHONE OR NIC
-// POST /api/auth/find-user
-// Used by: LoginPage when user logs in with phone or NIC
-// Body: { phone } OR { nic }
-// Returns: { email } so frontend can call Firebase with email
-// ============================================================
-async function findUser(req, res) {
-  try {
-    const { phone, nic } = req.body;
-    const emailForAuth = req.body.emailForAuth;
-
-    if (!phone && !nic)
-      return res.status(400).json({ success: false, message: 'Phone or NIC is required.' });
-
-    let snap;
-    if (phone) {
-      snap = await db.collection('users').where('phone', '==', phone).limit(1).get();
-    } else {
-      // Support both old (123456789V) and new (200012345678) NIC formats
-      snap = await db.collection('users').where('nic', '==', nic).limit(1).get();
-    }
-
-    if (snap.empty)
-      return res.status(404).json({ success: false, message: 'No account found.' });
-
-    const userData = snap.docs[0].data();
-    if (!userData.email)
-      return res.status(404).json({ success: false, message: 'This account has no email. Please contact support.' });
-
-    return res.status(200).json({ success: true, email: userData.email });
-  } catch (error) {
-    console.error('Find user error:', error);
-    return res.status(500).json({ success: false, message: 'Lookup failed.' });
-  }
-}
