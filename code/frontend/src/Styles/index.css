@@ -572,117 +572,142 @@ input[type="number"]::-webkit-outer-spin-button {
    ============================================================ */
 .nagro-login-root {
   min-height: 100vh;
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(135deg, #f0fdf4 0%, #fffbeb 50%, #f0fdf4 100%);
   display: flex;
   align-items: stretch;
+  background: #f8fafc;
 }
 .nagro-login-wrapper {
-  position: relative;
-  z-index: 1;
   display: flex;
   width: 100%;
   min-height: 100vh;
 }
 
-/* Brand panel */
+/* ── Left photo panel ── */
 .nagro-login-brand {
-  flex: 0 0 42%;
-  background: linear-gradient(160deg, #15803d 0%, #16a34a 50%, #14532d 100%);
-  padding: 60px 48px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  flex: 0 0 48%;
   position: relative;
   overflow: hidden;
+  background-image: url('./farm_bg.png');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }
-.nagro-brand-inner { position: relative; z-index: 2; }
-.nagro-brand-logo-wrap {
+.nagro-brand-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.15) 0%,
+    rgba(5, 46, 22, 0.55) 55%,
+    rgba(5, 46, 22, 0.88) 100%
+  );
+  z-index: 1;
+}
+.nagro-brand-inner {
+  position: relative;
+  z-index: 2;
+  padding: 48px 44px;
+}
+
+/* Logo pill on image */
+.nlb-logo-pill {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 64px; height: 64px;
+  gap: 8px;
   background: rgba(255,255,255,0.15);
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.2);
-  color: #fff;
-  margin-bottom: 24px;
+  border: 1px solid rgba(255,255,255,0.30);
   backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 99px;
+  padding: 7px 16px 7px 10px;
+  margin-bottom: 28px;
 }
-.nagro-brand-title {
+.nlb-logo-leaf-icon {
+  width: 18px; height: 18px;
+  color: #86efac;
+}
+.nlb-logo-text {
   font-family: 'DM Serif Display', Georgia, serif;
-  font-size: 3rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+/* Headline */
+.nlb-brand-headline {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 2.375rem !important;
+  font-weight: 700;
+  line-height: 1.15 !important;
   color: #fff !important;
-  line-height: 1.1;
-  margin-bottom: 4px;
+  margin-bottom: 14px;
 }
-.nagro-brand-sub {
-  font-size: 0.875rem;
-  color: rgba(255,255,255,0.6);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-weight: 600;
-  margin-bottom: 20px;
+.nlb-headline-accent {
+  color: #86efac;
 }
-.nagro-brand-tagline {
-  font-size: 1.0625rem;
-  color: rgba(255,255,255,0.85);
-  line-height: 1.65;
-  margin-bottom: 36px;
-  max-width: 340px;
-}
-.nagro-brand-features { list-style: none; display: flex; flex-direction: column; gap: 14px; }
-.nagro-brand-feature {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.nlb-brand-sub {
   font-size: 0.9375rem;
-  color: rgba(255,255,255,0.9);
+  color: rgba(255,255,255,0.78);
+  line-height: 1.6;
+  max-width: 340px;
+  margin-bottom: 32px;
 }
-.nagro-feature-emoji {
-  font-size: 1.125rem;
-  width: 36px; height: 36px;
-  background: rgba(255,255,255,0.12);
-  border-radius: 10px;
+
+/* Stats strip */
+.nlb-brand-stats {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 0;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.18);
+  backdrop-filter: blur(10px);
+  border-radius: 14px;
+  padding: 14px 20px;
+  width: fit-content;
+}
+.nlb-brand-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 0 20px;
+}
+.nlb-stat-num {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+}
+.nlb-stat-label {
+  font-size: 0.6875rem;
+  color: rgba(255,255,255,0.65);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.nlb-stat-sep {
+  width: 1px;
+  height: 36px;
+  background: rgba(255,255,255,0.22);
   flex-shrink: 0;
 }
 
-/* Decorative circles */
-.nagro-art-circle {
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
-  pointer-events: none;
-}
-.nagro-art-c1 { width: 300px; height: 300px; bottom: -100px; right: -80px; }
-.nagro-art-c2 { width: 200px; height: 200px; bottom: 80px;  right: 60px;  }
-.nagro-art-c3 { width: 120px; height: 120px; top: 40px;    right: 40px;  }
-
-/* Form panel */
+/* ── Right form panel ── */
 .nagro-login-form-panel {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 48px 40px;
-  background: rgba(255,255,255,0.7);
-  backdrop-filter: blur(20px);
+  background: #ffffff;
 }
 .nagro-login-card {
   width: 100%;
-  max-width: 440px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 24px;
-  padding: 40px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.08), 0 8px 20px rgba(0,0,0,0.05);
-  border: 1px solid rgba(255,255,255,0.6);
+  max-width: 420px;
 }
 .nagro-mobile-logo {
   display: none;
@@ -701,13 +726,14 @@ input[type="number"]::-webkit-outer-spin-button {
 /* Login responsive */
 @media (max-width: 900px) {
   .nagro-login-brand { display: none; }
-  .nagro-login-form-panel { background: transparent; }
+  .nagro-login-form-panel {
+    background: linear-gradient(135deg, #f0fdf4, #fffbeb);
+  }
   .nagro-mobile-logo { display: flex; }
 }
 @media (max-width: 520px) {
   .nagro-login-form-panel { padding: 24px 16px; }
   .nagro-login-card { padding: 28px 22px; border-radius: 16px; }
-  .nagro-social-btns { grid-template-columns: 1fr; }
 }
 
 /* ============================================================
@@ -1127,168 +1153,5 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 .nagro-switcher-logout:hover { background: #fef2f2; }
 
-/* ============================================================
-   LOGIN BRAND PANEL — v2  (farm illustration layout)
-   ============================================================ */
 
-/* Override the old brand panel background — warmer earthy gradient */
-.nagro-login-brand {
-  flex: 0 0 44%;
-  background: linear-gradient(175deg,
-    #14532d 0%,
-    #166534 25%,
-    #15803d 55%,
-    #16a34a 80%,
-    #22c55e 100%);
-  padding: 36px 40px 32px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  position: relative;
-  overflow: hidden;
-  gap: 0;
-}
-
-/* ── Top header row ── */
-.nlb-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: relative;
-  z-index: 2;
-  margin-bottom: 24px;
-}
-
-.nlb-logo-pill {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.25);
-  padding: 8px 18px;
-  border-radius: 99px;
-  backdrop-filter: blur(8px);
-}
-.nlb-logo-leaf {
-  font-size: 1.25rem;
-  line-height: 1;
-}
-.nlb-logo-text {
-  font-family: 'DM Serif Display', Georgia, serif;
-  font-size: 1.125rem;
-  color: #ffffff;
-  letter-spacing: 0.01em;
-}
-
-.nlb-badge {
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.8);
-  font-weight: 600;
-  background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.2);
-  padding: 5px 12px;
-  border-radius: 99px;
-  letter-spacing: 0.02em;
-}
-
-/* ── Headline block ── */
-.nlb-headline {
-  position: relative;
-  z-index: 2;
-  margin-bottom: 20px;
-}
-
-.nlb-title {
-  font-family: 'DM Serif Display', Georgia, serif;
-  font-size: 3rem;
-  line-height: 1.1;
-  color: #ffffff !important;
-  margin-bottom: 14px;
-  letter-spacing: -0.01em;
-}
-.nlb-title-accent {
-  color: #fde68a !important;
-  font-style: italic;
-}
-.nlb-desc {
-  font-size: 0.9375rem;
-  color: rgba(255,255,255,0.82);
-  line-height: 1.65;
-  max-width: 320px;
-}
-
-/* ── Illustration ── */
-.nlb-illustration {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  padding: 8px 0;
-}
-
-/* ── Stats strip ── */
-.nlb-stats {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  background: rgba(0,0,0,0.18);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 16px;
-  padding: 16px 24px;
-  backdrop-filter: blur(8px);
-  margin-top: 16px;
-}
-.nlb-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  flex: 1;
-}
-.nlb-stat-num {
-  font-family: 'DM Serif Display', Georgia, serif;
-  font-size: 1.625rem;
-  color: #fde68a;
-  line-height: 1;
-}
-.nlb-stat-label {
-  font-size: 0.6875rem;
-  color: rgba(255,255,255,0.65);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  white-space: nowrap;
-}
-.nlb-stat-divider {
-  width: 1px;
-  height: 36px;
-  background: rgba(255,255,255,0.2);
-  flex-shrink: 0;
-}
-
-/* ── Decorative circles (smaller, softer) ── */
-.nagro-login-brand .nagro-art-circle {
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.07);
-  pointer-events: none;
-}
-.nagro-login-brand .nagro-art-c1 { width: 350px; height: 350px; bottom: -120px; right: -120px; }
-.nagro-login-brand .nagro-art-c2 { width: 180px; height: 180px; top: 60px; right: -50px; }
-
-/* ── Responsive ── */
-@media (max-width: 1024px) {
-  .nagro-login-brand { flex: 0 0 40%; padding: 28px 28px 24px; }
-  .nlb-title { font-size: 2.25rem; }
-}
-@media (max-width: 900px) {
-  .nagro-login-brand { display: none; }
-  .nagro-login-form-panel { background: linear-gradient(135deg, #f0fdf4, #fffbeb); }
-  .nagro-mobile-logo { display: flex; }
-}
+/* (old brand panel v2 styles removed — using new photo panel styles above) */
