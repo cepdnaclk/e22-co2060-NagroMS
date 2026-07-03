@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { User, Briefcase, Clock, FileText, Video, Phone, MessageSquare, CheckCircle, Save } from 'lucide-react';
 import { useExpertData } from './hooks/useExpertData';
 import { updateExpertProfile } from '../../services/expertService';
-import '../../styles/expertDashboard.css';
+import '../../Styles/expertDashboard.css';
 
 const STORAGE_KEY = 'nagroms_expert_settings';
 

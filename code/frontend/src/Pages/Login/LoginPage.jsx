@@ -12,15 +12,22 @@ export function LoginPage() {
   const [isLoading, setIsLoading]       = useState(false);
   const [generalError, setGeneralError] = useState('');
 
-  const getFirebaseError = (code) => {
+  const getFirebaseError = (code, method) => {
+    const fieldLabel = method === 'email' ? 'email address' : method === 'phone' ? 'phone number' : 'NIC number';
     const map = {
-      'auth/user-not-found':         'No account found with these details.',
+      'auth/user-not-found':         `No account found with these ${method === 'email' ? 'email' : method === 'phone' ? 'phone' : 'NIC'} details.`,
       'auth/wrong-password':         'Incorrect password. Please try again.',
-      'auth/invalid-email':          'Please enter a valid email address.',
-      'auth/invalid-credential':     'Invalid credentials. Please check and try again.',
-      'auth/too-many-requests':      'Too many attempts. Please wait a few minutes.',
+      // For phone/NIC logins we translate to an internal email behind the scenes,
+      // so a Firebase "invalid-email" here really means we couldn't find/build
+      // a matching account for the phone or NIC the user typed — not that their
+      // input looked like a bad email address.
+      'auth/invalid-email':          method === 'email'
+        ? 'Please enter a valid email address.'
+        : `No account found for this ${fieldLabel}. Please check and try again.`,
+      'auth/invalid-credential':     `Invalid credentials for this ${fieldLabel}. Please check and try again.`,
+      'auth/too-many-requests':      'Too many login attempts. Please wait a few minutes before trying again.',
       'auth/user-disabled':          'This account has been disabled.',
-      'auth/network-request-failed': 'Network error. Check your connection.',
+      'auth/network-request-failed': 'Network error. Please check your connection and try again.',
     };
     return map[code] || null;
   };
@@ -69,7 +76,8 @@ export function LoginPage() {
       // Phone/NIC login: look up email from backend by phone or NIC
       if (loginMethod === 'phone' || loginMethod === 'nic') {
         try {
-          const res  = await fetch('http://localhost:5000/api/auth/find-user', {
+          const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
+          const res  = await fetch(`${backendUrl}/api/auth/find-user`, {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -93,7 +101,7 @@ export function LoginPage() {
       const result = await loginWithEmail(emailToUse, formData.password);
       navigate('/' + result.dashboardRoute);
     } catch (err) {
-      const msg = getFirebaseError(err.code) || err.message || 'Login failed.';
+      const msg = getFirebaseError(err.code, loginMethod) || err.message || 'Login failed.';
       setErrors(prev => ({ ...prev, password: msg }));
     } finally {
       setIsLoading(false);

@@ -274,11 +274,29 @@ async function updateUserRoles(req, res) {
 // ──────────────────────────────────────────────────────────────
 async function findUser(req, res) {
   try {
-    const { email } = req.body;
-    const user = await getUserByEmail(email);
+    const { email, phone, nic } = req.body;
+    let user = null;
+
+    if (email) {
+      user = await getUserByEmail(email);
+    } else if (phone) {
+      const snap = await db.collection('users').where('phone', '==', phone).limit(1).get();
+      if (!snap.empty) {
+        user = snap.docs[0].data();
+        user.id = snap.docs[0].id;
+      }
+    } else if (nic) {
+      const snap = await db.collection('users').where('nic', '==', nic).limit(1).get();
+      if (!snap.empty) {
+        user = snap.docs[0].data();
+        user.id = snap.docs[0].id;
+      }
+    }
+
     return res.status(200).json({
       success: true,
       exists: !!user,
+      email: user?.email || null,
       provider: user?.provider || null,
     });
   } catch (error) {
