@@ -38,7 +38,27 @@ async function updateOrderStatus(orderId, status, productId = null) {
   return true;
 }
 
+async function createOrder(data) {
+  const docRef = db.collection(COLLECTION).doc();
+  const order = {
+    id: docRef.id,
+    ...data,
+    status: data.status || 'pending',
+    orderDate: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+  };
+  await docRef.set(order);
+  return order;
+}
+
+async function deleteOrder(orderId) {
+  await db.collection(COLLECTION).doc(orderId).delete();
+  return true;
+}
+
 module.exports = {
   getOrdersByFarmer,
   updateOrderStatus,
+  createOrder,
+  deleteOrder,
 };
