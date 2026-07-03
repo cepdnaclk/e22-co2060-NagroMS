@@ -1,25 +1,25 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 
 // Auth pages
-import LandingPage from './pages/Landingpage/Landingpage.jsx';
-import { LoginPage } from './pages/Login/LoginPage.jsx';
-import { SignUpPage } from './pages/Login/SignUpPage.jsx';
-import { ForgotPasswordPage } from './pages/Login/ForgotPasswordPage.jsx';
+import LandingPage from './Pages/Landingpage/Landingpage.jsx';
+import { LoginPage } from './Pages/Login/LoginPage.jsx';
+import { SignUpPage } from './Pages/Login/SignUpPage.jsx';
+import { ForgotPasswordPage } from './Pages/Login/ForgotPasswordPage.jsx';
 
 // Expert dashboard components
-import ExpertLayout from './pages/expert/layouts/expertlayout.jsx';
-import ExpertDashboard from './pages/expert/ExpertDashboard.jsx';
-import Consultations from './pages/expert/Consultations.jsx';
-import QAForum from './pages/expert/QAForum.jsx';
-import KnowledgeBase from './pages/expert/Knowledgebase.jsx';
-import MyFarmers from './pages/expert/MyFarmers.jsx';
-import Settings from './pages/expert/Settings.jsx';
+import ExpertLayout from './Pages/expert/layouts/expertlayout.jsx';
+import ExpertDashboard from './Pages/expert/ExpertDashboard.jsx';
+import Consultations from './Pages/expert/Consultations.jsx';
+import QAForum from './Pages/expert/QAForum.jsx';
+import KnowledgeBase from './Pages/expert/Knowledgebase.jsx';
+import MyFarmers from './Pages/expert/MyFarmers.jsx';
+import Settings from './Pages/expert/Settings.jsx';
 
 // Farmer dashboard
-import { FarmerDashboard } from './pages/farmer/farmerDashboard.jsx';
+import { FarmerDashboard } from './Pages/farmer/farmerDashboard.jsx';
 
 // Customer dashboard
-import { CustomerDashboard } from './pages/Customer/src/app/components/CustomerDashboard.jsx';
+import { CustomerDashboard } from './Pages/Customer/src/app/components/CustomerDashboard.jsx';
 
 // Placeholder dashboards for other roles
 function PlaceholderDashboard({ role }) {

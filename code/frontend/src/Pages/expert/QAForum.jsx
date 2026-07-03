@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { MessageCircle, Clock, ChevronDown, ChevronUp, Send } from 'lucide-react';
 import { useExpertData } from './hooks/useExpertData';
 import { addAnswer } from '../../services/expertService';
-import '../../styles/expertDashboard.css';
+import '../../Styles/expertDashboard.css';
 
 const timeAgo = (ts) => {
     if (!ts) return '';
