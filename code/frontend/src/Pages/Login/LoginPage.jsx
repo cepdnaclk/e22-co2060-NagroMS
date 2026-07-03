@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Phone, CreditCard, ArrowRight, AlertCircle } from 'lucide-react';
-import { loginWithEmail, loginWithGoogle, loginWithFacebook } from '../utils/firebase';
+import { loginWithEmail, loginWithGoogle, loginWithFacebook } from '../../utils/firebase.js';
 
 function GoogleIcon() {
   return (
@@ -85,7 +86,8 @@ function FarmIllustration() {
   );
 }
 
-export function LoginPage({ onNavigate }) {
+export function LoginPage() {
+  const navigate = useNavigate();
   const [loginMethod, setLoginMethod]   = useState('email');
   const [formData, setFormData]         = useState({ identifier: '', password: '', rememberMe: false });
   const [showPassword, setShowPassword] = useState(false);
@@ -134,24 +136,31 @@ export function LoginPage({ onNavigate }) {
 
       // Phone/NIC login: look up email from backend by phone or NIC
       if (loginMethod === 'phone' || loginMethod === 'nic') {
-        const res  = await fetch('http://localhost:5000/api/auth/find-user', {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            [loginMethod === 'phone' ? 'phone' : 'nic']: formData.identifier
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok || !data.email) {
-          setErrors(prev => ({ ...prev, identifier: 'No account found with this ' + (loginMethod === 'phone' ? 'phone number.' : 'NIC number.') }));
-          setIsLoading(false);
-          return;
+        try {
+          const res  = await fetch('http://localhost:5000/api/auth/find-user', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              [loginMethod === 'phone' ? 'phone' : 'nic']: formData.identifier
+            }),
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            if (data.email) {
+              emailToUse = data.email;
+            }
+          }
+        } catch (err) {
+          console.warn("⚠️ Backend unreachable. Generating mock email for phone/NIC.");
+          // Generate same fake email pattern as firebase.js for consistency
+          const cleaned = formData.identifier.replace(/\D/g, '').toLowerCase();
+          emailToUse = `${loginMethod}_${cleaned}@nagroms.local`;
         }
-        emailToUse = data.email;
       }
 
       const result = await loginWithEmail(emailToUse, formData.password);
-      onNavigate(result.dashboardRoute);
+      navigate('/' + result.dashboardRoute);
     } catch (err) {
       const msg = getFirebaseError(err.code) || err.message || 'Login failed.';
       setErrors(prev => ({ ...prev, password: msg }));
@@ -165,7 +174,7 @@ export function LoginPage({ onNavigate }) {
     setIsLoading(true);
     try {
       const result = provider === 'Google' ? await loginWithGoogle() : await loginWithFacebook();
-      onNavigate(result.dashboardRoute || 'farmer-dashboard');
+      navigate('/' + (result.dashboardRoute || 'farmer-dashboard'));
     } catch (err) {
       setGeneralError(err.message || `${provider} login failed.`);
     } finally {
@@ -290,7 +299,7 @@ export function LoginPage({ onNavigate }) {
               <div className="nagro-field">
                 <div className="nagro-label-row">
                   <label className="nagro-label">Password</label>
-                  <button type="button" onClick={() => onNavigate('forgot-password')} className="nagro-forgot-link">
+                  <button type="button" onClick={() => navigate('/forgot-password')} className="nagro-forgot-link">
                     Forgot password?
                   </button>
                 </div>
@@ -336,7 +345,7 @@ export function LoginPage({ onNavigate }) {
 
             <p className="nagro-bottom-link">
               Don't have an account?{' '}
-              <button type="button" onClick={() => onNavigate('signup')} className="nagro-link">Create account</button>
+              <button type="button" onClick={() => navigate('/signup')} className="nagro-link">Create account</button>
             </p>
             <p className="nagro-security-note">🔒 Role-based secure access · SSL Encrypted</p>
           </div>
