@@ -30,18 +30,27 @@ import {
   ArrowRight,
   CreditCard,
   Bot,
-  Sparkles
+  Sparkles,
+  Wheat,
+  Briefcase,
+  RadioTower,
+  TreePine,
+  Cloud,
+  Box,
+  FileText,
+  ClipboardList,
+  CircleDollarSign,
+  TrendingDown,
+  Contact,
+  Leaf,
+  Coins
 } from 'lucide-react';
-<<<<<<< HEAD
-import { RoleSwitcher } from "../../components/RoleSwitcher.jsx";
-import { logout } from "../../utils/firebase";
-=======
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { db, auth as firebaseAuth } from "../../utils/firebase";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { RoleSwitcher } from "../RoleSwitcher.jsx";
->>>>>>> origin/main
+import { RoleSwitcher } from "../../components/RoleSwitcher.jsx";
+import { logout } from "../../utils/firebase";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "./InputOTP";
-import CommunityNetwork from "../../components/Network/CommunityNetwork";
 import './farmerDashboard.css';
 import {
   fetchFarmerProfile,
@@ -60,12 +69,9 @@ import {
   addInventory as apiAddInventory,
   updateInventory as apiUpdateInventory,
   deleteInventory as apiDeleteInventory,
-  updateOrderStatus
 } from '../../services/farmerApi';
 
-// Real-time Firestore imports
-import { db } from '../../utils/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+
 
 
 import tomatoImg from "./images/products/tomato.png";
@@ -107,7 +113,7 @@ export const getImageForName = (name) => {
   const n = name.toLowerCase();
 
   // Products
-  if (n.includes('tomato') || n.includes('tomoto')) return tomatoImg;
+  if (n.includes('tomato')) return tomatoImg;
   if (n.includes('rice')) return riceImg;
   if (n.includes('bean')) return beansImg;
   if (n.includes('carrot')) return carrotsImg;
@@ -135,6 +141,20 @@ export const getImageForName = (name) => {
 export function FarmerDashboard({ onNavigate }) {
   const [activeNav, setActiveNav] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [openGroup, setOpenGroup] = useState(null); // 'farm' | 'business' | 'communication' | 'support'
+  const [darkMode, setDarkMode] = useState(localStorage.getItem('nagroms_darkMode') === 'true');
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('nagroms_darkMode', 'true');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('nagroms_darkMode', 'false');
+    }
+  }, [darkMode]);
+
+  const toggleGroup = (key) => setOpenGroup(prev => prev === key ? null : key);
   const [userName, setUserName] = useState(localStorage.getItem('userName') || 'Farmer');
   const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail') || '');
   const [userPhone, setUserPhone] = useState(localStorage.getItem('userPhone') || '');
@@ -196,63 +216,13 @@ export function FarmerDashboard({ onNavigate }) {
     // 6. Fetch farmer profile (once is usually fine for profile, or stay real-time too)
     const fetchProfile = async () => {
       try {
-<<<<<<< HEAD
-        // Fetch profile
-        const profileRes = await fetchFarmerProfile();
-        let currentFarmerUid = null;
-        if (profileRes.success && profileRes.data) {
-          const p = profileRes.data;
-          currentFarmerUid = p.uid || p.id;
-          if (p.fullName) { setUserName(p.fullName); localStorage.setItem('userName', p.fullName); }
-          if (p.email) { setUserEmail(p.email); localStorage.setItem('userEmail', p.email); }
-          if (p.phone) { setUserPhone(p.phone); localStorage.setItem('userPhone', p.phone); }
-          if (p.district) { setUserLocation(p.district); localStorage.setItem('userLocation', p.district); }
-          if (p.nic) { setUserNIC(p.nic); localStorage.setItem('userNIC', p.nic); }
-        }
-        // Fetch products
-        const productsRes = await apiFetchProducts();
-        if (productsRes.success && productsRes.data) {
-          setProducts(productsRes.data);
-        }
-
-        // ── REAL-TIME ORDER LISTENER ──────────────────────────
-        let unsubscribeOrders = () => { };
-        if (currentFarmerUid) {
-          const q = query(
-            collection(db, 'orders'),
-            where('farmerId', '==', currentFarmerUid)
-          );
-          unsubscribeOrders = onSnapshot(q, (snapshot) => {
-            const liveOrders = snapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data()
-            }));
-            setOrders(liveOrders);
-            setOrdersList(liveOrders);
-            // also update ordersList for badge
-          });
-        }
-
-        // Fetch sales
-        const salesRes = await apiFetchSales();
-        if (salesRes.success && salesRes.data && salesRes.data.length > 0) {
-          setSales(salesRes.data);
-        }
-
-        // Fetch equipment
-        const eqRes = await apiFetchEquipment();
-        if (eqRes.success && eqRes.data && eqRes.data.length > 0) {
-          setMyEquipment(eqRes.data);
-        }
-
-        // Fetch inventory
-        const invRes = await apiFetchInventory();
-        if (invRes.success && invRes.data && invRes.data.length > 0) {
-          setInventory(invRes.data);
+        const res = await fetchFarmerProfile();
+        if (res.success && res.data) {
           const p = res.data;
           if (p.fullName) { setUserName(p.fullName); localStorage.setItem('userName', p.fullName); }
           if (p.district) { setUserLocation(p.district); localStorage.setItem('userLocation', p.district); }
-
+          if (p.nic) { setUserNIC(p.nic); localStorage.setItem('userNIC', p.nic); }
+        }
         }
       } catch (err) {
         console.warn("Profile fetch failed:", err.message);
@@ -396,9 +366,6 @@ export function FarmerDashboard({ onNavigate }) {
     name: '',
     quantity: '',
     price: '',
-    category: 'vegetables',
-    unit: 'kg',
-    image: '',
     status: 'In Stock'
   });
 
@@ -487,11 +454,7 @@ export function FarmerDashboard({ onNavigate }) {
 
   // Handlers for products
   const handleEditProduct = (product) => {
-    setEditingProduct({
-      ...product,
-      quantity: product.quantity !== undefined && product.quantity !== null ? String(product.quantity) : '',
-      price: product.price !== undefined && product.price !== null ? String(product.price) : '',
-    });
+    setEditingProduct({ ...product });
   };
 
   const handleSaveProduct = async () => {
@@ -536,9 +499,6 @@ export function FarmerDashboard({ onNavigate }) {
         name: newProduct.name,
         quantity: newProduct.quantity,
         price: newProduct.price,
-        unit: newProduct.unit || 'kg',
-        image: newProduct.image || '',
-        category: newProduct.category || 'vegetables',
         status: newProduct.status || 'In Stock',
       });
       if (res.success && res.data) {
@@ -552,7 +512,7 @@ export function FarmerDashboard({ onNavigate }) {
       alert('Network error. Adding locally. Error: ' + err.message);
       setProducts([...products, { id: Date.now(), ...newProduct }]);
     }
-    setNewProduct({ name: '', quantity: '', price: '', unit: 'kg', image: '', category: 'vegetables', status: 'In Stock' });
+    setNewProduct({ name: '', quantity: '', price: '', status: 'In Stock' });
     setShowAddProduct(false);
   };
 
@@ -659,52 +619,104 @@ export function FarmerDashboard({ onNavigate }) {
     setSidebarOpen(false);
   };
 
+  // Pending orders badge count
+  const pendingOrdersCount = (orders || []).reduce(
+    (sum, o) => sum + (o.products || []).filter(p => p.status === 'pending').length, 0
+  );
+
   // Render different content based on active nav
   const renderContent = () => {
     switch (activeNav) {
       case 'dashboard':
         return <DashboardContent onNavigate={handleQuickNavigation} products={products} rentedEquipment={rentedEquipment} sales={sales} orders={orders} rentalIncome={rentalIncome} rentalExpenses={rentalExpenses} userName={userName} />;
-      case 'products':
-        return <MyProductsContent
-          products={products}
-          onAddClick={() => setShowAddProduct(true)}
-          onEdit={handleEditProduct}
-          onDelete={(id) => setDeleteConfirm(id)}
-        />;
-      case 'sales':
-        return <SalesContent customerPurchases={customerPurchases} equipmentRentals={equipmentRentals} />;
-      case 'expenses':
-        return <ExpensesContent rentalExpenses={rentalExpenses} />;
-      case 'loans':
-        return <LoansContent availableLoans={availableLoans} activeLoans={activeLoans} />;
-      case 'orders':
-        return <OrdersContent orders={orders} />;
-      case 'contacts':
-        return <ContactsContent />;
-      case 'equipment':
-        return <EquipmentContent
-          myEquipment={myEquipment}
-          onAddClick={() => setShowAddEquipment(true)}
-          onDeleteEquipment={(id) => setDeleteEquipmentConfirm(id)}
-          onRentClick={(eq) => {
-            setRentConfirm(eq);
-            setRentQuantity(1);
-            setRentDays(1);
-          }}
-        />;
-      case 'weather':
-        return <WeatherContent userLocation={userLocation} />;
-      case 'inventory':
-        return <InventoryContent
-          inventory={inventory}
-          onAddClick={() => setShowAddInventory(true)}
-          onEdit={handleEditInventory}
-          onDelete={(id) => setDeleteInventoryConfirm(id)}
-        />;
-      case 'chatbot':
-        return <ChatbotContent userLocation={userLocation} />;
-      case 'community':
-        return <CommunityNetwork currentUserRole="farmer" />;
+
+      /* ─── Farm Management (combined scrollable page) ─── */
+      case 'farm-management':
+        return (
+          <div className="space-y-10">
+            <SectionHeader icon="🌾" title="Farm Management" subtitle="Manage your products, inventory and equipment" />
+            <div id="section-products">
+              <SectionDivider icon="🌿" label="My Products" />
+              <MyProductsContent
+                products={products}
+                onAddClick={() => setShowAddProduct(true)}
+                onEdit={handleEditProduct}
+                onDelete={(id) => setDeleteConfirm(id)}
+              />
+            </div>
+            <div id="section-inventory">
+              <SectionDivider icon="📋" label="Inventory" />
+              <InventoryContent
+                inventory={inventory}
+                onAddClick={() => setShowAddInventory(true)}
+                onEdit={handleEditInventory}
+                onDelete={(id) => setDeleteInventoryConfirm(id)}
+              />
+            </div>
+            <div id="section-equipment">
+              <SectionDivider icon="🚜" label="Equipment" />
+              <EquipmentContent
+                myEquipment={myEquipment}
+                onAddClick={() => setShowAddEquipment(true)}
+                onDeleteEquipment={(id) => setDeleteEquipmentConfirm(id)}
+                onRentClick={(eq) => { setRentConfirm(eq); setRentQuantity(1); setRentDays(1); }}
+              />
+            </div>
+          </div>
+        );
+
+      /* ─── Business Management (combined scrollable page) ─── */
+      case 'business-management':
+        return (
+          <div className="space-y-10">
+            <SectionHeader icon="💼" title="Business Management" subtitle="Track sales, expenses, orders and loans" />
+            <div id="section-sales">
+              <SectionDivider icon="💰" label="Sales & Income" />
+              <SalesContent customerPurchases={customerPurchases} equipmentRentals={equipmentRentals} />
+            </div>
+            <div id="section-expenses">
+              <SectionDivider icon="📉" label="Expenses" />
+              <ExpensesContent rentalExpenses={rentalExpenses} />
+            </div>
+            <div id="section-orders">
+              <SectionDivider icon="📦" label="Orders" badge={pendingOrdersCount} />
+              <OrdersContent orders={orders} />
+            </div>
+            <div id="section-loans">
+              <SectionDivider icon="💳" label="Bank Loans" />
+              <LoansContent availableLoans={availableLoans} activeLoans={activeLoans} />
+            </div>
+          </div>
+        );
+
+      /* ─── Communication (combined scrollable page) ─── */
+      case 'communication':
+        return (
+          <div className="space-y-10">
+            <SectionHeader icon="📡" title="Communication" subtitle="Connect with buyers and other farmers" />
+            <div id="section-contacts">
+              <SectionDivider icon="📞" label="Contacts" />
+              <ContactsContent />
+            </div>
+          </div>
+        );
+
+      /* ─── Farm Support (combined scrollable page) ─── */
+      case 'farm-support':
+        return (
+          <div className="space-y-10">
+            <SectionHeader icon="🌱" title="Farm Support" subtitle="Weather forecasts and AI farming assistant" />
+            <div id="section-weather">
+              <SectionDivider icon="⛅" label="Weather" />
+              <WeatherContent userLocation={userLocation} />
+            </div>
+            <div id="section-chatbot">
+              <SectionDivider icon="💬" label="Chatbot" />
+              <ChatbotContent userLocation={userLocation} />
+            </div>
+          </div>
+        );
+
       case 'settings':
         return (
           <SettingsContent
@@ -723,7 +735,7 @@ export function FarmerDashboard({ onNavigate }) {
           />
         );
       default:
-        return <DashboardContent onNavigate={handleQuickNavigation} products={products} rentedEquipment={rentedEquipment} sales={sales} orders={orders} rentalIncome={rentalIncome} rentalExpenses={rentalExpenses} />;
+        return <DashboardContent onNavigate={handleQuickNavigation} products={products} rentedEquipment={rentedEquipment} sales={sales} orders={orders} rentalIncome={rentalIncome} rentalExpenses={rentalExpenses} userName={userName} />;
     }
   };
 
@@ -733,161 +745,194 @@ export function FarmerDashboard({ onNavigate }) {
   );
 
   return (
-    <div className="fd-layout">
-
-      {/* ── Left Sidebar ── */}
-      <aside className="fd-sidebar">
-        {/* Logo */}
-        <div className="fd-sidebar-logo">
-          <div className="fd-sidebar-logo-icon">
-            <Sprout className="w-5 h-5" style={{ color: '#fff' }} />
+    <div className={`min-h-screen bg-background text-foreground ${darkMode ? 'dark' : ''}`}>
+      {/* Sidebar */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-green-200
+        transform transition-transform duration-300 ease-in-out
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <div className="h-full flex flex-col">
+          {/* Logo */}
+          <div className="flex items-center gap-2 p-6 border-b border-green-200">
+            <div className="bg-primary rounded-lg p-2">
+              <Sprout className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg text-primary font-semibold">NagroMS</h2>
+              <p className="text-xs text-muted-foreground">Farmer Portal</p>
+            </div>
           </div>
-          <span className="fd-sidebar-logo-text">NagroMS</span>
-        </div>
 
-        {/* Nav groups */}
-        <nav className="fd-sidebar-nav">
+          {/* Navigation */}
+          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
 
-          {/* Group 1: Main overview */}
-          <div className="fd-nav-group">
-            <span className="fd-nav-group-label">Overview</span>
-            <button
-              className={`fd-nav-item${activeNav === 'dashboard' ? ' fd-nav-active' : ''}`}
+            {/* Dashboard */}
+            <NavButton
+              icon={<LayoutDashboard className="w-5 h-5" />}
+              label="Dashboard"
+              active={activeNav === 'dashboard'}
               onClick={() => { setActiveNav('dashboard'); setSidebarOpen(false); }}
-            >
-              <LayoutDashboard className="fd-nav-icon" />
-              <span className="fd-nav-label">Products, Sales,<br />Expenses & Orders</span>
-              {pendingCount > 0 && <span className="fd-nav-badge">{pendingCount}</span>}
-            </button>
-          </div>
+            />
 
-          {/* Group 2: Loans & Weather */}
-          <div className="fd-nav-group">
-            <span className="fd-nav-group-label">Financial & Farming</span>
-            <button
-              className={`fd-nav-item${activeNav === 'loans' ? ' fd-nav-active' : ''}`}
-              onClick={() => { setActiveNav('loans'); setSidebarOpen(false); }}
-            >
-              <CreditCard className="fd-nav-icon" />
-              <span className="fd-nav-label">Loans</span>
-            </button>
-            <button
-              className={`fd-nav-item${activeNav === 'weather' ? ' fd-nav-active' : ''}`}
-              onClick={() => { setActiveNav('weather'); setSidebarOpen(false); }}
-            >
-              <CloudRain className="fd-nav-icon" />
-              <span className="fd-nav-label">Weather</span>
-            </button>
-          </div>
+            {/* Farm Management */}
+            <NavButton
+              icon={<Wheat className="w-5 h-5" />}
+              label="Farm Management"
+              active={activeNav === 'farm-management'}
+              onClick={() => { setActiveNav('farm-management'); setSidebarOpen(false); }}
+            />
 
-          {/* Group 3: Chatbot */}
-          <div className="fd-nav-group">
-            <span className="fd-nav-group-label">Assistant</span>
-            <button
-              className={`fd-nav-item${activeNav === 'chatbot' ? ' fd-nav-active' : ''}`}
-              onClick={() => { setActiveNav('chatbot'); setSidebarOpen(false); }}
-            >
-              <Bot className="fd-nav-icon" />
-              <span className="fd-nav-label">Chatbot</span>
-            </button>
-          </div>
-
-          {/* Group 4: More (Equipment, Inventory, Contacts, Community) */}
-          <div className="fd-nav-group">
-            <span className="fd-nav-group-label">More</span>
-            <button
-              className={`fd-nav-item${activeNav === 'equipment' ? ' fd-nav-active' : ''}`}
+            {/* Equipment Rental */}
+            <NavButton
+              icon={<Tractor className="w-5 h-5" />}
+              label="Equipment Rental"
+              active={activeNav === 'equipment'}
               onClick={() => { setActiveNav('equipment'); setSidebarOpen(false); }}
-            >
-              <Tractor className="fd-nav-icon" />
-              <span className="fd-nav-label">Equipment</span>
-            </button>
+            />
+
+            {/* Business Management */}
+            <SidebarGroup
+              icon={<Briefcase className="w-5 h-5" />}
+              label="Business Management"
+              groupKey="business"
+              isOpen={openGroup === 'business'}
+              onToggle={() => toggleGroup('business')}
+              isGroupActive={activeNav === 'business-management'}
+              badge={pendingOrdersCount}
+              items={[
+                { icon: <CircleDollarSign className="w-4 h-4" />, label: 'Sales & Income' },
+                { icon: <TrendingDown className="w-4 h-4" />, label: 'Expenses' },
+                { icon: <Package className="w-4 h-4" />, label: 'Orders', badge: pendingOrdersCount },
+              ]}
+              onNavigate={() => { setActiveNav('business-management'); setSidebarOpen(false); }}
+            />
+
+            {/* Communication */}
+            <SidebarGroup
+              icon={<RadioTower className="w-5 h-5" />}
+              label="Communication"
+              groupKey="communication"
+              isOpen={openGroup === 'communication'}
+              onToggle={() => toggleGroup('communication')}
+              isGroupActive={activeNav === 'communication'}
+              items={[
+                { icon: <Contact className="w-4 h-4" />, label: 'Contacts' },
+                { icon: <CreditCard className="w-4 h-4" />, label: 'Bank Loans' },
+              ]}
+              onNavigate={() => { setActiveNav('communication'); setSidebarOpen(false); }}
+            />
+
+            {/* Weather */}
+            <NavButton
+              icon={<Cloud className="w-5 h-5" />}
+              label="Weather Forecast"
+              active={activeNav === 'weather'}
+              onClick={() => { setActiveNav('weather'); setSidebarOpen(false); }}
+              darkMode={darkMode}
+            />
+
+            {/* AI Chatbot */}
+            <NavButton
+              icon={<MessageCircle className="w-5 h-5" />}
+              label="AI Chatbot"
+              active={activeNav === 'chatbot'}
+              onClick={() => { setActiveNav('chatbot'); setSidebarOpen(false); }}
+              darkMode={darkMode}
+            />
+
+          </nav>
+
+          {/* Settings & Logout */}
+          <div className="p-4 border-t border-green-200 space-y-2">
+            <NavButton
+              icon={<Settings className="w-5 h-5" />}
+              label="Settings"
+              active={activeNav === 'settings'}
+              onClick={() => { setActiveNav('settings'); setSidebarOpen(false); }}
+            />
             <button
-              className={`fd-nav-item${activeNav === 'inventory' ? ' fd-nav-active' : ''}`}
-              onClick={() => { setActiveNav('inventory'); setSidebarOpen(false); }}
+              onClick={() => onNavigate('landing')}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-500 hover:bg-red-50 transition-colors mt-2"
             >
-              <Package className="fd-nav-icon" />
-              <span className="fd-nav-label">Inventory</span>
-            </button>
-            <button
-              className={`fd-nav-item${activeNav === 'contacts' ? ' fd-nav-active' : ''}`}
-              onClick={() => { setActiveNav('contacts'); setSidebarOpen(false); }}
-            >
-              <Phone className="fd-nav-icon" />
-              <span className="fd-nav-label">Contacts</span>
-            </button>
-            <button
-              className={`fd-nav-item${activeNav === 'community' ? ' fd-nav-active' : ''}`}
-              onClick={() => { setActiveNav('community'); setSidebarOpen(false); }}
-            >
-              <Users className="fd-nav-icon" />
-              <span className="fd-nav-label">Community</span>
+              <span className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                <LogOut className="w-5 h-5" />
+              </span>
+              <span className="text-sm font-medium flex-1 text-left">Logout</span>
             </button>
           </div>
-        </nav>
-
-        {/* Settings + Logout at bottom */}
-        <div className="fd-sidebar-bottom">
-          <button
-            className={`fd-nav-item${activeNav === 'settings' ? ' fd-nav-active' : ''}`}
-            onClick={() => { setActiveNav('settings'); setSidebarOpen(false); }}
-          >
-            <Settings className="fd-nav-icon" />
-            <span className="fd-nav-label">Settings</span>
-          </button>
-          <button
-            className="fd-nav-item fd-nav-logout"
-            onClick={async () => { await logout(); window.location.href = '/'; }}
-          >
-            <LogOut className="fd-nav-icon" />
-            <span className="fd-nav-label">Logout</span>
-          </button>
         </div>
       </aside>
 
-      {/* ── Main area (header + content) ── */}
-      <div className="fd-main">
-
-        {/* Top header bar */}
-        <header className="fd-header">
-          <div className="fd-header-left">
-            {/* Hamburger for mobile */}
-            <button className="fd-hamburger" onClick={() => setSidebarOpen(!sidebarOpen)}>
-              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+      {/* Main Content Wrapper - Shifts when sidebar is open */}
+      <div className={`transition-all duration-300 ease-in-out flex flex-col min-h-screen ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
+        {/* Header with Menu Button */}
+        <div className="bg-white border-b border-green-200 px-4 py-3 flex items-center justify-between sticky top-0 z-40">
+          <div className="flex items-center gap-2">
+            {/* Hamburger Menu */}
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="text-foreground hover:bg-green-50 p-2 rounded-lg transition-colors mr-1"
+              aria-label="Toggle menu"
+            >
+              {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
-            <span className="fd-header-title">
-              {activeNav === 'dashboard' ? 'Farm Overview' :
-                activeNav === 'products' ? 'My Products' :
-                  activeNav === 'sales' ? 'Sales' :
-                    activeNav === 'expenses' ? 'Expenses' :
-                      activeNav === 'orders' ? 'Orders' :
-                        activeNav === 'loans' ? 'Loans' :
-                          activeNav === 'weather' ? 'Weather' :
-                            activeNav === 'chatbot' ? 'Farm Assistant' :
-                              activeNav === 'equipment' ? 'Equipment' :
-                                activeNav === 'inventory' ? 'Inventory' :
-                                  activeNav === 'contacts' ? 'Contacts' :
-                                    activeNav === 'community' ? 'Community' :
-                                      activeNav === 'settings' ? 'Settings' : 'Dashboard'}
-            </span>
-          </div>
-          <div className="fd-header-right">
-            <RoleSwitcher currentRole="farmer" onNavigate={onNavigate} />
-            <div className="fd-header-profile">
-              <span className="fd-profile-emoji">{profilePicture}</span>
-              <span className="fd-profile-name">{userName.split(' ')[0]}</span>
+            <div className="bg-primary rounded-lg p-1.5">
+              <Sprout className="w-5 h-5 text-white" />
             </div>
+            <span className="text-primary font-semibold">NagroMS</span>
           </div>
-        </header>
+          <div className="flex items-center gap-3">
+            <RoleSwitcher currentRole="farmer" onNavigate={onNavigate} />
+            
+            {/* Active Mode */}
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-green-50 border border-green-200 text-green-700 rounded-full text-sm font-medium">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+              </span>
+              Active
+            </div>
 
-        {/* Mobile overlay */}
-        {sidebarOpen && (
-          <div className="fd-sidebar-overlay" onClick={() => setSidebarOpen(false)} />
-        )}
+            {/* Theme Toggle */}
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl transition-all active:scale-95 border border-gray-200 hover:border-green-300 flex items-center justify-center cursor-pointer shadow-sm"
+              title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {darkMode ? (
+                <Sun className="w-4 h-4 text-amber-500" />
+              ) : (
+                <Moon className="w-4 h-4 text-gray-600" />
+              )}
+            </button>
+            
+            {/* Language Switcher */}
+            <select className="bg-white border border-gray-200 text-sm font-bold text-gray-600 hover:text-primary rounded-lg focus:ring-green-500 focus:border-green-500 block p-1.5 cursor-pointer outline-none hover:bg-green-50 transition-colors">
+              <option value="en">English</option>
+              <option value="si">සිංහල</option>
+              <option value="ta">தமிழ்</option>
+            </select>
+            
+            {/* Profile */}
+            <button 
+              onClick={() => {
+                setActiveNav('settings');
+                setSidebarOpen(false);
+              }}
+              className="w-10 h-10 rounded-full border-2 border-primary flex items-center justify-center bg-green-100 text-xl hover:shadow-md transition-all overflow-hidden"
+            >
+              {profilePicture}
+            </button>
+          </div>
+        </div>
 
-        {/* Page content */}
-        <main className="fd-content">
-          {renderContent()}
+        {/* Main Content */}
+        <main className="flex-1">
+          <div className="p-4 lg:p-8">
+            {renderContent()}
+          </div>
         </main>
       </div>
 
@@ -984,31 +1029,153 @@ export function FarmerDashboard({ onNavigate }) {
         />
       )}
     </div>
+  </div>
   );
 }
 
-function NavButton({ icon, label, active, onClick }) {
+/* ── Simple nav button ── */
+function NavButton({ icon, label, active, onClick, badge }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={`
-        flex flex-col items-center justify-center min-w-[72px] px-2 py-2 rounded-xl transition-all
+        w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
         ${active
-          ? 'text-primary bg-green-50 shadow-inner'
-          : 'text-gray-400 hover:text-primary hover:bg-gray-50'
+          ? 'bg-green-100 text-primary border border-green-300 font-bold shadow-sm'
+          : 'bg-white text-gray-700 hover:bg-green-100 hover:text-primary border border-gray-200'
         }
       `}
     >
-      <span className="text-2xl mb-1">{icon}</span>
-      <span className="text-[10px] font-semibold leading-none whitespace-nowrap tracking-wide">{label}</span>
+      {icon && (
+        <span className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+          {typeof icon === 'string' && icon.length <= 4 ? (
+            <span className="text-xl">{icon}</span>
+          ) : (
+            <img src={icon} alt="" className="w-7 h-7 object-contain" />
+          )}
+        </span>
+      )}
+      <span className="text-sm font-medium flex-1 text-left">{label}</span>
+      {badge > 0 && (
+        <span className="bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1">
+          {badge}
+        </span>
+      )}
     </button>
   );
 }
 
-// Dashboard Content
+/* ── Collapsible sidebar group — shows sub-items as a preview, clicks to navigate ── */
+function SidebarGroup({ icon, label, groupKey, isOpen, onToggle, isGroupActive, items, badge, onNavigate }) {
+  return (
+    <div>
+      {/* Parent row — click the chevron area to expand/collapse, click label area to navigate */}
+      <div
+        className={`
+          w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors cursor-pointer select-none group
+          ${isGroupActive
+            ? 'bg-green-100 text-primary border border-green-300 font-bold shadow-sm'
+            : isOpen
+              ? 'bg-green-50 text-primary border border-green-200 hover:bg-green-100'
+              : 'bg-white text-gray-700 hover:bg-green-100 hover:text-primary border border-gray-200'
+          }
+        `}
+      >
+        {/* Click the icon + label to navigate AND expand */}
+        <button
+          type="button"
+          onClick={() => {
+            onNavigate();
+            if (!isOpen) onToggle();
+          }}
+          className="flex items-center gap-3 flex-1 min-w-0"
+        >
+          <span className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+            <span className="text-xl">{icon}</span>
+          </span>
+          <span className="text-sm font-medium flex-1 text-left truncate">{label}</span>
+        </button>
+        {/* Badge when collapsed */}
+        {!isOpen && badge > 0 && (
+          <span className="bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 mr-1 flex-shrink-0">
+            {badge}
+          </span>
+        )}
+        {/* Chevron — click to expand/collapse */}
+        <button
+          type="button"
+          onClick={onToggle}
+          className="p-1 rounded flex-shrink-0"
+          aria-label="Toggle"
+        >
+          <ChevronDown
+            className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : 'rotate-0'}`}
+          />
+        </button>
+      </div>
+
+      {/* Sub-items preview (non-clickable, decorative) */}
+      {isOpen && (
+        <div className="mt-1 ml-3 pl-3 border-l-2 border-green-200 space-y-0.5">
+          {items.map((item, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={onNavigate}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                isGroupActive ? 'text-primary font-medium hover:bg-green-200/60' : 'text-gray-500 hover:bg-green-100 hover:text-primary'
+              }`}
+            >
+              <span className="text-base">{item.icon}</span>
+              <span className="flex-1 text-left">{item.label}</span>
+              {item.badge > 0 && (
+                <span className="bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-4 flex items-center justify-center px-1">
+                  {item.badge}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Section header for combined pages ── */
+function SectionHeader({ icon, title, subtitle }) {
+  return (
+    <div className="bg-gradient-to-r from-green-600 to-green-500 rounded-2xl p-6 text-white">
+      <div className="flex items-center gap-3 mb-1">
+        <span className="text-3xl">{icon}</span>
+        <h1 className="text-2xl font-bold">{title}</h1>
+      </div>
+      <p className="text-green-100">{subtitle}</p>
+    </div>
+  );
+}
+
+/* ── Section divider with label inside a combined page ── */
+function SectionDivider({ icon, label, badge }) {
+  return (
+    <div className="flex items-center gap-3 mb-4">
+      <span className="text-2xl">{icon}</span>
+      <h2 className="text-xl font-bold text-gray-800">{label}</h2>
+      {badge > 0 && (
+        <span className="bg-red-500 text-white text-xs font-bold rounded-full min-w-[22px] h-5 flex items-center justify-center px-1.5">
+          {badge}
+        </span>
+      )}
+      <div className="flex-1 h-px bg-green-200" />
+    </div>
+  );
+}
+
 function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders, rentalIncome, rentalExpenses, userName }) {
   const [showMoneyModal, setShowMoneyModal] = useState(null); // 'in', 'out', or null
+  const [showAllProducts, setShowAllProducts] = useState(false);
+  const [showAllSales, setShowAllSales] = useState(false);
+  const [showAllExpenses, setShowAllExpenses] = useState(false);
 
   // Calculate actual counts with safety checks
   const productCount = (products || []).length;
@@ -1018,17 +1185,27 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
   const rentalExpensesTotal = (rentalExpenses || []).reduce((total, expense) => total + (expense.total || 0), 0);
   const totalIncome = salesTotal + rentalIncomeTotal;
   const netProfit = totalIncome - rentalExpensesTotal;
-<<<<<<< HEAD
-  // Correctly calculate total pending products across all orders
-  const pendingOrdersCount = orders.reduce((sum, order) =>
-    sum + order.products.filter(p => p.status === 'pending').length, 0
-=======
-
   // Correctly calculate total pending products across all orders with safety checks
   const pendingOrdersCount = (orders || []).reduce((sum, order) =>
     sum + (order.products || []).filter(p => p.status === 'pending').length, 0
->>>>>>> origin/main
   );
+
+  // Chart Data Preparation
+  const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899'];
+  const pieData = (products || []).slice(0, 5).map(p => ({
+    name: p.name,
+    value: parseInt(p.quantity) || 0
+  }));
+
+  const areaData = [
+    { name: 'Mon', income: Math.round(totalIncome * 0.1) },
+    { name: 'Tue', income: Math.round(totalIncome * 0.2) },
+    { name: 'Wed', income: Math.round(totalIncome * 0.4) },
+    { name: 'Thu', income: Math.round(totalIncome * 0.3) },
+    { name: 'Fri', income: Math.round(totalIncome * 0.6) },
+    { name: 'Sat', income: Math.round(totalIncome * 0.8) },
+    { name: 'Sun', income: totalIncome || 5000 }
+  ];
 
   return (
     <div className="space-y-6">
@@ -1138,115 +1315,177 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
         </div>
       </div>
 
-      {/* Real-time Product Overview & Recent Activity */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* My Products Overview - Real-time */}
-        <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <h2 className="text-2xl text-primary font-bold">My Products Overview</h2>
-          </div>
+      {/* Real-time Product Overview, Sales, Expenses & Orders */}
+      <div className="grid lg:grid-cols-3 gap-6">
+        
+        {/* Left/Center Column - stacked vertically */}
+        <div className="lg:col-span-2 space-y-6">
+          
+          {/* Products Panel */}
+          <div className="bg-white/90 backdrop-blur-md rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 border border-green-100 p-6 transition-all duration-300">
+            <div className="flex items-center justify-between gap-3 mb-6">
+              <h2 className="text-2xl text-primary font-bold">Products Inventory</h2>
+            </div>
 
-          {/* Low Stock Alerts */}
-          {(products || []).filter(p => parseInt(p.quantity) <= 150).length > 0 && (
-            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg mb-4">
-              <p className="text-yellow-900 text-lg font-bold mb-2">
-                ⚠️ Low Stock Alert!
-              </p>
-              {(products || []).filter(p => parseInt(p.quantity) <= 150).map(p => (
-                <p key={p.id} className="text-yellow-800 text-md">
-                  {p.emoji} {p.name}: Only {p.quantity} kg left (Need {150 - parseInt(p.quantity)} kg more)
+            {/* Low Stock Alerts */}
+            {(products || []).filter(p => parseInt(p.quantity) <= 150).length > 0 && (
+              <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-xl mb-6">
+                <p className="text-yellow-900 text-lg font-bold mb-2 flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5" /> Low Stock Alert
                 </p>
-              ))}
-            </div>
-          )}
+                {(products || []).filter(p => parseInt(p.quantity) <= 150).map(p => (
+                  <p key={p.id} className="text-yellow-800 text-sm font-medium">
+                    {p.emoji} {p.name}: Only {p.quantity} kg left (Need {150 - parseInt(p.quantity)} kg more)
+                  </p>
+                ))}
+              </div>
+            )}
+            {/* Product Pie Chart */}
+            {(products || []).length > 0 ? (
+              <div className="h-64 w-full mb-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip formatter={(value) => `${value} kg`} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-10 font-medium">No products found. Add some to get started.</p>
+            )}
 
-          {/* Product Summary */}
-          <div className="space-y-3">
-            {(products || []).slice(0, 4).map(product => {
-              const qty = parseInt(product.quantity) || 0;
-              const stockStatus = qty > 150 ? 'In Stock' : 'Low Stock';
-
-              return (
-                <div key={product.id} className="flex items-center justify-between bg-green-50 rounded-lg p-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl">{product.emoji}</span>
-                    <div>
-                      <p className="text-lg text-foreground">{product.name}</p>
-                      <span className={`text-xs px-2 py-1 rounded-full ${stockStatus === 'Low Stock'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-green-100 text-green-800'
-                        }`}>
-                        {stockStatus}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg text-foreground font-bold">{product.quantity} kg</p>
-                    <p className="text-sm text-primary">LKR {product.price}/kg</p>
-                  </div>
-                </div>
-              );
-            })}
+            {(products || []).length > 0 && (
+              <button
+                onClick={() => onNavigate('farm-management')}
+                className="w-full py-3 bg-green-50 text-green-700 hover:bg-green-100 rounded-xl transition-colors font-bold flex justify-center items-center gap-2"
+              >
+                Manage All Products <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
           </div>
 
-          {products.length > 4 && (
+          {/* Sales Panel */}
+          <div className="bg-white/90 backdrop-blur-md rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 border border-green-100 p-6 transition-all duration-300">
+            <div className="flex items-center justify-between gap-3 mb-6">
+              <h2 className="text-2xl text-primary font-bold">Sales & Income Trend</h2>
+            </div>
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl p-5 border border-blue-100 mb-6">
+              <div className="flex justify-between items-center mb-1">
+                <p className="text-sm text-blue-700 font-bold uppercase tracking-wider">Total Income</p>
+                <div className="p-1.5 bg-blue-100 rounded-lg"><TrendingUp className="w-5 h-5 text-blue-600" /></div>
+              </div>
+              <p className="text-4xl text-blue-900 font-black mb-6">LKR {totalIncome.toLocaleString()}</p>
+              
+              {/* Income Area Chart */}
+              <div className="h-40 w-full -ml-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={areaData}>
+                    <defs>
+                      <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#64748b'}} />
+                    <RechartsTooltip 
+                      formatter={(value) => `LKR ${value.toLocaleString()}`}
+                      contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                    />
+                    <Area type="monotone" dataKey="income" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorIncome)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
             <button
-              onClick={() => onNavigate('products')}
-              className="mt-4 w-full py-2 text-primary hover:bg-green-50 rounded-lg transition-colors"
+              onClick={() => onNavigate('business-management')}
+              className="w-full py-3 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl transition-colors font-bold flex justify-center items-center gap-2"
             >
-              View All {products.length} Products →
+              Detailed Sales Report <ArrowRight className="w-4 h-4" />
             </button>
-          )}
+          </div>
+
+          {/* Expenses Panel */}
+          <div className="bg-white/90 backdrop-blur-md rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 border border-green-100 p-6 transition-all duration-300">
+            <div className="flex items-center justify-between gap-3 mb-6">
+              <h2 className="text-2xl text-primary font-bold">Expenses</h2>
+            </div>
+            <div className="bg-red-50 rounded-2xl p-6 border border-red-100 mb-6">
+               <div className="flex justify-between items-center mb-3">
+                 <p className="text-sm text-red-700 font-bold uppercase tracking-wider">Total Expenses</p>
+                 <div className="p-1.5 bg-red-100 rounded-lg"><TrendingDown className="w-5 h-5 text-red-600" /></div>
+               </div>
+               <p className="text-4xl text-red-900 font-black">LKR {rentalExpensesTotal.toLocaleString()}</p>
+            </div>
+            <button
+              onClick={() => onNavigate('business-management')}
+              className="w-full py-3 bg-red-50 text-red-700 hover:bg-red-100 rounded-xl transition-colors font-bold flex justify-center items-center gap-2"
+            >
+              View Expenses <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+
         </div>
 
-        {/* Recent Sales & Orders - Real-time */}
-        <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <h2 className="text-2xl text-primary font-bold">Recent Activity</h2>
-          </div>
-
-          {/* Latest Sales Summary - Visual Card */}
-          <div className="mb-8">
-            <h3 className="text-lg text-foreground font-bold mb-3">Income Summary</h3>
-            <div className="bg-blue-50 rounded-xl p-5 border-l-4 border-blue-500 hover:shadow-md transition-all cursor-pointer" onClick={() => onNavigate('sales')}>
-              <div className="flex justify-between items-center mb-3">
-                <p className="text-sm text-blue-700 font-bold uppercase tracking-wider">Activity: High</p>
-                <TrendingUp className="w-5 h-5 text-blue-600" />
-              </div>
-              <p className="text-3xl text-blue-900 font-black">
-                LKR {totalIncome.toLocaleString()}
-              </p>
-              <div className="grid grid-cols-2 gap-4 mt-4 border-t border-blue-100 pt-3">
-                <div>
-                  <p className="text-xs text-blue-600 font-bold uppercase">Products</p>
-                  <p className="text-sm text-blue-900 font-bold">LKR {salesTotal.toLocaleString()}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-blue-600 font-bold uppercase">Rentals</p>
-                  <p className="text-sm text-blue-900 font-bold">LKR {rentalIncomeTotal.toLocaleString()}</p>
-                </div>
-              </div>
-              <p className="text-sm text-blue-600 mt-4 font-medium">View full sales & income report →</p>
+        {/* Right Column - Orders Panel */}
+        <div className="lg:col-span-1 h-full">
+          <div className="bg-white/90 backdrop-blur-md rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 border border-green-100 p-6 h-full flex flex-col min-h-[500px] transition-all duration-300">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl text-primary font-bold">Recent Orders</h2>
+              {pendingOrdersCount > 0 && (
+                <span className="bg-purple-100 text-purple-800 text-xs px-2.5 py-1 rounded-full font-bold shadow-sm border border-purple-200">{pendingOrdersCount} Pending</span>
+              )}
             </div>
-          </div>
-
-          {/* Pending Orders Summary - Visual Card */}
-          <div>
-            <div className="flex items-center gap-3 mb-3">
-              <h3 className="text-lg text-foreground font-bold">Pending Orders Summary</h3>
+            
+            <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
+               {(!orders || orders.length === 0) ? (
+                 <div className="flex flex-col items-center justify-center h-40">
+                   <Package className="w-12 h-12 text-gray-300 mb-3" />
+                   <p className="text-gray-500 font-medium text-center">No orders yet.</p>
+                 </div>
+               ) : (
+                 orders.map((customer, i) => (
+                   <div key={i} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:border-purple-200 transition-colors">
+                     <div className="flex justify-between items-start mb-4 pb-3 border-b border-gray-50">
+                       <p className="font-bold text-gray-800">{customer.customerName}</p>
+                       <p className="text-xs text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded-md">{new Date(customer.date).toLocaleDateString()}</p>
+                     </div>
+                     <div className="space-y-3">
+                       {(customer.products || []).map((p, idx) => (
+                         <div key={idx} className="flex justify-between items-center text-sm">
+                           <span className="flex items-center gap-2 font-medium text-gray-700">
+                             <span className="w-8 h-8 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-100 text-lg">{p.emoji || '📦'}</span> 
+                             {p.name}
+                           </span>
+                           <span className={`font-bold px-2 py-1 rounded-lg text-[10px] tracking-wider uppercase ${p.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
+                             {p.status}
+                           </span>
+                         </div>
+                       ))}
+                     </div>
+                   </div>
+                 ))
+               )}
             </div>
-            <div className="bg-purple-50 rounded-xl p-4 border-l-4 border-purple-500 hover:shadow-md transition-all cursor-pointer" onClick={() => onNavigate('orders')}>
-              <div className="flex justify-between items-center mb-2">
-                <p className="text-sm text-purple-700 font-bold uppercase tracking-wider">Status: Action Required</p>
-                <span className="bg-purple-200 text-purple-800 text-xs px-2 py-1 rounded-full font-bold">Priority</span>
-              </div>
-              <p className="text-3xl text-purple-900 font-black">
-                {pendingOrdersCount} Total Items
-              </p>
-              <p className="text-sm text-purple-600 mt-1 font-medium">Click to manage all pending customer orders →</p>
-            </div>
+            <button onClick={() => onNavigate('business-management')} className="mt-6 w-full py-3 bg-purple-50 text-purple-700 font-bold rounded-xl hover:bg-purple-100 transition-colors flex justify-center items-center gap-2">
+              Manage Orders <ArrowRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
+
       </div>
 
       {/* Weather & Crop Suggestions */}
@@ -2077,11 +2316,6 @@ function ImageWithFallback({ src, alt, className }) {
 function OrdersContent({ orders }) {
   const [ordersList, setOrdersList] = useState(orders);
 
-  // Sync ordersList with prop when it changes
-  useEffect(() => {
-    setOrdersList(orders);
-  }, [orders]);
-
   // Auto-delete completed orders after 1 day
   useEffect(() => {
     const checkAndCleanOrders = () => {
@@ -2111,17 +2345,17 @@ function OrdersContent({ orders }) {
   }, []);
 
   // Toggle order status (pending <-> completed)
-  const toggleProductStatus = async (orderId, productId) => {
+  const toggleProductStatus = async (customerId, productId) => {
     // Find the new status first
-    const customer = ordersList.find(c => c.id === orderId);
+    const customer = ordersList.find(c => c.id === customerId);
     const product = customer?.products.find(p => p.id === productId);
     if (!product) return;
 
     const newStatus = product.status === 'pending' ? 'completed' : 'pending';
 
     // Update UI immediately (optimistic update)
-    const updatedOrdersList = ordersList.map(customer => {
-      if (customer.id === orderId) {
+    setOrdersList(ordersList.map(customer => {
+      if (customer.id === customerId) {
         const updatedProducts = customer.products.map(p => {
           if (p.id === productId) {
             return { ...p, status: newStatus };
@@ -2135,19 +2369,16 @@ function OrdersContent({ orders }) {
         return {
           ...customer,
           products: updatedProducts,
-          completedAt: allCompleted ? new Date().toISOString() : null,
-          status: allCompleted ? 'completed' : 'pending' // Also update overall status if needed
+          completedAt: allCompleted ? new Date().toISOString() : null
         };
       }
       return customer;
-    });
-
-    setOrdersList(updatedOrdersList);
+    }));
 
     // Sync to backend
     try {
       const { updateOrderStatus } = await import('../../services/farmerApi');
-      await updateOrderStatus(orderId, newStatus, productId);
+      await updateOrderStatus(productId, newStatus);
     } catch (err) {
       console.warn('Backend unavailable, order status updated locally only:', err.message);
     }
@@ -4414,20 +4645,6 @@ function AddProductModal({ product, onChange, onSave, onCancel }) {
 
 
 
-          {/* Category */}
-          <div>
-            <label className="block text-sm text-muted-foreground mb-1">Category</label>
-            <select
-              value={product.category || 'vegetables'}
-              onChange={e => onChange('category', e.target.value)}
-              className="w-full p-3 border rounded-lg text-lg bg-white"
-            >
-              <option value="vegetables">Vegetables</option>
-              <option value="fruits">Fruits</option>
-              <option value="grains">Grains</option>
-            </select>
-          </div>
-
           {/* Name */}
           <div>
             <label className="block text-sm text-muted-foreground mb-1">Name</label>
@@ -4439,7 +4656,6 @@ function AddProductModal({ product, onChange, onSave, onCancel }) {
               className="w-full p-3 border rounded-lg text-lg"
             />
           </div>
-
 
           {/* Quantity & Price */}
           <div className="grid grid-cols-2 gap-4">
@@ -4463,22 +4679,6 @@ function AddProductModal({ product, onChange, onSave, onCancel }) {
                 className="w-full p-3 border rounded-lg text-lg"
               />
             </div>
-          </div>
-
-          {/* Unit */}
-          <div>
-            <label className="block text-sm text-muted-foreground mb-1">Unit of Measurement</label>
-            <select
-              value={product.unit || 'kg'}
-              onChange={e => onChange('unit', e.target.value)}
-              className="w-full p-3 border rounded-lg text-lg bg-white"
-            >
-              <option value="kg">Kilogram (kg)</option>
-              <option value="g">Gram (g)</option>
-              <option value="unit">Per Unit / Each</option>
-              <option value="bunch">Bunch</option>
-              <option value="liter">Liter</option>
-            </select>
           </div>
 
         </div>
