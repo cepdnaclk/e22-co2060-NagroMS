@@ -15,8 +15,6 @@ import QAForum from './Pages/expert/QAForum.jsx';
 import KnowledgeBase from './Pages/expert/Knowledgebase.jsx';
 import MyFarmers from './Pages/expert/MyFarmers.jsx';
 import Settings from './Pages/expert/Settings.jsx';
-
-
 // Farmer dashboard
 import { FarmerDashboard } from './Pages/farmer/farmerDashboard.jsx';
 
