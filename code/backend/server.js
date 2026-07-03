@@ -78,12 +78,27 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ── Start server ─────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`\n🌾 NagroMS Backend running`);
-  console.log(`📡 Port     : ${PORT}`);
-  console.log(`🌍 Env      : ${process.env.NODE_ENV}`);
-  console.log(`🔗 Health   : http://localhost:${PORT}/health\n`);
-});
+// ── Start server with retry on EADDRINUSE ─────────────────────
+const startServer = (port) => {
+  const server = app.listen(port, () => {
+    console.log(`\n🌾 NagroMS Backend running`);
+    console.log(`📡 Port     : ${port}`);
+    console.log(`🌍 Env      : ${process.env.NODE_ENV}`);
+    console.log(`🔗 Health   : http://localhost:${port}/health\n`);
+  });
+
+  server.on('error', (err) => {
+    if (err && err.code === 'EADDRINUSE') {
+      console.warn(`⚠️  Port ${port} in use — trying ${port + 1}...`);
+      // try next port
+      startServer(port + 1);
+    } else {
+      console.error('❌ Server error:', err);
+      process.exit(1);
+    }
+  });
+};
+
+startServer(Number(PORT));
 
 module.exports = app;

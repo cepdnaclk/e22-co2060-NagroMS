@@ -173,6 +173,7 @@ export function FarmerDashboard({ onNavigate }) {
             }));
             setOrders(liveOrders);
             setOrdersList(liveOrders);
+            // also update ordersList for badge
           });
         }
 
@@ -226,6 +227,7 @@ export function FarmerDashboard({ onNavigate }) {
 
   // State for orders
   const [orders, setOrders] = useState([]);
+  const [ordersList, setOrdersList] = useState([]);
 
   // State for inventory
   const [inventory, setInventory] = useState([]);
@@ -691,67 +693,169 @@ export function FarmerDashboard({ onNavigate }) {
     }
   };
 
+  // Pending orders count for sidebar badge
+  const pendingCount = orders.reduce((sum, order) =>
+    sum + (order.products ? order.products.filter(p => p.status === 'pending').length : 0), 0
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header - Always Visible */}
-      <header className="sticky top-0 z-50 bg-white border-b border-green-200 shadow-sm">
-        <div className="px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="bg-primary rounded-lg p-1.5">
-                <Sprout className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-primary font-semibold text-xl">NagroMS</span>
-            </div>
+    <div className="fd-layout">
+
+      {/* ── Left Sidebar ── */}
+      <aside className="fd-sidebar">
+        {/* Logo */}
+        <div className="fd-sidebar-logo">
+          <div className="fd-sidebar-logo-icon">
+            <Sprout className="w-5 h-5" style={{ color: '#fff' }} />
           </div>
-          <div className="flex items-center gap-3">
-            <RoleSwitcher currentRole="farmer" onNavigate={onNavigate} />
+          <span className="fd-sidebar-logo-text">NagroMS</span>
+        </div>
+
+        {/* Nav groups */}
+        <nav className="fd-sidebar-nav">
+
+          {/* Group 1: Main overview */}
+          <div className="fd-nav-group">
+            <span className="fd-nav-group-label">Overview</span>
             <button
-              onClick={async () => {
-                await logout();
-                window.location.href = '/';
-              }}
-              className="hidden sm:flex items-center gap-2 text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors"
+              className={`fd-nav-item${activeNav === 'dashboard' ? ' fd-nav-active' : ''}`}
+              onClick={() => { setActiveNav('dashboard'); setSidebarOpen(false); }}
             >
-              <LogOut className="w-4 h-4" />
-              <span className="text-sm font-medium">Logout</span>
+              <LayoutDashboard className="fd-nav-icon" />
+              <span className="fd-nav-label">Products, Sales,<br />Expenses & Orders</span>
+              {pendingCount > 0 && <span className="fd-nav-badge">{pendingCount}</span>}
             </button>
           </div>
-        </div>
 
-        {/* Top Navigation Bar */}
-        <nav className="glass-nav overflow-x-auto shadow-sm border-t border-green-50">
-          <div className="flex items-center gap-2 px-4 py-1 min-w-max">
-            <NavButton icon="🏠" label="Dashboard" active={activeNav === 'dashboard'} onClick={() => setActiveNav('dashboard')} />
-            <NavButton icon="🌾" label="Products" active={activeNav === 'products'} onClick={() => setActiveNav('products')} />
-            <NavButton icon="💰" label="Sales" active={activeNav === 'sales'} onClick={() => setActiveNav('sales')} />
-            <NavButton icon="📉" label="Expenses" active={activeNav === 'expenses'} onClick={() => setActiveNav('expenses')} />
-            <NavButton icon="📦" label="Orders" active={activeNav === 'orders'} onClick={() => setActiveNav('orders')} />
-            <NavButton icon="📞" label="Contacts" active={activeNav === 'contacts'} onClick={() => setActiveNav('contacts')} />
-            <NavButton icon="💳" label="Loans" active={activeNav === 'loans'} onClick={() => setActiveNav('loans')} />
-            <NavButton icon="🚜" label="Equipment" active={activeNav === 'equipment'} onClick={() => setActiveNav('equipment')} />
-            <NavButton icon="⛅" label="Weather" active={activeNav === 'weather'} onClick={() => setActiveNav('weather')} />
-            <NavButton icon="📦" label="Inventory" active={activeNav === 'inventory'} onClick={() => setActiveNav('inventory')} />
-            <NavButton icon="💬" label="Chatbot" active={activeNav === 'chatbot'} onClick={() => setActiveNav('chatbot')} />
-            <NavButton icon="🤝" label="Community" active={activeNav === 'community'} onClick={() => setActiveNav('community')} />
-            <div className="w-px h-6 bg-green-200 mx-2"></div>
-            <NavButton icon="⚙️" label="Settings" active={activeNav === 'settings'} onClick={() => setActiveNav('settings')} />
-            <div className="sm:hidden">
-              <NavButton icon="🚪" label="Logout" active={false} onClick={async () => {
-                await logout();
-                window.location.href = '/';
-              }} />
-            </div>
+          {/* Group 2: Loans & Weather */}
+          <div className="fd-nav-group">
+            <span className="fd-nav-group-label">Financial & Farming</span>
+            <button
+              className={`fd-nav-item${activeNav === 'loans' ? ' fd-nav-active' : ''}`}
+              onClick={() => { setActiveNav('loans'); setSidebarOpen(false); }}
+            >
+              <CreditCard className="fd-nav-icon" />
+              <span className="fd-nav-label">Loans</span>
+            </button>
+            <button
+              className={`fd-nav-item${activeNav === 'weather' ? ' fd-nav-active' : ''}`}
+              onClick={() => { setActiveNav('weather'); setSidebarOpen(false); }}
+            >
+              <CloudRain className="fd-nav-icon" />
+              <span className="fd-nav-label">Weather</span>
+            </button>
+          </div>
+
+          {/* Group 3: Chatbot */}
+          <div className="fd-nav-group">
+            <span className="fd-nav-group-label">Assistant</span>
+            <button
+              className={`fd-nav-item${activeNav === 'chatbot' ? ' fd-nav-active' : ''}`}
+              onClick={() => { setActiveNav('chatbot'); setSidebarOpen(false); }}
+            >
+              <Bot className="fd-nav-icon" />
+              <span className="fd-nav-label">Chatbot</span>
+            </button>
+          </div>
+
+          {/* Group 4: More (Equipment, Inventory, Contacts, Community) */}
+          <div className="fd-nav-group">
+            <span className="fd-nav-group-label">More</span>
+            <button
+              className={`fd-nav-item${activeNav === 'equipment' ? ' fd-nav-active' : ''}`}
+              onClick={() => { setActiveNav('equipment'); setSidebarOpen(false); }}
+            >
+              <Tractor className="fd-nav-icon" />
+              <span className="fd-nav-label">Equipment</span>
+            </button>
+            <button
+              className={`fd-nav-item${activeNav === 'inventory' ? ' fd-nav-active' : ''}`}
+              onClick={() => { setActiveNav('inventory'); setSidebarOpen(false); }}
+            >
+              <Package className="fd-nav-icon" />
+              <span className="fd-nav-label">Inventory</span>
+            </button>
+            <button
+              className={`fd-nav-item${activeNav === 'contacts' ? ' fd-nav-active' : ''}`}
+              onClick={() => { setActiveNav('contacts'); setSidebarOpen(false); }}
+            >
+              <Phone className="fd-nav-icon" />
+              <span className="fd-nav-label">Contacts</span>
+            </button>
+            <button
+              className={`fd-nav-item${activeNav === 'community' ? ' fd-nav-active' : ''}`}
+              onClick={() => { setActiveNav('community'); setSidebarOpen(false); }}
+            >
+              <Users className="fd-nav-icon" />
+              <span className="fd-nav-label">Community</span>
+            </button>
           </div>
         </nav>
-      </header>      {/* Sidebar removed, replaced by bottom navigation */}
 
-      {/* Main Content */}
-      <main className="min-h-screen transition-all duration-300">
-        <div className="p-4 lg:p-8">
-          {renderContent()}
+        {/* Settings + Logout at bottom */}
+        <div className="fd-sidebar-bottom">
+          <button
+            className={`fd-nav-item${activeNav === 'settings' ? ' fd-nav-active' : ''}`}
+            onClick={() => { setActiveNav('settings'); setSidebarOpen(false); }}
+          >
+            <Settings className="fd-nav-icon" />
+            <span className="fd-nav-label">Settings</span>
+          </button>
+          <button
+            className="fd-nav-item fd-nav-logout"
+            onClick={async () => { await logout(); window.location.href = '/'; }}
+          >
+            <LogOut className="fd-nav-icon" />
+            <span className="fd-nav-label">Logout</span>
+          </button>
         </div>
-      </main>
+      </aside>
+
+      {/* ── Main area (header + content) ── */}
+      <div className="fd-main">
+
+        {/* Top header bar */}
+        <header className="fd-header">
+          <div className="fd-header-left">
+            {/* Hamburger for mobile */}
+            <button className="fd-hamburger" onClick={() => setSidebarOpen(!sidebarOpen)}>
+              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+            <span className="fd-header-title">
+              {activeNav === 'dashboard' ? 'Farm Overview' :
+               activeNav === 'products' ? 'My Products' :
+               activeNav === 'sales' ? 'Sales' :
+               activeNav === 'expenses' ? 'Expenses' :
+               activeNav === 'orders' ? 'Orders' :
+               activeNav === 'loans' ? 'Loans' :
+               activeNav === 'weather' ? 'Weather' :
+               activeNav === 'chatbot' ? 'Farm Assistant' :
+               activeNav === 'equipment' ? 'Equipment' :
+               activeNav === 'inventory' ? 'Inventory' :
+               activeNav === 'contacts' ? 'Contacts' :
+               activeNav === 'community' ? 'Community' :
+               activeNav === 'settings' ? 'Settings' : 'Dashboard'}
+            </span>
+          </div>
+          <div className="fd-header-right">
+            <RoleSwitcher currentRole="farmer" onNavigate={onNavigate} />
+            <div className="fd-header-profile">
+              <span className="fd-profile-emoji">{profilePicture}</span>
+              <span className="fd-profile-name">{userName.split(' ')[0]}</span>
+            </div>
+          </div>
+        </header>
+
+        {/* Mobile overlay */}
+        {sidebarOpen && (
+          <div className="fd-sidebar-overlay" onClick={() => setSidebarOpen(false)} />
+        )}
+
+        {/* Page content */}
+        <main className="fd-content">
+          {renderContent()}
+        </main>
+      </div>
 
       {/* Delete Product Confirmation Dialog */}
       {deleteConfirm && (
