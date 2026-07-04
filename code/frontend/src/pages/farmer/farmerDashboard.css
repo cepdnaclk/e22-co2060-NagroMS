@@ -1889,14 +1889,142 @@
 }
 
 *::-webkit-scrollbar-track {
-  background: var(--gray-100);
+  background: #f1f5f9;
 }
 
 *::-webkit-scrollbar-thumb {
-  background: var(--gray-400);
+  background: #cbd5e1;
   border-radius: 4px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: var(--gray-500);
+  background: #86efac; /* Light Green hover */
 }
+
+/* ── Dark Mode Class Overrides ── */
+.dark .bg-white {
+  background-color: var(--card) !important;
+}
+.dark .bg-gray-50 {
+  background-color: var(--background) !important;
+}
+.dark .bg-slate-50 {
+  background-color: var(--secondary) !important;
+}
+.dark .bg-green-50 {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+}
+.dark .bg-gray-100 {
+  background-color: var(--secondary) !important;
+}
+.dark .text-gray-800,
+.dark .text-gray-700,
+.dark .text-gray-600,
+.dark .text-slate-800,
+.dark .text-slate-700,
+.dark .text-slate-600 {
+  color: var(--foreground) !important;
+}
+.dark .text-muted-foreground {
+  color: var(--muted-foreground) !important;
+}
+.dark .border-green-200,
+.dark .border-gray-200,
+.dark .border-green-100,
+.dark .border-slate-100,
+.dark .border-purple-100,
+.dark .border-blue-100 {
+  border-color: var(--border) !important;
+}
+.dark input, 
+.dark select, 
+.dark textarea {
+  background-color: var(--secondary) !important;
+  color: var(--foreground) !important;
+  border-color: var(--border) !important;
+}
+.dark .hover\:bg-green-100:hover {
+  background-color: rgba(22, 163, 74, 0.15) !important;
+  color: #4ade80 !important;
+}
+.dark .hover\:text-primary:hover {
+  color: #4ade80 !important;
+}
+.dark .hover\:bg-gray-200:hover {
+  background-color: var(--border) !important;
+}
+/* Active states */
+.dark .bg-green-100 {
+  background-color: rgba(22, 163, 74, 0.2) !important;
+  color: #4ade80 !important;
+}
+.dark .border-green-300 {
+  border-color: #22c55e !important;
+}
+.dark .text-primary {
+  color: #4ade80 !important;
+}
+.dark .bg-primary {
+  background-color: #16a34a !important;
+  color: #ffffff !important;
+}
+.dark .bg-primary-foreground {
+  color: #ffffff !important;
+}
+.dark select option {
+  background-color: var(--card) !important;
+  color: var(--foreground) !important;
+}
+.dark .text-emerald-700,
+.dark .text-teal-700,
+.dark .text-green-700 {
+  color: #4ade80 !important;
+}
+.dark .bg-emerald-50,
+.dark .bg-teal-50,
+.dark .bg-green-50 {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+}
+.dark .text-red-500 {
+  color: #f87171 !important;
+}
+.dark .text-red-700 {
+  color: #f87171 !important;
+}
+.dark .bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+}
+.dark .border-red-200 {
+  border-color: rgba(239, 68, 68, 0.2) !important;
+}
+.dark .text-amber-700 {
+  color: #fbbf24 !important;
+}
+.dark .bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+}
+.dark .border-amber-200 {
+  border-color: rgba(245, 158, 11, 0.2) !important;
+}
+
+/* ── Premium Card Hover Interaction: Stand Up & Green Glow Outline ── */
+.grid > div:not(.fd-sidebar-nav):not(.fd-nav-group),
+.grid > button,
+.grid .bg-white,
+.grid .bg-white\/90,
+.grid .bg-gradient-to-br {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.grid > div:not(.fd-sidebar-nav):not(.fd-nav-group):hover,
+.grid > button:hover,
+.grid .bg-white:hover,
+.grid .bg-white\/90:hover,
+.grid .bg-gradient-to-br:hover {
+  transform: translateY(-6px) !important;
+  box-shadow: 0 20px 25px -5px rgba(34, 197, 94, 0.15), 0 10px 10px -5px rgba(34, 197, 94, 0.06) !important;
+  border-color: #22c55e !important;
+  outline: 2px solid #22c55e !important;
+  outline-offset: -2px !important;
+}
+
