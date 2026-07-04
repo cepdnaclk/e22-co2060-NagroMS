@@ -3,9 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import {
   Leaf, Mail, Lock, User, ArrowLeft, ArrowRight, CreditCard, Phone, MapPin,
   Check, Building2, UserCircle, Tractor, ShoppingBag, Wrench, GraduationCap,
-  AlertCircle, Eye, EyeOff
+  AlertCircle, Eye, EyeOff, Globe
 } from 'lucide-react';
 import { registerWithEmail } from '../../utils/firebase.js';
+import { useLanguage, SUPPORTED_LANGUAGES } from '../../i18n/LanguageContext.jsx';
+
+const LANGUAGE_LABELS = { en: 'EN', si: 'සිං', ta: 'த' };
 
 const SRI_LANKAN_DISTRICTS = [
   'Colombo','Gampaha','Kalutara','Kandy','Matale','Nuwara Eliya',
@@ -17,6 +20,7 @@ const SRI_LANKAN_DISTRICTS = [
 
 export function SignUpPage() {
   const navigate = useNavigate();
+  const { lang, setLang, t } = useLanguage();
   const [step, setStep]               = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm]   = useState(false);
@@ -45,7 +49,7 @@ export function SignUpPage() {
 
   const handleRoleContinue = () => {
     if (formData.roles.length === 0) {
-      setFormError('Please select at least one role to continue.');
+      setFormError(t('signup.errors.selectRole'));
       return;
     }
     setFormError('');
@@ -62,10 +66,10 @@ export function SignUpPage() {
   // ── Map Firebase error codes ──────────────────────────────
   const getFirebaseError = (code) => {
     const map = {
-      'auth/email-already-in-use': 'An account already exists with this email/phone/NIC.',
-      'auth/invalid-email':        'Invalid email address.',
-      'auth/weak-password':        'Password is too weak. Use at least 6 characters.',
-      'auth/network-request-failed': 'Network error. Check your connection.',
+      'auth/email-already-in-use': t('signup.errors.emailInUse'),
+      'auth/invalid-email':        t('signup.errors.invalidEmail'),
+      'auth/weak-password':        t('signup.errors.weakPassword'),
+      'auth/network-request-failed': t('signup.errors.networkFailed'),
     };
     return map[code] || null;
   };
@@ -77,17 +81,17 @@ export function SignUpPage() {
 
     // Validate passwords
     if (formData.password !== formData.confirmPassword) {
-      setFormError('Passwords do not match.');
+      setFormError(t('signup.errors.passwordsMismatch'));
       return;
     }
     if (formData.password.length < 6) {
-      setFormError('Password must be at least 6 characters.');
+      setFormError(t('signup.errors.passwordTooShort'));
       return;
     }
 
     // Must have at least one of: email, phone, NIC
     if (!formData.email && !formData.phone && !formData.nic) {
-      setFormError('Please provide at least an email, phone number, or NIC.');
+      setFormError(t('signup.errors.needIdentifier'));
       return;
     }
 
@@ -98,7 +102,7 @@ export function SignUpPage() {
       const dashRoute = result.dashboardRoute || getDashRoute(formData.roles[0]);
       navigate('/' + dashRoute);
     } catch (err) {
-      const friendly = getFirebaseError(err.code) || err.message || 'Registration failed. Please try again.';
+      const friendly = getFirebaseError(err.code) || err.message || t('signup.errors.registrationFailed');
       setFormError(friendly);
     } finally {
       setIsLoading(false);
@@ -126,15 +130,15 @@ export function SignUpPage() {
   const displayStep = step === 3 ? totalSteps : step;
 
   const getRoleLabel = () => formData.roles.map(r => ({
-    farmer: 'Farmer', customer: 'Customer',
-    'service-provider': 'Service Provider', expert: 'Agricultural Expert'
+    farmer: t('signup.roles.farmer.title'), customer: t('signup.roles.customer.title'),
+    'service-provider': t('signup.roles.serviceProvider.title'), expert: t('signup.roles.expert.title')
   }[r] || r)).join(' & ');
 
   const roles = [
-    { id: 'farmer',           icon: <Tractor className="w-8 h-8"/>,       title: 'Farmer',              desc: 'Sell produce, manage crops, and access farming tools',     color: 'green'  },
-    { id: 'customer',         icon: <ShoppingBag className="w-8 h-8"/>,   title: 'Customer',            desc: 'Buy fresh produce directly from local farmers',            color: 'blue'   },
-    { id: 'service-provider', icon: <Wrench className="w-8 h-8"/>,        title: 'Service Provider',    desc: 'Offer equipment rentals and agricultural services',        color: 'orange' },
-    { id: 'expert',           icon: <GraduationCap className="w-8 h-8"/>, title: 'Agricultural Expert', desc: 'Provide consultations and share expertise',                color: 'purple' },
+    { id: 'farmer',           icon: <Tractor className="w-8 h-8"/>,       title: t('signup.roles.farmer.title'),           desc: t('signup.roles.farmer.desc'),           color: 'green'  },
+    { id: 'customer',         icon: <ShoppingBag className="w-8 h-8"/>,   title: t('signup.roles.customer.title'),         desc: t('signup.roles.customer.desc'),         color: 'blue'   },
+    { id: 'service-provider', icon: <Wrench className="w-8 h-8"/>,        title: t('signup.roles.serviceProvider.title'),  desc: t('signup.roles.serviceProvider.desc'),  color: 'orange' },
+    { id: 'expert',           icon: <GraduationCap className="w-8 h-8"/>, title: t('signup.roles.expert.title'),           desc: t('signup.roles.expert.desc'),           color: 'purple' },
   ];
 
   return (
@@ -146,10 +150,26 @@ export function SignUpPage() {
         {/* Top bar */}
         <div className="nagro-signup-topbar">
           <button type="button" onClick={handleBack} className="nagro-back-btn">
-            <ArrowLeft className="w-4 h-4"/><span>Back</span>
+            <ArrowLeft className="w-4 h-4"/><span>{t('signup.back')}</span>
           </button>
           <div className="nagro-signup-logo"><Leaf className="w-5 h-5"/><span>NagroMS</span></div>
-          <div className="nagro-step-counter">Step {displayStep} of {totalSteps}</div>
+          <div className="nagro-signup-topbar-right">
+            <div className="nagro-lang-switcher" role="group" aria-label="Select language">
+              <Globe className="w-4 h-4 nagro-lang-globe" />
+              {SUPPORTED_LANGUAGES.map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => setLang(code)}
+                  className={`nagro-lang-btn${lang === code ? ' active' : ''}`}
+                  aria-pressed={lang === code}
+                >
+                  {LANGUAGE_LABELS[code]}
+                </button>
+              ))}
+            </div>
+            <div className="nagro-step-counter">{t('signup.stepCounter', { current: displayStep, total: totalSteps })}</div>
+          </div>
         </div>
 
         {/* Progress bar */}
@@ -172,8 +192,8 @@ export function SignUpPage() {
           {step === 1 && (
             <div className="nagro-step-content">
               <div className="nagro-step-header">
-                <h2>Select Your Role</h2>
-                <p>Choose one or more roles. You can always update later.</p>
+                <h2>{t('signup.step1.title')}</h2>
+                <p>{t('signup.step1.subtitle')}</p>
               </div>
               <div className="nagro-roles-grid">
                 {roles.map(role => (
@@ -192,7 +212,7 @@ export function SignUpPage() {
                 <div className="nagro-form-error"><AlertCircle className="w-4 h-4"/><span>{formError}</span></div>
               )}
               <button type="button" onClick={handleRoleContinue} className="nagro-submit-btn">
-                <span>Continue</span><ArrowRight className="w-4 h-4"/>
+                <span>{t('signup.step1.continue')}</span><ArrowRight className="w-4 h-4"/>
               </button>
             </div>
           )}
@@ -201,13 +221,13 @@ export function SignUpPage() {
           {step === 2 && (
             <div className="nagro-step-content">
               <div className="nagro-step-header">
-                <h2>Account Type</h2>
-                <p>Registering as <strong className="nagro-highlight">{getRoleLabel()}</strong></p>
+                <h2>{t('signup.step2.title')}</h2>
+                <p>{t('signup.step2.registeringAs')} <strong className="nagro-highlight">{getRoleLabel()}</strong></p>
               </div>
               <div className="nagro-account-type-grid">
                 {[
-                  { id: 'individual', icon: <UserCircle className="w-14 h-14"/>, title: 'Individual Account', desc: 'For personal use', features: ['Personal profile','Quick registration','Direct purchases'] },
-                  { id: 'business',   icon: <Building2 className="w-14 h-14"/>,  title: 'Business Account',  desc: 'For companies & organizations', features: ['Business profile','Multiple users','Bulk transactions'] },
+                  { id: 'individual', icon: <UserCircle className="w-14 h-14"/>, title: t('signup.step2.individual.title'), desc: t('signup.step2.individual.desc'), features: t('signup.step2.individual.features') },
+                  { id: 'business',   icon: <Building2 className="w-14 h-14"/>,  title: t('signup.step2.business.title'),   desc: t('signup.step2.business.desc'),   features: t('signup.step2.business.features') },
                 ].map(type => (
                   <button key={type.id} type="button" onClick={() => handleAccountTypeSelect(type.id)}
                     className="nagro-account-type-card">
@@ -219,7 +239,7 @@ export function SignUpPage() {
                         <li key={i}><Check className="w-3.5 h-3.5"/><span>{f}</span></li>
                       ))}
                     </ul>
-                    <span className="nagro-acct-select-btn">Select <ArrowRight className="w-3.5 h-3.5"/></span>
+                    <span className="nagro-acct-select-btn">{t('signup.step2.select')} <ArrowRight className="w-3.5 h-3.5"/></span>
                   </button>
                 ))}
               </div>
@@ -230,11 +250,11 @@ export function SignUpPage() {
           {step === 3 && (
             <div className="nagro-step-content">
               <div className="nagro-step-header">
-                <h2>Complete Registration</h2>
+                <h2>{t('signup.step3.title')}</h2>
                 <p>
                   <span className="nagro-highlight">{getRoleLabel()}</span>
                   {' · '}
-                  <span className="nagro-highlight">{formData.accountType === 'individual' ? 'Individual' : 'Business'}</span>
+                  <span className="nagro-highlight">{formData.accountType === 'individual' ? t('signup.step3.individual') : t('signup.step3.business')}</span>
                 </p>
               </div>
 
@@ -244,47 +264,47 @@ export function SignUpPage() {
                 {formData.accountType === 'individual' ? (
                   <div className="nagro-form-row">
                     <div className="nagro-field">
-                      <label className="nagro-label">Full Name *</label>
+                      <label className="nagro-label">{t('signup.step3.fullName')} *</label>
                       <div className="nagro-input-wrap">
                         <span className="nagro-input-icon"><User className="w-4 h-4"/></span>
                         <input type="text" name="fullName" value={formData.fullName} onChange={handleChange}
-                          placeholder="Your full name" className="nagro-input" required/>
+                          placeholder={t('signup.step3.fullNamePh')} className="nagro-input" required/>
                       </div>
                     </div>
                     <div className="nagro-field">
-                      <label className="nagro-label">NIC Number *</label>
+                      <label className="nagro-label">{t('signup.step3.nicNumber')} *</label>
                       <div className="nagro-input-wrap">
                         <span className="nagro-input-icon"><CreditCard className="w-4 h-4"/></span>
                         <input type="text" name="nic" value={formData.nic} onChange={handleChange}
-                          placeholder="123456789V or 200012345678" className="nagro-input" required/>
+                          placeholder={t('signup.step3.nicPh')} className="nagro-input" required/>
                       </div>
                     </div>
                   </div>
                 ) : (
                   <>
                     <div className="nagro-field">
-                      <label className="nagro-label">Business Name *</label>
+                      <label className="nagro-label">{t('signup.step3.businessName')} *</label>
                       <div className="nagro-input-wrap">
                         <span className="nagro-input-icon"><Building2 className="w-4 h-4"/></span>
                         <input type="text" name="businessName" value={formData.businessName} onChange={handleChange}
-                          placeholder="Your business name" className="nagro-input" required/>
+                          placeholder={t('signup.step3.businessNamePh')} className="nagro-input" required/>
                       </div>
                     </div>
                     <div className="nagro-form-row">
                       <div className="nagro-field">
-                        <label className="nagro-label">Registration No. *</label>
+                        <label className="nagro-label">{t('signup.step3.registrationNo')} *</label>
                         <div className="nagro-input-wrap">
                           <span className="nagro-input-icon"><CreditCard className="w-4 h-4"/></span>
                           <input type="text" name="businessRegistrationNumber" value={formData.businessRegistrationNumber}
-                            onChange={handleChange} placeholder="BR/12345" className="nagro-input" required/>
+                            onChange={handleChange} placeholder={t('signup.step3.registrationNoPh')} className="nagro-input" required/>
                         </div>
                       </div>
                       <div className="nagro-field">
-                        <label className="nagro-label">Contact Person *</label>
+                        <label className="nagro-label">{t('signup.step3.contactPerson')} *</label>
                         <div className="nagro-input-wrap">
                           <span className="nagro-input-icon"><User className="w-4 h-4"/></span>
                           <input type="text" name="contactPersonName" value={formData.contactPersonName}
-                            onChange={handleChange} placeholder="Contact name" className="nagro-input" required/>
+                            onChange={handleChange} placeholder={t('signup.step3.contactPersonPh')} className="nagro-input" required/>
                         </div>
                       </div>
                     </div>
@@ -293,56 +313,56 @@ export function SignUpPage() {
 
                 <div className="nagro-form-row">
                   <div className="nagro-field">
-                    <label className="nagro-label">District *</label>
+                    <label className="nagro-label">{t('signup.step3.district')} *</label>
                     <div className="nagro-input-wrap nagro-select-wrap">
                       <span className="nagro-input-icon"><MapPin className="w-4 h-4"/></span>
                       <select name="district" value={formData.district} onChange={handleChange}
                         className="nagro-input nagro-select" required>
-                        <option value="">Select district</option>
-                        {SRI_LANKAN_DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
+                        <option value="">{t('signup.step3.selectDistrict')}</option>
+                        {SRI_LANKAN_DISTRICTS.map(d => <option key={d} value={d}>{t(`districts.${d}`)}</option>)}
                       </select>
                       <span className="nagro-select-arrow"><ArrowRight className="w-4 h-4"/></span>
                     </div>
                   </div>
                   <div className="nagro-field">
-                    <label className="nagro-label">Phone Number *</label>
+                    <label className="nagro-label">{t('signup.step3.phoneNumber')} *</label>
                     <div className="nagro-input-wrap">
                       <span className="nagro-input-icon"><Phone className="w-4 h-4"/></span>
                       <input type="tel" name="phone" value={formData.phone} onChange={handleChange}
-                        placeholder="+94 77 123 4567" className="nagro-input" required/>
+                        placeholder={t('signup.step3.phonePh')} className="nagro-input" required/>
                     </div>
                   </div>
                 </div>
 
                 <div className="nagro-field">
-                  <label className="nagro-label">Email Address <span style={{color:'#9ca3af',fontWeight:400}}>(optional)</span></label>
+                  <label className="nagro-label">{t('signup.step3.emailAddress')} <span style={{color:'#9ca3af',fontWeight:400}}>{t('signup.step3.optional')}</span></label>
                   <div className="nagro-input-wrap">
                     <span className="nagro-input-icon"><Mail className="w-4 h-4"/></span>
                     <input type="email" name="email" value={formData.email} onChange={handleChange}
-                      placeholder="example@email.com — leave blank if none" className="nagro-input"/>
+                      placeholder={t('signup.step3.emailPh')} className="nagro-input"/>
                   </div>
                 </div>
 
                 <div className="nagro-form-row">
                   <div className="nagro-field">
-                    <label className="nagro-label">Password *</label>
+                    <label className="nagro-label">{t('signup.step3.password')} *</label>
                     <div className="nagro-input-wrap">
                       <span className="nagro-input-icon"><Lock className="w-4 h-4"/></span>
                       <input type={showPassword ? 'text' : 'password'} name="password"
                         value={formData.password} onChange={handleChange}
-                        placeholder="Min. 6 characters" className="nagro-input" required minLength={6}/>
+                        placeholder={t('signup.step3.passwordPh')} className="nagro-input" required minLength={6}/>
                       <button type="button" className="nagro-eye-btn" onClick={() => setShowPassword(!showPassword)}>
                         {showPassword ? <EyeOff className="w-4 h-4"/> : <Eye className="w-4 h-4"/>}
                       </button>
                     </div>
                   </div>
                   <div className="nagro-field">
-                    <label className="nagro-label">Confirm Password *</label>
+                    <label className="nagro-label">{t('signup.step3.confirmPassword')} *</label>
                     <div className="nagro-input-wrap">
                       <span className="nagro-input-icon"><Lock className="w-4 h-4"/></span>
                       <input type={showConfirm ? 'text' : 'password'} name="confirmPassword"
                         value={formData.confirmPassword} onChange={handleChange}
-                        placeholder="Re-enter password" className="nagro-input" required minLength={6}/>
+                        placeholder={t('signup.step3.confirmPasswordPh')} className="nagro-input" required minLength={6}/>
                       <button type="button" className="nagro-eye-btn" onClick={() => setShowConfirm(!showConfirm)}>
                         {showConfirm ? <EyeOff className="w-4 h-4"/> : <Eye className="w-4 h-4"/>}
                       </button>
@@ -353,14 +373,14 @@ export function SignUpPage() {
                 {formData.confirmPassword && (
                   <div className={`nagro-password-match ${formData.password === formData.confirmPassword ? 'match' : 'no-match'}`}>
                     {formData.password === formData.confirmPassword
-                      ? <><Check className="w-3.5 h-3.5"/><span>Passwords match</span></>
-                      : <><AlertCircle className="w-3.5 h-3.5"/><span>Passwords do not match</span></>}
+                      ? <><Check className="w-3.5 h-3.5"/><span>{t('signup.step3.passwordsMatch')}</span></>
+                      : <><AlertCircle className="w-3.5 h-3.5"/><span>{t('signup.step3.passwordsNoMatch')}</span></>}
                   </div>
                 )}
 
                 <label className="nagro-terms">
                   <input type="checkbox" className="nagro-checkbox" required/>
-                  <span>I agree to the <a href="#!" className="nagro-link">Terms of Service</a> and <a href="#!" className="nagro-link">Privacy Policy</a></span>
+                  <span>{t('signup.step3.agreeTermsPrefix')} <a href="#!" className="nagro-link">{t('signup.step3.termsOfService')}</a> {t('signup.step3.agreeTermsMiddle')} <a href="#!" className="nagro-link">{t('signup.step3.privacyPolicy')}</a></span>
                 </label>
 
                 {formError && (
@@ -371,7 +391,7 @@ export function SignUpPage() {
                   className={`nagro-submit-btn${isLoading ? ' loading' : ''}`}>
                   {isLoading
                     ? <span className="nagro-spinner"/>
-                    : <><Check className="w-4 h-4"/><span>Create Account</span></>
+                    : <><Check className="w-4 h-4"/><span>{t('signup.step3.createAccount')}</span></>
                   }
                 </button>
               </form>
@@ -380,10 +400,10 @@ export function SignUpPage() {
         </div>
 
         <p className="nagro-bottom-link nagro-signup-signin">
-          Already have an account?{' '}
-          <button type="button" onClick={() => navigate('/login')} className="nagro-link">Sign in here</button>
+          {t('signup.alreadyHaveAccount')}{' '}
+          <button type="button" onClick={() => navigate('/login')} className="nagro-link">{t('signup.signInHere')}</button>
         </p>
-        <p className="nagro-signup-footer-note">🌾 Join farmers, customers & agricultural professionals on NagroMS</p>
+        <p className="nagro-signup-footer-note">{t('signup.footerNote')}</p>
       </div>
     </div>
   );

@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Phone, CreditCard, ArrowRight, AlertCircle, Leaf } from 'lucide-react';
+import { Eye, EyeOff, Mail, Phone, CreditCard, ArrowRight, AlertCircle, Leaf, Globe } from 'lucide-react';
 import { loginWithEmail } from '../../utils/firebase.js';
+import { useLanguage, SUPPORTED_LANGUAGES } from '../../i18n/LanguageContext.jsx';
+
+const LANGUAGE_LABELS = { en: 'EN', si: 'සිං', ta: 'த' };
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const { lang, setLang, t } = useLanguage();
   const [loginMethod, setLoginMethod]   = useState('email');
   const [formData, setFormData]         = useState({ identifier: '', password: '', rememberMe: false });
   const [showPassword, setShowPassword] = useState(false);
@@ -13,21 +17,21 @@ export function LoginPage() {
   const [generalError, setGeneralError] = useState('');
 
   const getFirebaseError = (code, method) => {
-    const fieldLabel = method === 'email' ? 'email address' : method === 'phone' ? 'phone number' : 'NIC number';
+    const fieldLabel = t(`login.fieldLabel.${method}`);
     const map = {
-      'auth/user-not-found':         `No account found with these ${method === 'email' ? 'email' : method === 'phone' ? 'phone' : 'NIC'} details.`,
-      'auth/wrong-password':         'Incorrect password. Please try again.',
+      'auth/user-not-found':         t('errors.userNotFound', { method: fieldLabel }),
+      'auth/wrong-password':         t('errors.wrongPassword'),
       // For phone/NIC logins we translate to an internal email behind the scenes,
       // so a Firebase "invalid-email" here really means we couldn't find/build
       // a matching account for the phone or NIC the user typed — not that their
       // input looked like a bad email address.
       'auth/invalid-email':          method === 'email'
-        ? 'Please enter a valid email address.'
-        : `No account found for this ${fieldLabel}. Please check and try again.`,
-      'auth/invalid-credential':     `Invalid credentials for this ${fieldLabel}. Please check and try again.`,
-      'auth/too-many-requests':      'Too many login attempts. Please wait a few minutes before trying again.',
-      'auth/user-disabled':          'This account has been disabled.',
-      'auth/network-request-failed': 'Network error. Please check your connection and try again.',
+        ? t('errors.invalidEmail')
+        : t('errors.noAccountForField', { field: fieldLabel }),
+      'auth/invalid-credential':     t('errors.invalidCredential', { field: fieldLabel }),
+      'auth/too-many-requests':      t('errors.tooManyRequests'),
+      'auth/user-disabled':          t('errors.userDisabled'),
+      'auth/network-request-failed': t('errors.networkFailed'),
     };
     return map[code] || null;
   };
@@ -35,12 +39,12 @@ export function LoginPage() {
   // ── Strict per-field validation ─────────────────────────────
   const validateIdentifier = (value, method) => {
     if (!value) {
-      return `Please enter your ${method === 'email' ? 'email address' : method === 'phone' ? 'phone number' : 'NIC number'}.`;
+      return t('errors.enterField', { field: t(`login.fieldLabel.${method}`) });
     }
     if (method === 'email') {
       // Full email regex — must have local@domain.tld
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-      if (!emailRegex.test(value)) return 'Please enter a valid email address (e.g. user@example.com).';
+      if (!emailRegex.test(value)) return t('errors.invalidEmail');
     }
     if (method === 'phone') {
       // Sri Lanka: 07XXXXXXXX (10 digits) or +947XXXXXXXX (11 digits with country code)
@@ -49,13 +53,13 @@ export function LoginPage() {
       const slIntl     = /^\+947\d{8}$/.test(cleaned);
       const slIntlAlt  = /^00947\d{8}$/.test(cleaned);
       if (!slLocal && !slIntl && !slIntlAlt) {
-        return 'Enter a valid Sri Lanka phone number (e.g. 0771234567 or +94771234567).';
+        return t('errors.invalidPhone');
       }
     }
     if (method === 'nic') {
       const oldNIC = /^\d{9}[VvXx]$/.test(value);
       const newNIC = /^\d{12}$/.test(value);
-      if (!oldNIC && !newNIC) return 'Enter a valid NIC (e.g. 123456789V or 200012345678).';
+      if (!oldNIC && !newNIC) return t('errors.invalidNic');
     }
     return '';
   };
@@ -67,7 +71,7 @@ export function LoginPage() {
 
     const identifierError = validateIdentifier(formData.identifier, loginMethod);
     if (identifierError) { setErrors(prev => ({ ...prev, identifier: identifierError })); return; }
-    if (!formData.password) { setErrors(prev => ({ ...prev, password: 'Please enter your password.' })); return; }
+    if (!formData.password) { setErrors(prev => ({ ...prev, password: t('errors.enterPassword') })); return; }
 
     setIsLoading(true);
     try {
@@ -101,7 +105,7 @@ export function LoginPage() {
       const result = await loginWithEmail(emailToUse, formData.password);
       navigate('/' + result.dashboardRoute);
     } catch (err) {
-      const msg = getFirebaseError(err.code, loginMethod) || err.message || 'Login failed.';
+      const msg = getFirebaseError(err.code, loginMethod) || err.message || t('errors.loginFailed');
       setErrors(prev => ({ ...prev, password: msg }));
     } finally {
       setIsLoading(false);
@@ -123,19 +127,12 @@ export function LoginPage() {
   };
 
   const methods = [
-    { id: 'email', icon: <Mail className="w-4 h-4" />,       label: 'Email'  },
-    { id: 'phone', icon: <Phone className="w-4 h-4" />,      label: 'Phone'  },
-    { id: 'nic',   icon: <CreditCard className="w-4 h-4" />, label: 'NIC'    },
+    { id: 'email', icon: <Mail className="w-4 h-4" />,       label: t('login.email') },
+    { id: 'phone', icon: <Phone className="w-4 h-4" />,      label: t('login.phone') },
+    { id: 'nic',   icon: <CreditCard className="w-4 h-4" />, label: t('login.nic')   },
   ];
 
-  const getPlaceholder = () => {
-    switch (loginMethod) {
-      case 'email': return 'user@example.com';
-      case 'phone': return '0771234567 or +94771234567';
-      case 'nic':   return '123456789V  or  200012345678';
-      default:      return '';
-    }
-  };
+  const getPlaceholder = () => t(`login.placeholders.${loginMethod}`);
 
   const getIcon = () => {
     switch (loginMethod) {
@@ -159,19 +156,19 @@ export function LoginPage() {
               <span className="nlb-logo-text">NagroMS</span>
             </div>
             <h1 className="nlb-brand-headline">
-              Empowering<br />
-              <span className="nlb-headline-accent">Agriculture,</span><br />
-              Connecting Markets
+              {t('brand.headline1')}<br />
+              <span className="nlb-headline-accent">{t('brand.headline2')}</span><br />
+              {t('brand.headline3')}
             </h1>
             <p className="nlb-brand-sub">
-              Direct farm-to-market platform for Sri Lankan farmers — fair prices, zero middlemen.
+              {t('brand.sub')}
             </p>
             <div className="nlb-brand-stats">
-              <div className="nlb-brand-stat"><span className="nlb-stat-num">2–3</span><span className="nlb-stat-label">Pilot Farmers</span></div>
+              <div className="nlb-brand-stat"><span className="nlb-stat-num">2–3</span><span className="nlb-stat-label">{t('brand.statFarmers')}</span></div>
               <div className="nlb-stat-sep" />
-              <div className="nlb-brand-stat"><span className="nlb-stat-num">4</span><span className="nlb-stat-label">User Roles</span></div>
+              <div className="nlb-brand-stat"><span className="nlb-stat-num">4</span><span className="nlb-stat-label">{t('brand.statRoles')}</span></div>
               <div className="nlb-stat-sep" />
-              <div className="nlb-brand-stat"><span className="nlb-stat-num">100%</span><span className="nlb-stat-label">Transparent</span></div>
+              <div className="nlb-brand-stat"><span className="nlb-stat-num">100%</span><span className="nlb-stat-label">{t('brand.statTransparent')}</span></div>
             </div>
           </div>
         </div>
@@ -186,9 +183,25 @@ export function LoginPage() {
               <span>NagroMS</span>
             </div>
 
+            {/* Language switcher */}
+            <div className="nagro-lang-switcher" role="group" aria-label="Select language">
+              <Globe className="w-4 h-4 nagro-lang-globe" />
+              {SUPPORTED_LANGUAGES.map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => setLang(code)}
+                  className={`nagro-lang-btn${lang === code ? ' active' : ''}`}
+                  aria-pressed={lang === code}
+                >
+                  {LANGUAGE_LABELS[code]}
+                </button>
+              ))}
+            </div>
+
             <div className="nagro-form-header">
-              <h2>Login to NagroMS</h2>
-              <p>Select your account type and sign in below</p>
+              <h2>{t('login.title')}</h2>
+              <p>{t('login.subtitle')}</p>
             </div>
 
             {generalError && (
@@ -201,7 +214,7 @@ export function LoginPage() {
 
               {/* Account type selector */}
               <div className="nagro-field">
-                <label className="nagro-label">Account Type *</label>
+                <label className="nagro-label">{t('login.accountType')} *</label>
                 <div className="nagro-method-tabs">
                   {methods.map(m => (
                     <button key={m.id} type="button"
@@ -216,7 +229,7 @@ export function LoginPage() {
               {/* Identifier field */}
               <div className="nagro-field">
                 <label className="nagro-label">
-                  {loginMethod === 'email' ? 'Email Address' : loginMethod === 'phone' ? 'Phone Number' : 'NIC Number'} *
+                  {loginMethod === 'email' ? t('login.emailAddress') : loginMethod === 'phone' ? t('login.phoneNumber') : t('login.nicNumber')} *
                 </label>
                 <div className={`nagro-input-wrap${errors.identifier ? ' error' : ''}`}>
                   <span className="nagro-input-icon">{getIcon()}</span>
@@ -234,15 +247,15 @@ export function LoginPage() {
               {/* Password field */}
               <div className="nagro-field">
                 <div className="nagro-label-row">
-                  <label className="nagro-label">Password *</label>
+                  <label className="nagro-label">{t('login.password')} *</label>
                   <button type="button" onClick={() => navigate('/forgot-password')} className="nagro-forgot-link">
-                    Forgot password?
+                    {t('login.forgotPassword')}
                   </button>
                 </div>
                 <div className={`nagro-input-wrap${errors.password ? ' error' : ''}`}>
                   <input type={showPassword ? 'text' : 'password'} name="password"
                     value={formData.password} onChange={handleChange}
-                    placeholder="Your password" className="nagro-input"
+                    placeholder={t('login.yourPassword')} className="nagro-input"
                     style={{ paddingLeft: 14 }} autoComplete="current-password" />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="nagro-eye-btn">
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -258,16 +271,16 @@ export function LoginPage() {
               <button type="submit" disabled={isLoading}
                 className={`nagro-submit-btn${isLoading ? ' loading' : ''}`}>
                 {isLoading ? <span className="nagro-spinner" /> : (
-                  <><span>Sign In</span><ArrowRight className="w-4 h-4" /></>
+                  <><span>{t('login.signIn')}</span><ArrowRight className="w-4 h-4" /></>
                 )}
               </button>
             </form>
 
             <p className="nagro-bottom-link">
-              Don't have an account?{' '}
-              <button type="button" onClick={() => navigate('/signup')} className="nagro-link">Create account</button>
+              {t('login.noAccount')}{' '}
+              <button type="button" onClick={() => navigate('/signup')} className="nagro-link">{t('login.createAccount')}</button>
             </p>
-            <p className="nagro-security-note">🔒 Role-based secure access · SSL Encrypted</p>
+            <p className="nagro-security-note">{t('login.securityNote')}</p>
           </div>
         </div>
       </div>

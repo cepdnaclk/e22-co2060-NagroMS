@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { LanguageProvider } from './i18n/LanguageContext.jsx';
 
 // Auth pages
 import LandingPage from './Pages/Landingpage/Landingpage.jsx';
@@ -40,6 +41,7 @@ function PlaceholderDashboard({ role }) {
 export default function App() {
   return (
     <div className="min-h-screen bg-background">
+      <LanguageProvider>
       <Routes>
         {/* Landing Page */}
         <Route path="/" element={<LandingPage />} />
@@ -72,6 +74,7 @@ export default function App() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </LanguageProvider>
     </div>
   );
 }
