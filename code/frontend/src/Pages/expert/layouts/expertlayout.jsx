@@ -3,6 +3,7 @@ import { getAuth } from 'firebase/auth';
 import { LayoutDashboard, Calendar, MessageSquare, BookOpen, Users, Settings, LogOut } from 'lucide-react';
 import { logout } from '../../../utils/firebase.js';
 import { colors } from '../../../Styles/expertStyles';
+import { RoleSwitcher } from '../../../components/RoleSwitcher.jsx';
 
 const navItems = [
     { to: '/expert-dashboard', label: 'Overview', icon: LayoutDashboard, end: true },
@@ -34,6 +35,9 @@ export default function ExpertLayout() {
                     <span style={{ fontSize: '22px', fontWeight: '800', color: colors.text, letterSpacing: '-0.5px', fontFamily: "'Merriweather', Georgia, serif" }}>
                         Nagro<span style={{ color: colors.green }}>MS</span>
                     </span>
+                </div>
+                <div className="flex items-center gap-3">
+                    <RoleSwitcher currentRole="expert" />
                 </div>
             </header>
 
