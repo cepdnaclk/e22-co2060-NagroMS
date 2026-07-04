@@ -32,10 +32,16 @@ import {
   Bot,
   Sparkles
 } from 'lucide-react';
+<<<<<<< HEAD
+import { RoleSwitcher } from "../../components/RoleSwitcher.jsx";
+import { logout } from "../../utils/firebase";
+=======
 import { db, auth as firebaseAuth } from "../../utils/firebase";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { RoleSwitcher } from "../RoleSwitcher.jsx";
+>>>>>>> origin/main
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "./InputOTP";
+import CommunityNetwork from "../../components/Network/CommunityNetwork";
 import './farmerDashboard.css';
 import {
   fetchFarmerProfile,
@@ -54,9 +60,12 @@ import {
   addInventory as apiAddInventory,
   updateInventory as apiUpdateInventory,
   deleteInventory as apiDeleteInventory,
+  updateOrderStatus
 } from '../../services/farmerApi';
 
-
+// Real-time Firestore imports
+import { db } from '../../utils/firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 
 import tomatoImg from "./images/products/tomato.png";
@@ -98,7 +107,7 @@ export const getImageForName = (name) => {
   const n = name.toLowerCase();
 
   // Products
-  if (n.includes('tomato')) return tomatoImg;
+  if (n.includes('tomato') || n.includes('tomoto')) return tomatoImg;
   if (n.includes('rice')) return riceImg;
   if (n.includes('bean')) return beansImg;
   if (n.includes('carrot')) return carrotsImg;
@@ -187,11 +196,63 @@ export function FarmerDashboard({ onNavigate }) {
     // 6. Fetch farmer profile (once is usually fine for profile, or stay real-time too)
     const fetchProfile = async () => {
       try {
-        const res = await fetchFarmerProfile();
-        if (res.success && res.data) {
+<<<<<<< HEAD
+        // Fetch profile
+        const profileRes = await fetchFarmerProfile();
+        let currentFarmerUid = null;
+        if (profileRes.success && profileRes.data) {
+          const p = profileRes.data;
+          currentFarmerUid = p.uid || p.id;
+          if (p.fullName) { setUserName(p.fullName); localStorage.setItem('userName', p.fullName); }
+          if (p.email) { setUserEmail(p.email); localStorage.setItem('userEmail', p.email); }
+          if (p.phone) { setUserPhone(p.phone); localStorage.setItem('userPhone', p.phone); }
+          if (p.district) { setUserLocation(p.district); localStorage.setItem('userLocation', p.district); }
+          if (p.nic) { setUserNIC(p.nic); localStorage.setItem('userNIC', p.nic); }
+        }
+        // Fetch products
+        const productsRes = await apiFetchProducts();
+        if (productsRes.success && productsRes.data) {
+          setProducts(productsRes.data);
+        }
+
+        // ── REAL-TIME ORDER LISTENER ──────────────────────────
+        let unsubscribeOrders = () => { };
+        if (currentFarmerUid) {
+          const q = query(
+            collection(db, 'orders'),
+            where('farmerId', '==', currentFarmerUid)
+          );
+          unsubscribeOrders = onSnapshot(q, (snapshot) => {
+            const liveOrders = snapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+            setOrders(liveOrders);
+            setOrdersList(liveOrders);
+            // also update ordersList for badge
+          });
+        }
+
+        // Fetch sales
+        const salesRes = await apiFetchSales();
+        if (salesRes.success && salesRes.data && salesRes.data.length > 0) {
+          setSales(salesRes.data);
+        }
+
+        // Fetch equipment
+        const eqRes = await apiFetchEquipment();
+        if (eqRes.success && eqRes.data && eqRes.data.length > 0) {
+          setMyEquipment(eqRes.data);
+        }
+
+        // Fetch inventory
+        const invRes = await apiFetchInventory();
+        if (invRes.success && invRes.data && invRes.data.length > 0) {
+          setInventory(invRes.data);
           const p = res.data;
           if (p.fullName) { setUserName(p.fullName); localStorage.setItem('userName', p.fullName); }
           if (p.district) { setUserLocation(p.district); localStorage.setItem('userLocation', p.district); }
+
         }
       } catch (err) {
         console.warn("Profile fetch failed:", err.message);
@@ -233,6 +294,7 @@ export function FarmerDashboard({ onNavigate }) {
 
   // State for orders
   const [orders, setOrders] = useState([]);
+  const [ordersList, setOrdersList] = useState([]);
 
   // State for inventory
   const [inventory, setInventory] = useState([]);
@@ -334,6 +396,9 @@ export function FarmerDashboard({ onNavigate }) {
     name: '',
     quantity: '',
     price: '',
+    category: 'vegetables',
+    unit: 'kg',
+    image: '',
     status: 'In Stock'
   });
 
@@ -422,16 +487,20 @@ export function FarmerDashboard({ onNavigate }) {
 
   // Handlers for products
   const handleEditProduct = (product) => {
-    setEditingProduct({ ...product });
+    setEditingProduct({
+      ...product,
+      quantity: product.quantity !== undefined && product.quantity !== null ? String(product.quantity) : '',
+      price: product.price !== undefined && product.price !== null ? String(product.price) : '',
+    });
   };
 
   const handleSaveProduct = async () => {
     try {
       const res = await apiUpdateProduct(editingProduct.id, {
-        name:     editingProduct.name,
+        name: editingProduct.name,
         quantity: editingProduct.quantity,
-        price:    editingProduct.price,
-        status:   editingProduct.status,
+        price: editingProduct.price,
+        status: editingProduct.status,
       });
       if (res.success) {
         setProducts(products.map(p => p.id === editingProduct.id ? res.data : p));
@@ -464,10 +533,13 @@ export function FarmerDashboard({ onNavigate }) {
 
     try {
       const res = await apiAddProduct({
-        name:     newProduct.name,
+        name: newProduct.name,
         quantity: newProduct.quantity,
-        price:    newProduct.price,
-        status:   newProduct.status || 'In Stock',
+        price: newProduct.price,
+        unit: newProduct.unit || 'kg',
+        image: newProduct.image || '',
+        category: newProduct.category || 'vegetables',
+        status: newProduct.status || 'In Stock',
       });
       if (res.success && res.data) {
         setProducts([...products, res.data]);
@@ -480,7 +552,7 @@ export function FarmerDashboard({ onNavigate }) {
       alert('Network error. Adding locally. Error: ' + err.message);
       setProducts([...products, { id: Date.now(), ...newProduct }]);
     }
-    setNewProduct({ name: '', quantity: '', price: '', status: 'In Stock' });
+    setNewProduct({ name: '', quantity: '', price: '', unit: 'kg', image: '', category: 'vegetables', status: 'In Stock' });
     setShowAddProduct(false);
   };
 
@@ -631,6 +703,8 @@ export function FarmerDashboard({ onNavigate }) {
         />;
       case 'chatbot':
         return <ChatbotContent userLocation={userLocation} />;
+      case 'community':
+        return <CommunityNetwork currentUserRole="farmer" />;
       case 'settings':
         return (
           <SettingsContent
@@ -653,198 +727,169 @@ export function FarmerDashboard({ onNavigate }) {
     }
   };
 
+  // Pending orders count for sidebar badge
+  const pendingCount = orders.reduce((sum, order) =>
+    sum + (order.products ? order.products.filter(p => p.status === 'pending').length : 0), 0
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header with Menu Button - Always Visible */}
-      <div className="bg-white border-b border-green-200 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="bg-primary rounded-lg p-1.5">
-            <Sprout className="w-5 h-5 text-white" />
+    <div className="fd-layout">
+
+      {/* ── Left Sidebar ── */}
+      <aside className="fd-sidebar">
+        {/* Logo */}
+        <div className="fd-sidebar-logo">
+          <div className="fd-sidebar-logo-icon">
+            <Sprout className="w-5 h-5" style={{ color: '#fff' }} />
           </div>
-          <span className="text-primary font-semibold">NagroMS</span>
+          <span className="fd-sidebar-logo-text">NagroMS</span>
         </div>
-        <div className="flex items-center gap-3">
-          <RoleSwitcher currentRole="farmer" onNavigate={onNavigate} />
+
+        {/* Nav groups */}
+        <nav className="fd-sidebar-nav">
+
+          {/* Group 1: Main overview */}
+          <div className="fd-nav-group">
+            <span className="fd-nav-group-label">Overview</span>
+            <button
+              className={`fd-nav-item${activeNav === 'dashboard' ? ' fd-nav-active' : ''}`}
+              onClick={() => { setActiveNav('dashboard'); setSidebarOpen(false); }}
+            >
+              <LayoutDashboard className="fd-nav-icon" />
+              <span className="fd-nav-label">Products, Sales,<br />Expenses & Orders</span>
+              {pendingCount > 0 && <span className="fd-nav-badge">{pendingCount}</span>}
+            </button>
+          </div>
+
+          {/* Group 2: Loans & Weather */}
+          <div className="fd-nav-group">
+            <span className="fd-nav-group-label">Financial & Farming</span>
+            <button
+              className={`fd-nav-item${activeNav === 'loans' ? ' fd-nav-active' : ''}`}
+              onClick={() => { setActiveNav('loans'); setSidebarOpen(false); }}
+            >
+              <CreditCard className="fd-nav-icon" />
+              <span className="fd-nav-label">Loans</span>
+            </button>
+            <button
+              className={`fd-nav-item${activeNav === 'weather' ? ' fd-nav-active' : ''}`}
+              onClick={() => { setActiveNav('weather'); setSidebarOpen(false); }}
+            >
+              <CloudRain className="fd-nav-icon" />
+              <span className="fd-nav-label">Weather</span>
+            </button>
+          </div>
+
+          {/* Group 3: Chatbot */}
+          <div className="fd-nav-group">
+            <span className="fd-nav-group-label">Assistant</span>
+            <button
+              className={`fd-nav-item${activeNav === 'chatbot' ? ' fd-nav-active' : ''}`}
+              onClick={() => { setActiveNav('chatbot'); setSidebarOpen(false); }}
+            >
+              <Bot className="fd-nav-icon" />
+              <span className="fd-nav-label">Chatbot</span>
+            </button>
+          </div>
+
+          {/* Group 4: More (Equipment, Inventory, Contacts, Community) */}
+          <div className="fd-nav-group">
+            <span className="fd-nav-group-label">More</span>
+            <button
+              className={`fd-nav-item${activeNav === 'equipment' ? ' fd-nav-active' : ''}`}
+              onClick={() => { setActiveNav('equipment'); setSidebarOpen(false); }}
+            >
+              <Tractor className="fd-nav-icon" />
+              <span className="fd-nav-label">Equipment</span>
+            </button>
+            <button
+              className={`fd-nav-item${activeNav === 'inventory' ? ' fd-nav-active' : ''}`}
+              onClick={() => { setActiveNav('inventory'); setSidebarOpen(false); }}
+            >
+              <Package className="fd-nav-icon" />
+              <span className="fd-nav-label">Inventory</span>
+            </button>
+            <button
+              className={`fd-nav-item${activeNav === 'contacts' ? ' fd-nav-active' : ''}`}
+              onClick={() => { setActiveNav('contacts'); setSidebarOpen(false); }}
+            >
+              <Phone className="fd-nav-icon" />
+              <span className="fd-nav-label">Contacts</span>
+            </button>
+            <button
+              className={`fd-nav-item${activeNav === 'community' ? ' fd-nav-active' : ''}`}
+              onClick={() => { setActiveNav('community'); setSidebarOpen(false); }}
+            >
+              <Users className="fd-nav-icon" />
+              <span className="fd-nav-label">Community</span>
+            </button>
+          </div>
+        </nav>
+
+        {/* Settings + Logout at bottom */}
+        <div className="fd-sidebar-bottom">
           <button
-            type="button"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-foreground hover:bg-green-50 p-2 rounded-lg transition-colors"
-            aria-label="Toggle menu"
+            className={`fd-nav-item${activeNav === 'settings' ? ' fd-nav-active' : ''}`}
+            onClick={() => { setActiveNav('settings'); setSidebarOpen(false); }}
           >
-            {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            <Settings className="fd-nav-icon" />
+            <span className="fd-nav-label">Settings</span>
           </button>
-        </div>
-      </div>
-
-      {/* Overlay - Click to close sidebar */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar - Hidden by default, shows on menu click */}
-      <aside className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-green-200
-        transform transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
-        <div className="h-full flex flex-col">
-          {/* Logo */}
-          <div className="flex items-center gap-2 p-6 border-b border-green-200">
-            <div className="bg-primary rounded-lg p-2">
-              <Sprout className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h2 className="text-lg text-primary font-semibold">NagroMS</h2>
-              <p className="text-xs text-muted-foreground">Farmer Portal</p>
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            <NavButton
-              icon="🏠"
-              label="dashboard"
-              active={activeNav === 'dashboard'}
-              onClick={() => {
-                setActiveNav('dashboard');
-                setSidebarOpen(false);
-              }}
-            />
-            <NavButton
-              icon="🌾"
-              label="My Products"
-              active={activeNav === 'products'}
-              onClick={() => {
-                setActiveNav('products');
-                setSidebarOpen(false);
-              }}
-            />
-            <NavButton
-              icon="💰"
-              label="Sales & Income"
-              active={activeNav === 'sales'}
-              onClick={() => {
-                setActiveNav('sales');
-                setSidebarOpen(false);
-              }}
-            />
-            <NavButton
-              icon="📉"
-              label="Expenses"
-              active={activeNav === 'expenses'}
-              onClick={() => {
-                setActiveNav('expenses');
-                setSidebarOpen(false);
-              }}
-            />
-            <NavButton
-              icon="📦"
-              label="Orders"
-              active={activeNav === 'orders'}
-              onClick={() => {
-                setActiveNav('orders');
-                setSidebarOpen(false);
-              }}
-            />
-            <NavButton
-              icon="📞"
-              label="Contacts"
-              active={activeNav === 'contacts'}
-              onClick={() => {
-                setActiveNav('contacts');
-                setSidebarOpen(false);
-              }}
-            />
-            <NavButton
-              icon="💳"
-              label="Bank Loans"
-              active={activeNav === 'loans'}
-              onClick={() => {
-                setActiveNav('loans');
-                setSidebarOpen(false);
-              }}
-            />
-            <NavButton
-              icon="🚜"
-              label="Equipment"
-              active={activeNav === 'equipment'}
-              onClick={() => {
-                setActiveNav('equipment');
-                setSidebarOpen(false);
-              }}
-            />
-            <NavButton
-              icon="⛅"
-              label="Weather"
-              active={activeNav === 'weather'}
-              onClick={() => {
-                setActiveNav('weather');
-                setSidebarOpen(false);
-              }}
-            />
-            <NavButton
-              icon="📦"
-              label="Inventory"
-              active={activeNav === 'inventory'}
-              onClick={() => {
-                setActiveNav('inventory');
-                setSidebarOpen(false);
-              }}
-            />
-            <NavButton
-              icon="💬"
-              label="Chatbot"
-              active={activeNav === 'chatbot'}
-              onClick={() => {
-                setActiveNav('chatbot');
-                setSidebarOpen(false);
-              }}
-            />
-          </nav>
-
-          {/* User Info & Logout */}
-          <div className="p-4 border-t border-green-200">
-            <button
-              onClick={() => {
-                setActiveNav('settings');
-                setSidebarOpen(false);
-              }}
-              className="w-full bg-green-50 rounded-xl p-4 mb-3 hover:bg-green-100 transition-all text-left shadow-sm hover:shadow-md border border-green-100"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full border-2 border-primary flex items-center justify-center bg-white text-2xl">
-                  {profilePicture}
-                </div>
-                <div className="flex-1 overflow-hidden">
-                  <p className="text-sm font-bold text-foreground truncate">{userName}</p>
-                  <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center gap-2 text-xs text-primary font-bold bg-white/50 px-2 py-1 rounded-lg">
-                <img src={settingsIcon} alt="" className="w-4 h-4 object-contain" />
-                <span>Settings & Profile</span>
-              </div>
-            </button>
-            <button
-              onClick={() => onNavigate('landing')}
-              className="w-full flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="text-sm">Logout</span>
-            </button>
-          </div>
+          <button
+            className="fd-nav-item fd-nav-logout"
+            onClick={async () => { await logout(); window.location.href = '/'; }}
+          >
+            <LogOut className="fd-nav-icon" />
+            <span className="fd-nav-label">Logout</span>
+          </button>
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="min-h-screen">
-        <div className="p-4 lg:p-8">
+      {/* ── Main area (header + content) ── */}
+      <div className="fd-main">
+
+        {/* Top header bar */}
+        <header className="fd-header">
+          <div className="fd-header-left">
+            {/* Hamburger for mobile */}
+            <button className="fd-hamburger" onClick={() => setSidebarOpen(!sidebarOpen)}>
+              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+            <span className="fd-header-title">
+              {activeNav === 'dashboard' ? 'Farm Overview' :
+                activeNav === 'products' ? 'My Products' :
+                  activeNav === 'sales' ? 'Sales' :
+                    activeNav === 'expenses' ? 'Expenses' :
+                      activeNav === 'orders' ? 'Orders' :
+                        activeNav === 'loans' ? 'Loans' :
+                          activeNav === 'weather' ? 'Weather' :
+                            activeNav === 'chatbot' ? 'Farm Assistant' :
+                              activeNav === 'equipment' ? 'Equipment' :
+                                activeNav === 'inventory' ? 'Inventory' :
+                                  activeNav === 'contacts' ? 'Contacts' :
+                                    activeNav === 'community' ? 'Community' :
+                                      activeNav === 'settings' ? 'Settings' : 'Dashboard'}
+            </span>
+          </div>
+          <div className="fd-header-right">
+            <RoleSwitcher currentRole="farmer" onNavigate={onNavigate} />
+            <div className="fd-header-profile">
+              <span className="fd-profile-emoji">{profilePicture}</span>
+              <span className="fd-profile-name">{userName.split(' ')[0]}</span>
+            </div>
+          </div>
+        </header>
+
+        {/* Mobile overlay */}
+        {sidebarOpen && (
+          <div className="fd-sidebar-overlay" onClick={() => setSidebarOpen(false)} />
+        )}
+
+        {/* Page content */}
+        <main className="fd-content">
           {renderContent()}
-        </div>
-      </main>
+        </main>
+      </div>
 
       {/* Delete Product Confirmation Dialog */}
       {deleteConfirm && (
@@ -948,23 +993,15 @@ function NavButton({ icon, label, active, onClick }) {
       type="button"
       onClick={onClick}
       className={`
-        w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
+        flex flex-col items-center justify-center min-w-[72px] px-2 py-2 rounded-xl transition-all
         ${active
-          ? 'bg-primary text-white'
-          : 'bg-white text-gray-700 hover:bg-green-50 hover:text-primary border border-gray-200'
+          ? 'text-primary bg-green-50 shadow-inner'
+          : 'text-gray-400 hover:text-primary hover:bg-gray-50'
         }
       `}
     >
-      {icon && (
-        <span className="w-8 h-8 flex items-center justify-center">
-          {typeof icon === 'string' && icon.length <= 4 ? (
-            <span className="text-2xl">{icon}</span>
-          ) : (
-            <img src={icon} alt="" className="w-8 h-8 object-contain" />
-          )}
-        </span>
-      )}
-      <span className="text-base font-medium">{label}</span>
+      <span className="text-2xl mb-1">{icon}</span>
+      <span className="text-[10px] font-semibold leading-none whitespace-nowrap tracking-wide">{label}</span>
     </button>
   );
 }
@@ -981,10 +1018,16 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
   const rentalExpensesTotal = (rentalExpenses || []).reduce((total, expense) => total + (expense.total || 0), 0);
   const totalIncome = salesTotal + rentalIncomeTotal;
   const netProfit = totalIncome - rentalExpensesTotal;
-  
+<<<<<<< HEAD
+  // Correctly calculate total pending products across all orders
+  const pendingOrdersCount = orders.reduce((sum, order) =>
+    sum + order.products.filter(p => p.status === 'pending').length, 0
+=======
+
   // Correctly calculate total pending products across all orders with safety checks
-  const pendingOrdersCount = (orders || []).reduce((sum, order) => 
+  const pendingOrdersCount = (orders || []).reduce((sum, order) =>
     sum + (order.products || []).filter(p => p.status === 'pending').length, 0
+>>>>>>> origin/main
   );
 
   return (
@@ -2034,6 +2077,11 @@ function ImageWithFallback({ src, alt, className }) {
 function OrdersContent({ orders }) {
   const [ordersList, setOrdersList] = useState(orders);
 
+  // Sync ordersList with prop when it changes
+  useEffect(() => {
+    setOrdersList(orders);
+  }, [orders]);
+
   // Auto-delete completed orders after 1 day
   useEffect(() => {
     const checkAndCleanOrders = () => {
@@ -2063,17 +2111,17 @@ function OrdersContent({ orders }) {
   }, []);
 
   // Toggle order status (pending <-> completed)
-  const toggleProductStatus = async (customerId, productId) => {
+  const toggleProductStatus = async (orderId, productId) => {
     // Find the new status first
-    const customer = ordersList.find(c => c.id === customerId);
-    const product  = customer?.products.find(p => p.id === productId);
+    const customer = ordersList.find(c => c.id === orderId);
+    const product = customer?.products.find(p => p.id === productId);
     if (!product) return;
 
     const newStatus = product.status === 'pending' ? 'completed' : 'pending';
 
     // Update UI immediately (optimistic update)
-    setOrdersList(ordersList.map(customer => {
-      if (customer.id === customerId) {
+    const updatedOrdersList = ordersList.map(customer => {
+      if (customer.id === orderId) {
         const updatedProducts = customer.products.map(p => {
           if (p.id === productId) {
             return { ...p, status: newStatus };
@@ -2087,16 +2135,19 @@ function OrdersContent({ orders }) {
         return {
           ...customer,
           products: updatedProducts,
-          completedAt: allCompleted ? new Date().toISOString() : null
+          completedAt: allCompleted ? new Date().toISOString() : null,
+          status: allCompleted ? 'completed' : 'pending' // Also update overall status if needed
         };
       }
       return customer;
-    }));
+    });
+
+    setOrdersList(updatedOrdersList);
 
     // Sync to backend
     try {
       const { updateOrderStatus } = await import('../../services/farmerApi');
-      await updateOrderStatus(productId, newStatus);
+      await updateOrderStatus(orderId, newStatus, productId);
     } catch (err) {
       console.warn('Backend unavailable, order status updated locally only:', err.message);
     }
@@ -3159,10 +3210,10 @@ function SettingsContent({
     try {
       const res = await apiUpdateFarmerProfile({
         fullName: profileData.name,
-        email:    profileData.email,
-        phone:    profileData.phone,
+        email: profileData.email,
+        phone: profileData.phone,
         location: profileData.location,
-        nic:      profileData.nic,
+        nic: profileData.nic,
         farmSize: profileData.farmSize
       });
 
@@ -4363,6 +4414,20 @@ function AddProductModal({ product, onChange, onSave, onCancel }) {
 
 
 
+          {/* Category */}
+          <div>
+            <label className="block text-sm text-muted-foreground mb-1">Category</label>
+            <select
+              value={product.category || 'vegetables'}
+              onChange={e => onChange('category', e.target.value)}
+              className="w-full p-3 border rounded-lg text-lg bg-white"
+            >
+              <option value="vegetables">Vegetables</option>
+              <option value="fruits">Fruits</option>
+              <option value="grains">Grains</option>
+            </select>
+          </div>
+
           {/* Name */}
           <div>
             <label className="block text-sm text-muted-foreground mb-1">Name</label>
@@ -4374,6 +4439,7 @@ function AddProductModal({ product, onChange, onSave, onCancel }) {
               className="w-full p-3 border rounded-lg text-lg"
             />
           </div>
+
 
           {/* Quantity & Price */}
           <div className="grid grid-cols-2 gap-4">
@@ -4397,6 +4463,22 @@ function AddProductModal({ product, onChange, onSave, onCancel }) {
                 className="w-full p-3 border rounded-lg text-lg"
               />
             </div>
+          </div>
+
+          {/* Unit */}
+          <div>
+            <label className="block text-sm text-muted-foreground mb-1">Unit of Measurement</label>
+            <select
+              value={product.unit || 'kg'}
+              onChange={e => onChange('unit', e.target.value)}
+              className="w-full p-3 border rounded-lg text-lg bg-white"
+            >
+              <option value="kg">Kilogram (kg)</option>
+              <option value="g">Gram (g)</option>
+              <option value="unit">Per Unit / Each</option>
+              <option value="bunch">Bunch</option>
+              <option value="liter">Liter</option>
+            </select>
           </div>
 
         </div>
