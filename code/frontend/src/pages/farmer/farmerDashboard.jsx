@@ -32,8 +32,14 @@ import {
   Bot,
   Sparkles
 } from 'lucide-react';
+<<<<<<< HEAD
 import { RoleSwitcher } from "../../components/RoleSwitcher.jsx";
 import { logout } from "../../utils/firebase";
+=======
+import { db, auth as firebaseAuth } from "../../utils/firebase";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { RoleSwitcher } from "../RoleSwitcher.jsx";
+>>>>>>> origin/main
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "./InputOTP";
 import CommunityNetwork from "../../components/Network/CommunityNetwork";
 import './farmerDashboard.css';
@@ -137,10 +143,60 @@ export function FarmerDashboard({ onNavigate }) {
   const [profilePicture, setProfilePicture] = useState(localStorage.getItem('profilePicture') || '👨‍🌾');
   const [loading, setLoading] = useState(true);
 
-  // Fetch live data from backend on mount
+  // Listen for live data from Firestore in real-time
   useEffect(() => {
-    async function loadDashboardData() {
+    // Get current user UID
+    const user = firebaseAuth.currentUser;
+    const uid = user ? user.uid : localStorage.getItem('nagroms_uid'); // Fallback if needed
+
+    if (!uid) {
+      console.warn("No user UID found for real-time listeners.");
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+
+    // 1. Real-time Products Listener
+    const qProducts = query(collection(db, "products"), where("farmerId", "==", uid));
+    const unsubProducts = onSnapshot(qProducts, (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setProducts(docs);
+      setLoading(false);
+    }, (err) => console.error("Products Listener Error:", err));
+
+    // 2. Real-time Orders Listener
+    const qOrders = query(collection(db, "orders"), where("farmerId", "==", uid));
+    const unsubOrders = onSnapshot(qOrders, (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setOrders(docs);
+    }, (err) => console.error("Orders Listener Error:", err));
+
+    // 3. Real-time Inventory Listener
+    const qInv = query(collection(db, "inventories"), where("farmerId", "==", uid));
+    const unsubInv = onSnapshot(qInv, (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setInventory(docs);
+    }, (err) => console.error("Inventory Listener Error:", err));
+
+    // 4. Real-time Loans Listener
+    const qLoans = query(collection(db, "loans"), where("farmerId", "==", uid));
+    const unsubLoans = onSnapshot(qLoans, (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setActiveLoans(docs);
+    }, (err) => console.error("Loans Listener Error:", err));
+
+    // 5. Real-time Expenses Listener
+    const qExpenses = query(collection(db, "expenses"), where("farmerId", "==", uid));
+    const unsubExpenses = onSnapshot(qExpenses, (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setRentalExpenses(docs);
+    }, (err) => console.error("Expenses Listener Error:", err));
+
+    // 6. Fetch farmer profile (once is usually fine for profile, or stay real-time too)
+    const fetchProfile = async () => {
       try {
+<<<<<<< HEAD
         // Fetch profile
         const profileRes = await fetchFarmerProfile();
         let currentFarmerUid = null;
@@ -158,9 +214,9 @@ export function FarmerDashboard({ onNavigate }) {
         if (productsRes.success && productsRes.data) {
           setProducts(productsRes.data);
         }
-        
+
         // ── REAL-TIME ORDER LISTENER ──────────────────────────
-        let unsubscribeOrders = () => {};
+        let unsubscribeOrders = () => { };
         if (currentFarmerUid) {
           const q = query(
             collection(db, 'orders'),
@@ -193,14 +249,25 @@ export function FarmerDashboard({ onNavigate }) {
         const invRes = await apiFetchInventory();
         if (invRes.success && invRes.data && invRes.data.length > 0) {
           setInventory(invRes.data);
+          const p = res.data;
+          if (p.fullName) { setUserName(p.fullName); localStorage.setItem('userName', p.fullName); }
+          if (p.district) { setUserLocation(p.district); localStorage.setItem('userLocation', p.district); }
+
         }
       } catch (err) {
-        console.warn('Backend not available, using demo data:', err.message);
-      } finally {
-        setLoading(false);
+        console.warn("Profile fetch failed:", err.message);
       }
-    }
-    loadDashboardData();
+    };
+    fetchProfile();
+
+    // Cleanup listeners on unmount
+    return () => {
+      unsubProducts();
+      unsubOrders();
+      unsubInv();
+      unsubLoans();
+      unsubExpenses();
+    };
   }, []);
 
   // State for products
@@ -309,40 +376,7 @@ export function FarmerDashboard({ onNavigate }) {
   ]);
 
   // State for active loans (loans farmer has taken)
-  const [activeLoans] = useState([
-    {
-      id: 1,
-      bankName: 'Bank of Ceylon',
-      bankLogo: bocImg,
-      loanType: 'Agriculture Loan',
-      amount: 2000000,
-      borrowed: 2000000,
-      paid: 800000,
-      remaining: 1200000,
-      interestRate: '8.5%',
-      monthlyPayment: 50000,
-      nextPayment: '2026-03-05',
-      startDate: '2025-06-01',
-      endDate: '2028-06-01',
-      status: 'Active'
-    },
-    {
-      id: 2,
-      bankName: 'People\'s Bank',
-      bankLogo: peoplesImg,
-      loanType: 'Crop Production Loan',
-      amount: 500000,
-      borrowed: 500000,
-      paid: 400000,
-      remaining: 100000,
-      interestRate: '7.5%',
-      monthlyPayment: 25000,
-      nextPayment: '2026-03-10',
-      startDate: '2025-01-15',
-      endDate: '2026-07-15',
-      status: 'Active'
-    }
-  ]);
+  const [activeLoans, setActiveLoans] = useState([]);
 
   // State for modals
   const [editingProduct, setEditingProduct] = useState(null);
@@ -823,18 +857,18 @@ export function FarmerDashboard({ onNavigate }) {
             </button>
             <span className="fd-header-title">
               {activeNav === 'dashboard' ? 'Farm Overview' :
-               activeNav === 'products' ? 'My Products' :
-               activeNav === 'sales' ? 'Sales' :
-               activeNav === 'expenses' ? 'Expenses' :
-               activeNav === 'orders' ? 'Orders' :
-               activeNav === 'loans' ? 'Loans' :
-               activeNav === 'weather' ? 'Weather' :
-               activeNav === 'chatbot' ? 'Farm Assistant' :
-               activeNav === 'equipment' ? 'Equipment' :
-               activeNav === 'inventory' ? 'Inventory' :
-               activeNav === 'contacts' ? 'Contacts' :
-               activeNav === 'community' ? 'Community' :
-               activeNav === 'settings' ? 'Settings' : 'Dashboard'}
+                activeNav === 'products' ? 'My Products' :
+                  activeNav === 'sales' ? 'Sales' :
+                    activeNav === 'expenses' ? 'Expenses' :
+                      activeNav === 'orders' ? 'Orders' :
+                        activeNav === 'loans' ? 'Loans' :
+                          activeNav === 'weather' ? 'Weather' :
+                            activeNav === 'chatbot' ? 'Farm Assistant' :
+                              activeNav === 'equipment' ? 'Equipment' :
+                                activeNav === 'inventory' ? 'Inventory' :
+                                  activeNav === 'contacts' ? 'Contacts' :
+                                    activeNav === 'community' ? 'Community' :
+                                      activeNav === 'settings' ? 'Settings' : 'Dashboard'}
             </span>
           </div>
           <div className="fd-header-right">
@@ -976,17 +1010,24 @@ function NavButton({ icon, label, active, onClick }) {
 function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders, rentalIncome, rentalExpenses, userName }) {
   const [showMoneyModal, setShowMoneyModal] = useState(null); // 'in', 'out', or null
 
-  // Calculate actual counts
-  const productCount = products.length;
-  const rentedEquipmentCount = rentedEquipment.length;
-  const salesTotal = sales.reduce((total, sale) => total + sale.total, 0);
-  const rentalIncomeTotal = rentalIncome.reduce((total, rental) => total + rental.total, 0);
-  const rentalExpensesTotal = rentalExpenses.reduce((total, expense) => total + expense.total, 0);
+  // Calculate actual counts with safety checks
+  const productCount = (products || []).length;
+  const rentedEquipmentCount = (rentedEquipment || []).length;
+  const salesTotal = (sales || []).reduce((total, sale) => total + (sale.total || 0), 0);
+  const rentalIncomeTotal = (rentalIncome || []).reduce((total, rental) => total + (rental.total || 0), 0);
+  const rentalExpensesTotal = (rentalExpenses || []).reduce((total, expense) => total + (expense.total || 0), 0);
   const totalIncome = salesTotal + rentalIncomeTotal;
   const netProfit = totalIncome - rentalExpensesTotal;
+<<<<<<< HEAD
   // Correctly calculate total pending products across all orders
   const pendingOrdersCount = orders.reduce((sum, order) =>
     sum + order.products.filter(p => p.status === 'pending').length, 0
+=======
+
+  // Correctly calculate total pending products across all orders with safety checks
+  const pendingOrdersCount = (orders || []).reduce((sum, order) =>
+    sum + (order.products || []).filter(p => p.status === 'pending').length, 0
+>>>>>>> origin/main
   );
 
   return (
@@ -1106,12 +1147,12 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
           </div>
 
           {/* Low Stock Alerts */}
-          {products.filter(p => parseInt(p.quantity) <= 150).length > 0 && (
+          {(products || []).filter(p => parseInt(p.quantity) <= 150).length > 0 && (
             <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg mb-4">
               <p className="text-yellow-900 text-lg font-bold mb-2">
                 ⚠️ Low Stock Alert!
               </p>
-              {products.filter(p => parseInt(p.quantity) <= 150).map(p => (
+              {(products || []).filter(p => parseInt(p.quantity) <= 150).map(p => (
                 <p key={p.id} className="text-yellow-800 text-md">
                   {p.emoji} {p.name}: Only {p.quantity} kg left (Need {150 - parseInt(p.quantity)} kg more)
                 </p>
@@ -1121,7 +1162,7 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
 
           {/* Product Summary */}
           <div className="space-y-3">
-            {products.slice(0, 4).map(product => {
+            {(products || []).slice(0, 4).map(product => {
               const qty = parseInt(product.quantity) || 0;
               const stockStatus = qty > 150 ? 'In Stock' : 'Low Stock';
 
@@ -2100,7 +2141,7 @@ function OrdersContent({ orders }) {
       }
       return customer;
     });
-    
+
     setOrdersList(updatedOrdersList);
 
     // Sync to backend

@@ -8,6 +8,8 @@ const orderModel = require('../models/orderModel');
 const saleModel = require('../models/saleModel');
 const equipmentModel = require('../models/equipmentModel');
 const inventoryModel = require('../models/inventoryModel');
+const loanModel = require('../models/loanModel');
+const expenseModel = require('../models/expenseModel');
 
 /**
  * Get Farmer Profile
@@ -269,6 +271,46 @@ exports.deleteInventory = async (req, res) => {
     }
     await inventoryModel.deleteInventory(req.params.id);
     res.status(200).json({ success: true, message: 'Deleted' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ── Loan Methods ─────────────────────────────────────────────
+
+exports.getLoans = async (req, res) => {
+  try {
+    const loans = await loanModel.getLoansByFarmer(req.user.uid);
+    res.status(200).json({ success: true, data: loans });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.addLoan = async (req, res) => {
+  try {
+    const loan = await loanModel.createLoan({ ...req.body, farmerId: req.user.uid });
+    res.status(201).json({ success: true, data: loan });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ── Expense Methods ──────────────────────────────────────────
+
+exports.getExpenses = async (req, res) => {
+  try {
+    const expenses = await expenseModel.getExpensesByFarmer(req.user.uid);
+    res.status(200).json({ success: true, data: expenses });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.addExpense = async (req, res) => {
+  try {
+    const expense = await expenseModel.createExpense({ ...req.body, farmerId: req.user.uid });
+    res.status(201).json({ success: true, data: expense });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

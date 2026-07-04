@@ -65,12 +65,36 @@ export async function registerWithEmail(formData) {
   const credential = await createUserWithEmailAndPassword(auth, emailForAuth, formData.password);
   const idToken = await credential.user.getIdToken();
 
+<<<<<<< HEAD
   const res = await fetch(`${API}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ idToken, ...formData, emailForAuth }),
   });
   const data = await res.json();
+=======
+  let res;
+  let data;
+  try {
+    // Step 2: Send to backend
+    res = await fetch(`${API}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        idToken,
+        ...formData,
+        emailForAuth,
+      }),
+    });
+
+    data = await res.json();
+
+  } catch (err) {
+    // Network error (e.g., Failed to fetch) or invalid JSON
+    await credential.user.delete();
+    throw new Error('Network error: Could not connect to the server.');
+  }
+>>>>>>> origin
 
   if (!res.ok) {
     await credential.user.delete();
@@ -151,6 +175,7 @@ export async function forgotPassword(email) {
 export async function logout() {
   await signOut(auth);
   localStorage.removeItem('nagroms_token');
+  localStorage.removeItem('nagroms_uid');
   localStorage.removeItem('userRoles');
   localStorage.removeItem('userEmail');
 }
