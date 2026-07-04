@@ -10,16 +10,17 @@ export function RoleSwitcher({ currentRole }) {
 
   useEffect(() => {
     // Load user roles from localStorage
-    const roles = JSON.parse(localStorage.getItem('userRoles') || '[]');
+    let roles = JSON.parse(localStorage.getItem('userRoles') || '[]');
     const email = localStorage.getItem('userEmail') || '';
+    
+    // If no roles are stored, fall back to the current role
+    if (!roles || roles.length === 0) {
+      roles = currentRole ? [currentRole] : ['farmer'];
+    }
+    
     setUserRoles(roles);
     setUserEmail(email);
-  }, []);
-
-  // If user only has one role, don't show switcher
-  if (userRoles.length <= 1) {
-    return null;
-  }
+  }, [currentRole]);
 
   const getRoleDisplayName = (role) => {
     const names = {
@@ -58,8 +59,15 @@ export function RoleSwitcher({ currentRole }) {
     <div className="relative">
       {/* Dropdown Button */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 px-4 py-2 bg-white border-2 border-primary rounded-lg hover:bg-green-50 transition-colors"
+        onClick={() => {
+          if (userRoles.length > 1) {
+            setIsOpen(!isOpen);
+          }
+        }}
+        disabled={userRoles.length <= 1}
+        className={`flex items-center gap-3 px-4 py-2 bg-white border-2 border-primary rounded-lg transition-colors ${
+          userRoles.length > 1 ? 'hover:bg-green-50 cursor-pointer' : 'cursor-default'
+        }`}
       >
         <div className="flex items-center gap-2">
           <span className="text-xl">{getRoleIcon(currentRole)}</span>
@@ -68,11 +76,13 @@ export function RoleSwitcher({ currentRole }) {
             <p className="text-sm text-primary">{getRoleDisplayName(currentRole)}</p>
           </div>
         </div>
-        <ChevronDown className={`w-5 h-5 text-primary transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        {userRoles.length > 1 && (
+          <ChevronDown className={`w-5 h-5 text-primary transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        )}
       </button>
 
       {/* Dropdown Menu */}
-      {isOpen && (
+      {isOpen && userRoles.length > 1 && (
         <>
           {/* Backdrop */}
           <div 
