@@ -10,6 +10,7 @@ import {
   X,
   Sprout,
   Sun,
+  Moon,
   Droplets,
   Wind,
   TrendingUp,
@@ -30,18 +31,27 @@ import {
   ArrowRight,
   CreditCard,
   Bot,
-  Sparkles
+  Sparkles,
+  Wheat,
+  Briefcase,
+  RadioTower,
+  TreePine,
+  Cloud,
+  Box,
+  FileText,
+  ClipboardList,
+  CircleDollarSign,
+  TrendingDown,
+  Contact,
+  Leaf,
+  Coins
 } from 'lucide-react';
-<<<<<<< HEAD
-import { RoleSwitcher } from "../../components/RoleSwitcher.jsx";
-import { logout } from "../../utils/firebase";
-=======
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { db, auth as firebaseAuth } from "../../utils/firebase";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { RoleSwitcher } from "../RoleSwitcher.jsx";
->>>>>>> origin/main
+import { RoleSwitcher } from "../../components/RoleSwitcher.jsx";
+import { logout } from "../../utils/firebase";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "./InputOTP";
-import CommunityNetwork from "../../components/Network/CommunityNetwork";
 import './farmerDashboard.css';
 import {
   fetchFarmerProfile,
@@ -60,12 +70,9 @@ import {
   addInventory as apiAddInventory,
   updateInventory as apiUpdateInventory,
   deleteInventory as apiDeleteInventory,
-  updateOrderStatus
 } from '../../services/farmerApi';
 
-// Real-time Firestore imports
-import { db } from '../../utils/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+
 
 
 import tomatoImg from "./images/products/tomato.png";
@@ -100,14 +107,60 @@ import moneyIcon from "./images/products/money.png";
 import weatherIcon from "./images/products/weather.png";
 import chatbotIcon from "./images/products/chatbot.png";
 import settingsIcon from "./images/products/settings.png";
-import trendingUpIcon from "./images/products/money.png";
+const getWeatherData = (district) => {
+  const normalized = (district || 'Anuradhapura').trim();
+  
+  // A simple hashing algorithm to get a unique but consistent value for each district
+  let hash = 0;
+  for (let i = 0; i < normalized.length; i++) {
+    hash = normalized.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  hash = Math.abs(hash);
+
+  const weatherTypes = [
+    { status: 'Sunny', emoji: '☀️', temp: 31, humidity: 62, wind: 10, rain: 5, alert: '☀️ Perfect weather for harvesting and drying grains.' },
+    { status: 'Partly Cloudy', emoji: '⛅', temp: 29, humidity: 68, wind: 12, rain: 15, alert: '⛅ Excellent weather for planting and fertilizer application.' },
+    { status: 'Cloudy', emoji: '☁️', temp: 28, humidity: 74, wind: 14, rain: 25, alert: '☁️ Good conditions for soil weeding and maintenance.' },
+    { status: 'Light Rain', emoji: '🌧️', temp: 26, humidity: 82, wind: 16, rain: 60, alert: '⚠️ Wet conditions. Ensure proper drainage in low-lying fields.' },
+    { status: 'Heavy Rain', emoji: '🌧️', temp: 25, humidity: 88, wind: 18, rain: 85, alert: '⚠️ High rain risk. Postpone pesticide spraying and secure storehouses.' },
+    { status: 'Thunderstorm', emoji: '⛈️', temp: 24, humidity: 92, wind: 22, rain: 95, alert: '🚨 Lightning risk! Avoid outdoor field work during thunderstorm warnings.' }
+  ];
+
+  const typeIndex = hash % weatherTypes.length;
+  const current = weatherTypes[typeIndex];
+
+  // Generate a deterministic 7-day forecast
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const forecast = days.map((day, index) => {
+    const dayHash = (hash + index * 17) % weatherTypes.length;
+    const dayWeather = weatherTypes[dayHash];
+    const tempOffset = (dayHash % 3) - 1; 
+    return {
+      day,
+      emoji: dayWeather.emoji,
+      temp: `${dayWeather.temp + tempOffset}°C`
+    };
+  });
+
+  return {
+    district: normalized,
+    temp: `${current.temp}°C`,
+    status: current.status,
+    emoji: current.emoji,
+    humidity: `${current.humidity}%`,
+    wind: `${current.wind} km/h`,
+    rain: `${current.rain}%`,
+    alert: current.alert,
+    forecast
+  };
+};
 
 export const getImageForName = (name) => {
   if (!name) return undefined;
   const n = name.toLowerCase();
 
   // Products
-  if (n.includes('tomato') || n.includes('tomoto')) return tomatoImg;
+  if (n.includes('tomato')) return tomatoImg;
   if (n.includes('rice')) return riceImg;
   if (n.includes('bean')) return beansImg;
   if (n.includes('carrot')) return carrotsImg;
@@ -135,6 +188,20 @@ export const getImageForName = (name) => {
 export function FarmerDashboard({ onNavigate }) {
   const [activeNav, setActiveNav] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [openGroup, setOpenGroup] = useState(null); // 'farm' | 'business' | 'communication' | 'support'
+  const [darkMode, setDarkMode] = useState(localStorage.getItem('nagroms_darkMode') === 'true');
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('nagroms_darkMode', 'true');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('nagroms_darkMode', 'false');
+    }
+  }, [darkMode]);
+
+  const toggleGroup = (key) => setOpenGroup(prev => prev === key ? null : key);
   const [userName, setUserName] = useState(localStorage.getItem('userName') || 'Farmer');
   const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail') || '');
   const [userPhone, setUserPhone] = useState(localStorage.getItem('userPhone') || '');
@@ -196,63 +263,13 @@ export function FarmerDashboard({ onNavigate }) {
     // 6. Fetch farmer profile (once is usually fine for profile, or stay real-time too)
     const fetchProfile = async () => {
       try {
-<<<<<<< HEAD
-        // Fetch profile
-        const profileRes = await fetchFarmerProfile();
-        let currentFarmerUid = null;
-        if (profileRes.success && profileRes.data) {
-          const p = profileRes.data;
-          currentFarmerUid = p.uid || p.id;
-          if (p.fullName) { setUserName(p.fullName); localStorage.setItem('userName', p.fullName); }
-          if (p.email) { setUserEmail(p.email); localStorage.setItem('userEmail', p.email); }
-          if (p.phone) { setUserPhone(p.phone); localStorage.setItem('userPhone', p.phone); }
-          if (p.district) { setUserLocation(p.district); localStorage.setItem('userLocation', p.district); }
-          if (p.nic) { setUserNIC(p.nic); localStorage.setItem('userNIC', p.nic); }
-        }
-        // Fetch products
-        const productsRes = await apiFetchProducts();
-        if (productsRes.success && productsRes.data) {
-          setProducts(productsRes.data);
-        }
-
-        // ── REAL-TIME ORDER LISTENER ──────────────────────────
-        let unsubscribeOrders = () => { };
-        if (currentFarmerUid) {
-          const q = query(
-            collection(db, 'orders'),
-            where('farmerId', '==', currentFarmerUid)
-          );
-          unsubscribeOrders = onSnapshot(q, (snapshot) => {
-            const liveOrders = snapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data()
-            }));
-            setOrders(liveOrders);
-            setOrdersList(liveOrders);
-            // also update ordersList for badge
-          });
-        }
-
-        // Fetch sales
-        const salesRes = await apiFetchSales();
-        if (salesRes.success && salesRes.data && salesRes.data.length > 0) {
-          setSales(salesRes.data);
-        }
-
-        // Fetch equipment
-        const eqRes = await apiFetchEquipment();
-        if (eqRes.success && eqRes.data && eqRes.data.length > 0) {
-          setMyEquipment(eqRes.data);
-        }
-
-        // Fetch inventory
-        const invRes = await apiFetchInventory();
-        if (invRes.success && invRes.data && invRes.data.length > 0) {
-          setInventory(invRes.data);
+        const res = await fetchFarmerProfile();
+        if (res.success && res.data) {
           const p = res.data;
           if (p.fullName) { setUserName(p.fullName); localStorage.setItem('userName', p.fullName); }
           if (p.district) { setUserLocation(p.district); localStorage.setItem('userLocation', p.district); }
-
+          if (p.nic) { setUserNIC(p.nic); localStorage.setItem('userNIC', p.nic); }
+        }
         }
       } catch (err) {
         console.warn("Profile fetch failed:", err.message);
@@ -396,9 +413,6 @@ export function FarmerDashboard({ onNavigate }) {
     name: '',
     quantity: '',
     price: '',
-    category: 'vegetables',
-    unit: 'kg',
-    image: '',
     status: 'In Stock'
   });
 
@@ -487,11 +501,7 @@ export function FarmerDashboard({ onNavigate }) {
 
   // Handlers for products
   const handleEditProduct = (product) => {
-    setEditingProduct({
-      ...product,
-      quantity: product.quantity !== undefined && product.quantity !== null ? String(product.quantity) : '',
-      price: product.price !== undefined && product.price !== null ? String(product.price) : '',
-    });
+    setEditingProduct({ ...product });
   };
 
   const handleSaveProduct = async () => {
@@ -536,9 +546,6 @@ export function FarmerDashboard({ onNavigate }) {
         name: newProduct.name,
         quantity: newProduct.quantity,
         price: newProduct.price,
-        unit: newProduct.unit || 'kg',
-        image: newProduct.image || '',
-        category: newProduct.category || 'vegetables',
         status: newProduct.status || 'In Stock',
       });
       if (res.success && res.data) {
@@ -552,7 +559,7 @@ export function FarmerDashboard({ onNavigate }) {
       alert('Network error. Adding locally. Error: ' + err.message);
       setProducts([...products, { id: Date.now(), ...newProduct }]);
     }
-    setNewProduct({ name: '', quantity: '', price: '', unit: 'kg', image: '', category: 'vegetables', status: 'In Stock' });
+    setNewProduct({ name: '', quantity: '', price: '', status: 'In Stock' });
     setShowAddProduct(false);
   };
 
@@ -659,52 +666,119 @@ export function FarmerDashboard({ onNavigate }) {
     setSidebarOpen(false);
   };
 
+  // Pending orders badge count
+  const pendingOrdersCount = (orders || []).reduce(
+    (sum, o) => sum + (o.products || []).filter(p => p.status === 'pending').length, 0
+  );
+
   // Render different content based on active nav
   const renderContent = () => {
     switch (activeNav) {
       case 'dashboard':
-        return <DashboardContent onNavigate={handleQuickNavigation} products={products} rentedEquipment={rentedEquipment} sales={sales} orders={orders} rentalIncome={rentalIncome} rentalExpenses={rentalExpenses} userName={userName} />;
-      case 'products':
-        return <MyProductsContent
-          products={products}
-          onAddClick={() => setShowAddProduct(true)}
-          onEdit={handleEditProduct}
-          onDelete={(id) => setDeleteConfirm(id)}
-        />;
-      case 'sales':
-        return <SalesContent customerPurchases={customerPurchases} equipmentRentals={equipmentRentals} />;
-      case 'expenses':
-        return <ExpensesContent rentalExpenses={rentalExpenses} />;
-      case 'loans':
-        return <LoansContent availableLoans={availableLoans} activeLoans={activeLoans} />;
-      case 'orders':
-        return <OrdersContent orders={orders} />;
-      case 'contacts':
-        return <ContactsContent />;
+        return <DashboardContent onNavigate={handleQuickNavigation} products={products} rentedEquipment={rentedEquipment} sales={sales} orders={orders} rentalIncome={rentalIncome} rentalExpenses={rentalExpenses} userName={userName} userLocation={userLocation} />;
+
+      /* ─── Farm Management (combined scrollable page) ─── */
+      case 'farm-management':
+        return (
+          <div className="space-y-6">
+            <SectionHeader icon="🌾" title="Farm Management" subtitle="Manage your products and inventory side-by-side" />
+            <div className="grid lg:grid-cols-2 gap-8 items-start">
+              {/* Left Column: My Products */}
+              <div id="section-products" className="bg-white rounded-3xl p-6 border border-green-100 shadow-sm space-y-4 text-left">
+                <SectionDivider icon="🌿" label="My Products" />
+                <MyProductsContent
+                  products={products}
+                  onAddClick={() => setShowAddProduct(true)}
+                  onEdit={handleEditProduct}
+                  onDelete={(id) => setDeleteConfirm(id)}
+                />
+              </div>
+
+              {/* Right Column: Product Inventory */}
+              <div id="section-inventory" className="bg-white rounded-3xl p-6 border border-green-100 shadow-sm space-y-4 text-left">
+                <SectionDivider icon="📋" label="Inventory" />
+                <InventoryContent
+                  inventory={inventory}
+                  onAddClick={() => setShowAddInventory(true)}
+                  onEdit={handleEditInventory}
+                  onDelete={(id) => setDeleteInventoryConfirm(id)}
+                />
+              </div>
+            </div>
+          </div>
+        );
+
+      /* ─── Equipment Rental Page ─── */
       case 'equipment':
-        return <EquipmentContent
-          myEquipment={myEquipment}
-          onAddClick={() => setShowAddEquipment(true)}
-          onDeleteEquipment={(id) => setDeleteEquipmentConfirm(id)}
-          onRentClick={(eq) => {
-            setRentConfirm(eq);
-            setRentQuantity(1);
-            setRentDays(1);
-          }}
-        />;
+        return (
+          <div className="space-y-6">
+            <SectionHeader icon="🚜" title="Equipment Rental" subtitle="Manage your rented equipment and rental options" />
+            <div id="section-equipment" className="bg-white rounded-3xl p-6 border border-green-100 shadow-sm text-left">
+              <SectionDivider icon="🚜" label="Equipment" />
+              <EquipmentContent
+                myEquipment={myEquipment}
+                onAddClick={() => setShowAddEquipment(true)}
+                onDeleteEquipment={(id) => setDeleteEquipmentConfirm(id)}
+                onRentClick={(eq) => { setRentConfirm(eq); setRentQuantity(1); setRentDays(1); }}
+              />
+            </div>
+          </div>
+        );
+
+      /* ─── Business Management (combined scrollable page) ─── */
+      case 'business-management':
+        return (
+          <div className="space-y-10">
+            <SectionHeader icon="💼" title="Business Management" subtitle="Track sales, expenses, and orders" />
+            <div id="section-sales">
+              <SectionDivider icon="💰" label="Sales & Income" />
+              <SalesContent customerPurchases={customerPurchases} equipmentRentals={equipmentRentals} />
+            </div>
+            <div id="section-expenses">
+              <SectionDivider icon="📉" label="Expenses" />
+              <ExpensesContent rentalExpenses={rentalExpenses} />
+            </div>
+            <div id="section-orders">
+              <SectionDivider icon="📦" label="Orders" badge={pendingOrdersCount} />
+              <OrdersContent orders={orders} />
+            </div>
+          </div>
+        );
+
+      /* ─── Communication (combined scrollable page) ─── */
+      case 'communication':
+        return (
+          <div className="space-y-10">
+            <SectionHeader icon="📡" title="Communication" subtitle="Connect with buyers, other farmers, and manage bank loans" />
+            <div id="section-contacts">
+              <SectionDivider icon="📞" label="Contacts" />
+              <ContactsContent />
+            </div>
+            <div id="section-loans">
+              <SectionDivider icon="💳" label="Bank Loans" />
+              <LoansContent availableLoans={availableLoans} activeLoans={activeLoans} />
+            </div>
+          </div>
+        );
+
+      /* ─── Weather (standalone page) ─── */
       case 'weather':
-        return <WeatherContent userLocation={userLocation} />;
-      case 'inventory':
-        return <InventoryContent
-          inventory={inventory}
-          onAddClick={() => setShowAddInventory(true)}
-          onEdit={handleEditInventory}
-          onDelete={(id) => setDeleteInventoryConfirm(id)}
-        />;
+        return (
+          <div className="space-y-10">
+            <SectionHeader icon="⛅" title="Weather Forecast" subtitle="Check local weather conditions and harvest readiness" />
+            <WeatherContent userLocation={userLocation} />
+          </div>
+        );
+
+      /* ─── Chatbot (standalone page) ─── */
       case 'chatbot':
-        return <ChatbotContent userLocation={userLocation} />;
-      case 'community':
-        return <CommunityNetwork currentUserRole="farmer" />;
+        return (
+          <div className="space-y-10">
+            <SectionHeader icon="💬" title="AI Chatbot Assistant" subtitle="Get smart agricultural advice and crop recommendations" />
+            <ChatbotContent userLocation={userLocation} />
+          </div>
+        );
+
       case 'settings':
         return (
           <SettingsContent
@@ -723,7 +797,7 @@ export function FarmerDashboard({ onNavigate }) {
           />
         );
       default:
-        return <DashboardContent onNavigate={handleQuickNavigation} products={products} rentedEquipment={rentedEquipment} sales={sales} orders={orders} rentalIncome={rentalIncome} rentalExpenses={rentalExpenses} />;
+        return <DashboardContent onNavigate={handleQuickNavigation} products={products} rentedEquipment={rentedEquipment} sales={sales} orders={orders} rentalIncome={rentalIncome} rentalExpenses={rentalExpenses} userName={userName} userLocation={userLocation} />;
     }
   };
 
@@ -733,161 +807,194 @@ export function FarmerDashboard({ onNavigate }) {
   );
 
   return (
-    <div className="fd-layout">
-
-      {/* ── Left Sidebar ── */}
-      <aside className="fd-sidebar">
-        {/* Logo */}
-        <div className="fd-sidebar-logo">
-          <div className="fd-sidebar-logo-icon">
-            <Sprout className="w-5 h-5" style={{ color: '#fff' }} />
+    <div className={`min-h-screen bg-background text-foreground ${darkMode ? 'dark' : ''}`}>
+      {/* Sidebar */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-green-200
+        transform transition-transform duration-300 ease-in-out
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <div className="h-full flex flex-col">
+          {/* Logo */}
+          <div className="flex items-center gap-2 p-6 border-b border-green-200">
+            <div className="bg-primary rounded-lg p-2">
+              <Sprout className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg text-primary font-semibold">NagroMS</h2>
+              <p className="text-xs text-muted-foreground">Farmer Portal</p>
+            </div>
           </div>
-          <span className="fd-sidebar-logo-text">NagroMS</span>
-        </div>
 
-        {/* Nav groups */}
-        <nav className="fd-sidebar-nav">
+          {/* Navigation */}
+          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
 
-          {/* Group 1: Main overview */}
-          <div className="fd-nav-group">
-            <span className="fd-nav-group-label">Overview</span>
-            <button
-              className={`fd-nav-item${activeNav === 'dashboard' ? ' fd-nav-active' : ''}`}
+            {/* Dashboard */}
+            <NavButton
+              icon={<LayoutDashboard className="w-5 h-5" />}
+              label="Dashboard"
+              active={activeNav === 'dashboard'}
               onClick={() => { setActiveNav('dashboard'); setSidebarOpen(false); }}
-            >
-              <LayoutDashboard className="fd-nav-icon" />
-              <span className="fd-nav-label">Products, Sales,<br />Expenses & Orders</span>
-              {pendingCount > 0 && <span className="fd-nav-badge">{pendingCount}</span>}
-            </button>
-          </div>
+            />
 
-          {/* Group 2: Loans & Weather */}
-          <div className="fd-nav-group">
-            <span className="fd-nav-group-label">Financial & Farming</span>
-            <button
-              className={`fd-nav-item${activeNav === 'loans' ? ' fd-nav-active' : ''}`}
-              onClick={() => { setActiveNav('loans'); setSidebarOpen(false); }}
-            >
-              <CreditCard className="fd-nav-icon" />
-              <span className="fd-nav-label">Loans</span>
-            </button>
-            <button
-              className={`fd-nav-item${activeNav === 'weather' ? ' fd-nav-active' : ''}`}
-              onClick={() => { setActiveNav('weather'); setSidebarOpen(false); }}
-            >
-              <CloudRain className="fd-nav-icon" />
-              <span className="fd-nav-label">Weather</span>
-            </button>
-          </div>
+            {/* Farm Management */}
+            <NavButton
+              icon={<Wheat className="w-5 h-5" />}
+              label="Farm Management"
+              active={activeNav === 'farm-management'}
+              onClick={() => { setActiveNav('farm-management'); setSidebarOpen(false); }}
+            />
 
-          {/* Group 3: Chatbot */}
-          <div className="fd-nav-group">
-            <span className="fd-nav-group-label">Assistant</span>
-            <button
-              className={`fd-nav-item${activeNav === 'chatbot' ? ' fd-nav-active' : ''}`}
-              onClick={() => { setActiveNav('chatbot'); setSidebarOpen(false); }}
-            >
-              <Bot className="fd-nav-icon" />
-              <span className="fd-nav-label">Chatbot</span>
-            </button>
-          </div>
-
-          {/* Group 4: More (Equipment, Inventory, Contacts, Community) */}
-          <div className="fd-nav-group">
-            <span className="fd-nav-group-label">More</span>
-            <button
-              className={`fd-nav-item${activeNav === 'equipment' ? ' fd-nav-active' : ''}`}
+            {/* Equipment Rental */}
+            <NavButton
+              icon={<Tractor className="w-5 h-5" />}
+              label="Equipment Rental"
+              active={activeNav === 'equipment'}
               onClick={() => { setActiveNav('equipment'); setSidebarOpen(false); }}
-            >
-              <Tractor className="fd-nav-icon" />
-              <span className="fd-nav-label">Equipment</span>
-            </button>
+            />
+
+            {/* Business Management */}
+            <SidebarGroup
+              icon={<Briefcase className="w-5 h-5" />}
+              label="Business Management"
+              groupKey="business"
+              isOpen={openGroup === 'business'}
+              onToggle={() => toggleGroup('business')}
+              isGroupActive={activeNav === 'business-management'}
+              badge={pendingOrdersCount}
+              items={[
+                { icon: <CircleDollarSign className="w-4 h-4" />, label: 'Sales & Income' },
+                { icon: <TrendingDown className="w-4 h-4" />, label: 'Expenses' },
+                { icon: <Package className="w-4 h-4" />, label: 'Orders', badge: pendingOrdersCount },
+              ]}
+              onNavigate={() => { setActiveNav('business-management'); setSidebarOpen(false); }}
+            />
+
+            {/* Communication */}
+            <SidebarGroup
+              icon={<RadioTower className="w-5 h-5" />}
+              label="Communication"
+              groupKey="communication"
+              isOpen={openGroup === 'communication'}
+              onToggle={() => toggleGroup('communication')}
+              isGroupActive={activeNav === 'communication'}
+              items={[
+                { icon: <Contact className="w-4 h-4" />, label: 'Contacts' },
+                { icon: <CreditCard className="w-4 h-4" />, label: 'Bank Loans' },
+              ]}
+              onNavigate={() => { setActiveNav('communication'); setSidebarOpen(false); }}
+            />
+
+            {/* Weather */}
+            <NavButton
+              icon={<Cloud className="w-5 h-5" />}
+              label="Weather Forecast"
+              active={activeNav === 'weather'}
+              onClick={() => { setActiveNav('weather'); setSidebarOpen(false); }}
+              darkMode={darkMode}
+            />
+
+            {/* AI Chatbot */}
+            <NavButton
+              icon={<MessageCircle className="w-5 h-5" />}
+              label="AI Chatbot"
+              active={activeNav === 'chatbot'}
+              onClick={() => { setActiveNav('chatbot'); setSidebarOpen(false); }}
+              darkMode={darkMode}
+            />
+
+          </nav>
+
+          {/* Settings & Logout */}
+          <div className="p-4 border-t border-green-200 space-y-2">
+            <NavButton
+              icon={<Settings className="w-5 h-5" />}
+              label="Settings"
+              active={activeNav === 'settings'}
+              onClick={() => { setActiveNav('settings'); setSidebarOpen(false); }}
+            />
             <button
-              className={`fd-nav-item${activeNav === 'inventory' ? ' fd-nav-active' : ''}`}
-              onClick={() => { setActiveNav('inventory'); setSidebarOpen(false); }}
+              onClick={() => onNavigate('landing')}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-500 hover:bg-red-50 transition-colors mt-2"
             >
-              <Package className="fd-nav-icon" />
-              <span className="fd-nav-label">Inventory</span>
-            </button>
-            <button
-              className={`fd-nav-item${activeNav === 'contacts' ? ' fd-nav-active' : ''}`}
-              onClick={() => { setActiveNav('contacts'); setSidebarOpen(false); }}
-            >
-              <Phone className="fd-nav-icon" />
-              <span className="fd-nav-label">Contacts</span>
-            </button>
-            <button
-              className={`fd-nav-item${activeNav === 'community' ? ' fd-nav-active' : ''}`}
-              onClick={() => { setActiveNav('community'); setSidebarOpen(false); }}
-            >
-              <Users className="fd-nav-icon" />
-              <span className="fd-nav-label">Community</span>
+              <span className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                <LogOut className="w-5 h-5" />
+              </span>
+              <span className="text-sm font-medium flex-1 text-left">Logout</span>
             </button>
           </div>
-        </nav>
-
-        {/* Settings + Logout at bottom */}
-        <div className="fd-sidebar-bottom">
-          <button
-            className={`fd-nav-item${activeNav === 'settings' ? ' fd-nav-active' : ''}`}
-            onClick={() => { setActiveNav('settings'); setSidebarOpen(false); }}
-          >
-            <Settings className="fd-nav-icon" />
-            <span className="fd-nav-label">Settings</span>
-          </button>
-          <button
-            className="fd-nav-item fd-nav-logout"
-            onClick={async () => { await logout(); window.location.href = '/'; }}
-          >
-            <LogOut className="fd-nav-icon" />
-            <span className="fd-nav-label">Logout</span>
-          </button>
         </div>
       </aside>
 
-      {/* ── Main area (header + content) ── */}
-      <div className="fd-main">
-
-        {/* Top header bar */}
-        <header className="fd-header">
-          <div className="fd-header-left">
-            {/* Hamburger for mobile */}
-            <button className="fd-hamburger" onClick={() => setSidebarOpen(!sidebarOpen)}>
-              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+      {/* Main Content Wrapper - Shifts when sidebar is open */}
+      <div className={`transition-all duration-300 ease-in-out flex flex-col min-h-screen ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
+        {/* Header with Menu Button */}
+        <div className="bg-white border-b border-green-200 px-4 py-3 flex items-center justify-between sticky top-0 z-40">
+          <div className="flex items-center gap-2">
+            {/* Hamburger Menu */}
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="text-foreground hover:bg-green-50 p-2 rounded-lg transition-colors mr-1"
+              aria-label="Toggle menu"
+            >
+              {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
-            <span className="fd-header-title">
-              {activeNav === 'dashboard' ? 'Farm Overview' :
-                activeNav === 'products' ? 'My Products' :
-                  activeNav === 'sales' ? 'Sales' :
-                    activeNav === 'expenses' ? 'Expenses' :
-                      activeNav === 'orders' ? 'Orders' :
-                        activeNav === 'loans' ? 'Loans' :
-                          activeNav === 'weather' ? 'Weather' :
-                            activeNav === 'chatbot' ? 'Farm Assistant' :
-                              activeNav === 'equipment' ? 'Equipment' :
-                                activeNav === 'inventory' ? 'Inventory' :
-                                  activeNav === 'contacts' ? 'Contacts' :
-                                    activeNav === 'community' ? 'Community' :
-                                      activeNav === 'settings' ? 'Settings' : 'Dashboard'}
-            </span>
-          </div>
-          <div className="fd-header-right">
-            <RoleSwitcher currentRole="farmer" onNavigate={onNavigate} />
-            <div className="fd-header-profile">
-              <span className="fd-profile-emoji">{profilePicture}</span>
-              <span className="fd-profile-name">{userName.split(' ')[0]}</span>
+            <div className="bg-primary rounded-lg p-1.5">
+              <Sprout className="w-5 h-5 text-white" />
             </div>
+            <span className="text-primary font-semibold">NagroMS</span>
           </div>
-        </header>
+          <div className="flex items-center gap-3">
+            <RoleSwitcher currentRole="farmer" onNavigate={onNavigate} />
+            
+            {/* Active Mode */}
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-green-50 border border-green-200 text-green-700 rounded-full text-sm font-medium">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+              </span>
+              Active
+            </div>
 
-        {/* Mobile overlay */}
-        {sidebarOpen && (
-          <div className="fd-sidebar-overlay" onClick={() => setSidebarOpen(false)} />
-        )}
+            {/* Theme Toggle */}
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl transition-all active:scale-95 border border-gray-200 hover:border-green-300 flex items-center justify-center cursor-pointer shadow-sm"
+              title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {darkMode ? (
+                <Sun className="w-4 h-4 text-amber-500" />
+              ) : (
+                <Moon className="w-4 h-4 text-gray-600" />
+              )}
+            </button>
+            
+            {/* Language Switcher */}
+            <select className="bg-white border border-gray-200 text-sm font-bold text-gray-600 hover:text-primary rounded-lg focus:ring-green-500 focus:border-green-500 block p-1.5 cursor-pointer outline-none hover:bg-green-50 transition-colors">
+              <option value="en">English</option>
+              <option value="si">සිංහල</option>
+              <option value="ta">தமிழ்</option>
+            </select>
+            
+            {/* Profile */}
+            <button 
+              onClick={() => {
+                setActiveNav('settings');
+                setSidebarOpen(false);
+              }}
+              className="w-10 h-10 rounded-full border-2 border-primary flex items-center justify-center bg-green-100 text-xl hover:shadow-md transition-all overflow-hidden"
+            >
+              {profilePicture}
+            </button>
+          </div>
+        </div>
 
-        {/* Page content */}
-        <main className="fd-content">
-          {renderContent()}
+        {/* Main Content */}
+        <main className="flex-1">
+          <div className="p-4 lg:p-8">
+            {renderContent()}
+          </div>
         </main>
       </div>
 
@@ -984,31 +1091,158 @@ export function FarmerDashboard({ onNavigate }) {
         />
       )}
     </div>
+  </div>
   );
 }
 
-function NavButton({ icon, label, active, onClick }) {
+/* ── Simple nav button ── */
+function NavButton({ icon, label, active, onClick, badge }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={`
-        flex flex-col items-center justify-center min-w-[72px] px-2 py-2 rounded-xl transition-all
+        w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all border
         ${active
-          ? 'text-primary bg-green-50 shadow-inner'
-          : 'text-gray-400 hover:text-primary hover:bg-gray-50'
+          ? 'bg-green-100 text-primary border-green-300 font-bold shadow-sm'
+          : 'bg-white text-gray-700 hover:bg-green-100 hover:text-primary border-gray-200 hover:border-green-300'
         }
       `}
     >
-      <span className="text-2xl mb-1">{icon}</span>
-      <span className="text-[10px] font-semibold leading-none whitespace-nowrap tracking-wide">{label}</span>
+      {icon && (
+        <span className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+          {typeof icon === 'string' ? (
+            icon.length <= 4 ? (
+              <span className="text-xl">{icon}</span>
+            ) : (
+              <img src={icon} alt="" className="w-7 h-7 object-contain" />
+            )
+          ) : (
+            icon
+          )}
+        </span>
+      )}
+      <span className="text-sm font-medium flex-1 text-left">{label}</span>
+      {badge > 0 && (
+        <span className="bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1">
+          {badge}
+        </span>
+      )}
     </button>
   );
 }
 
-// Dashboard Content
-function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders, rentalIncome, rentalExpenses, userName }) {
+/* ── Collapsible sidebar group — shows sub-items as a preview, clicks to navigate ── */
+function SidebarGroup({ icon, label, groupKey, isOpen, onToggle, isGroupActive, items, badge, onNavigate }) {
+  return (
+    <div>
+      {/* Parent row — click the chevron area to expand/collapse, click label area to navigate */}
+      <div
+        className={`
+          w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all cursor-pointer select-none group border
+          ${isGroupActive
+            ? 'bg-green-100 text-primary border-green-300 font-bold shadow-sm'
+            : isOpen
+              ? 'bg-green-50 text-primary border-green-200 hover:bg-green-100 hover:border-green-300'
+              : 'bg-white text-gray-700 hover:bg-green-100 hover:text-primary border-gray-200 hover:border-green-300'
+          }
+        `}
+      >
+        {/* Click the icon + label to navigate AND expand */}
+        <button
+          type="button"
+          onClick={() => {
+            onNavigate();
+            if (!isOpen) onToggle();
+          }}
+          className="flex items-center gap-3 flex-1 min-w-0"
+        >
+          <span className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+            <span className="text-xl">{icon}</span>
+          </span>
+          <span className="text-sm font-medium flex-1 text-left truncate">{label}</span>
+        </button>
+        {/* Badge when collapsed */}
+        {!isOpen && badge > 0 && (
+          <span className="bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 mr-1 flex-shrink-0">
+            {badge}
+          </span>
+        )}
+        {/* Chevron — click to expand/collapse */}
+        <button
+          type="button"
+          onClick={onToggle}
+          className="p-1 rounded flex-shrink-0"
+          aria-label="Toggle"
+        >
+          <ChevronDown
+            className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : 'rotate-0'}`}
+          />
+        </button>
+      </div>
+
+      {/* Sub-items preview (non-clickable, decorative) */}
+      {isOpen && (
+        <div className="mt-1 ml-3 pl-3 border-l-2 border-green-200 space-y-0.5 animate-in slide-in-from-top-1 duration-150">
+          {items.map((item, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={onNavigate}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                isGroupActive ? 'text-primary font-medium hover:bg-green-200/60' : 'text-gray-500 hover:bg-green-100 hover:text-primary'
+              }`}
+            >
+              <span className="text-base">{item.icon}</span>
+              <span className="flex-1 text-left">{item.label}</span>
+              {item.badge > 0 && (
+                <span className="bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-4 flex items-center justify-center px-1">
+                  {item.badge}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Section header for combined pages ── */
+function SectionHeader({ icon, title, subtitle }) {
+  return (
+    <div className="bg-gradient-to-r from-green-600 to-green-500 rounded-2xl p-6 text-white">
+      <div className="flex items-center gap-3 mb-1">
+        <span className="text-3xl">{icon}</span>
+        <h1 className="text-2xl font-bold">{title}</h1>
+      </div>
+      <p className="text-green-100">{subtitle}</p>
+    </div>
+  );
+}
+
+/* ── Section divider with label inside a combined page ── */
+function SectionDivider({ icon, label, badge }) {
+  return (
+    <div className="flex items-center gap-3 mb-4 group cursor-default">
+      <span className="text-2xl">{icon}</span>
+      <h2 className="text-xl font-bold text-gray-800">{label}</h2>
+      {badge > 0 && (
+        <span className="bg-red-500 text-white text-xs font-bold rounded-full min-w-[22px] h-5 flex items-center justify-center px-1.5">
+          {badge}
+        </span>
+      )}
+      <div className="flex-1 h-px bg-green-200 group-hover:bg-green-400 transition-colors duration-300" />
+    </div>
+  );
+}
+
+function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders, rentalIncome, rentalExpenses, userName, userLocation }) {
+  const weatherData = getWeatherData(userLocation);
   const [showMoneyModal, setShowMoneyModal] = useState(null); // 'in', 'out', or null
+  const [showAllProducts, setShowAllProducts] = useState(false);
+  const [showAllSales, setShowAllSales] = useState(false);
+  const [showAllExpenses, setShowAllExpenses] = useState(false);
 
   // Calculate actual counts with safety checks
   const productCount = (products || []).length;
@@ -1018,17 +1252,37 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
   const rentalExpensesTotal = (rentalExpenses || []).reduce((total, expense) => total + (expense.total || 0), 0);
   const totalIncome = salesTotal + rentalIncomeTotal;
   const netProfit = totalIncome - rentalExpensesTotal;
-<<<<<<< HEAD
-  // Correctly calculate total pending products across all orders
-  const pendingOrdersCount = orders.reduce((sum, order) =>
-    sum + order.products.filter(p => p.status === 'pending').length, 0
-=======
-
   // Correctly calculate total pending products across all orders with safety checks
   const pendingOrdersCount = (orders || []).reduce((sum, order) =>
     sum + (order.products || []).filter(p => p.status === 'pending').length, 0
->>>>>>> origin/main
   );
+
+  // Chart Data Preparation
+  const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899'];
+  const pieData = (products || []).slice(0, 5).map(p => ({
+    name: p.name,
+    value: parseInt(p.quantity) || 0
+  }));
+
+  const areaData = [
+    { name: 'Mon', income: Math.round(totalIncome * 0.1) },
+    { name: 'Tue', income: Math.round(totalIncome * 0.2) },
+    { name: 'Wed', income: Math.round(totalIncome * 0.4) },
+    { name: 'Thu', income: Math.round(totalIncome * 0.3) },
+    { name: 'Fri', income: Math.round(totalIncome * 0.6) },
+    { name: 'Sat', income: Math.round(totalIncome * 0.8) },
+    { name: 'Sun', income: totalIncome || 5000 }
+  ];
+
+  const expenseAreaData = [
+    { name: 'Mon', expense: Math.round(rentalExpensesTotal * 0.15) },
+    { name: 'Tue', expense: Math.round(rentalExpensesTotal * 0.10) },
+    { name: 'Wed', expense: Math.round(rentalExpensesTotal * 0.30) },
+    { name: 'Thu', expense: Math.round(rentalExpensesTotal * 0.25) },
+    { name: 'Fri', expense: Math.round(rentalExpensesTotal * 0.50) },
+    { name: 'Sat', expense: Math.round(rentalExpensesTotal * 0.75) },
+    { name: 'Sun', expense: rentalExpensesTotal || 2000 }
+  ];
 
   return (
     <div className="space-y-6">
@@ -1068,382 +1322,584 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
         />
       </div>
 
-      {/* Financial Summary - New Section */}
-      <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl p-6 border-2 border-green-200">
-        <div className="flex items-center gap-3 mb-6">
-          <h2 className="text-2xl text-primary font-bold">Money Summary</h2>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-4">
-          {/* Total Income */}
-          <div
-            className="bg-white rounded-xl p-5 border-l-4 border-green-500 shadow-md hover:shadow-xl transition-all text-left"
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <h3 className="text-lg text-muted-foreground">Money In</h3>
-            </div>
-            <p className="text-3xl text-green-600 font-bold mb-3">
-              +LKR {totalIncome.toLocaleString()}
-            </p>
-            <div className="space-y-1 border-t border-gray-200 pt-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground flex items-center gap-1">
-                  Product Sales:
-                </span>
-                <span className="text-foreground font-bold">LKR {salesTotal.toLocaleString()}</span>
+      {/* Two Column Dashboard Layout (Money Summary on Left, Operations on Right) */}
+      <div className="grid lg:grid-cols-2 gap-6 items-start">
+        
+        {/* Left Half: Money Summary Hub & Info Panels */}
+        <div className="space-y-6">
+          {/* Financial Summary */}
+          <div style={{ height: '602px' }} className="bg-gradient-to-br from-green-50 to-blue-50 rounded-3xl p-6 border-2 border-green-200 shadow-sm flex flex-col">
+            <div>
+              <div className="flex items-center gap-3 mb-6">
+                <h2 className="text-2xl text-primary font-bold">Money Summary</h2>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground flex items-center gap-1">
-                  Rental Income:
-                </span>
-                <span className="text-foreground font-bold">LKR {rentalIncomeTotal.toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
 
-          {/* Total Expenses */}
-          <div
-            className="bg-white rounded-xl p-5 border-l-4 border-red-500 shadow-md hover:shadow-xl transition-all text-left"
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <h3 className="text-lg text-muted-foreground">Money Out</h3>
-            </div>
-            <p className="text-3xl text-red-600 font-bold mb-3">
-              -LKR {rentalExpensesTotal.toLocaleString()}
-            </p>
-            <div className="space-y-1 border-t border-gray-200 pt-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground flex items-center gap-1">
-                  Equipment Rental:
-                </span>
-                <span className="text-foreground font-bold">LKR {rentalExpensesTotal.toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Net Profit */}
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-5 shadow-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <h3 className="text-lg text-white font-bold underline">Net Profit Summary</h3>
-            </div>
-            <p className="text-4xl text-white font-bold mb-3">
-              LKR {netProfit.toLocaleString()}
-            </p>
-            <div className="bg-white/20 rounded-lg px-3 py-2">
-              <p className="text-white text-sm">
-                {netProfit > 0 ? '✅ Profit!' : '⚠️ Loss'}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Real-time Product Overview & Recent Activity */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* My Products Overview - Real-time */}
-        <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <h2 className="text-2xl text-primary font-bold">My Products Overview</h2>
-          </div>
-
-          {/* Low Stock Alerts */}
-          {(products || []).filter(p => parseInt(p.quantity) <= 150).length > 0 && (
-            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg mb-4">
-              <p className="text-yellow-900 text-lg font-bold mb-2">
-                ⚠️ Low Stock Alert!
-              </p>
-              {(products || []).filter(p => parseInt(p.quantity) <= 150).map(p => (
-                <p key={p.id} className="text-yellow-800 text-md">
-                  {p.emoji} {p.name}: Only {p.quantity} kg left (Need {150 - parseInt(p.quantity)} kg more)
-                </p>
-              ))}
-            </div>
-          )}
-
-          {/* Product Summary */}
-          <div className="space-y-3">
-            {(products || []).slice(0, 4).map(product => {
-              const qty = parseInt(product.quantity) || 0;
-              const stockStatus = qty > 150 ? 'In Stock' : 'Low Stock';
-
-              return (
-                <div key={product.id} className="flex items-center justify-between bg-green-50 rounded-lg p-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl">{product.emoji}</span>
-                    <div>
-                      <p className="text-lg text-foreground">{product.name}</p>
-                      <span className={`text-xs px-2 py-1 rounded-full ${stockStatus === 'Low Stock'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-green-100 text-green-800'
-                        }`}>
-                        {stockStatus}
+              <div className="flex flex-col gap-4">
+                {/* Total Income */}
+                <div
+                  onClick={() => setShowMoneyModal('in')}
+                  className="bg-white rounded-xl p-5 border-l-4 border-green-500 border-t border-r border-b border-transparent hover:border-green-300 hover:bg-green-50/80 cursor-pointer shadow-md hover:shadow-xl transition-all duration-300 text-left"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-lg text-muted-foreground">Money In</h3>
+                  </div>
+                  <p className="text-3xl text-green-600 font-bold mb-3">
+                    +LKR {totalIncome.toLocaleString()}
+                  </p>
+                  <div className="space-y-1 border-t border-gray-200 pt-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground flex items-center gap-1">
+                        Product Sales:
                       </span>
+                      <span className="text-foreground font-bold">LKR {salesTotal.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground flex items-center gap-1">
+                        Rental Income:
+                      </span>
+                      <span className="text-foreground font-bold">LKR {rentalIncomeTotal.toLocaleString()}</span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-lg text-foreground font-bold">{product.quantity} kg</p>
-                    <p className="text-sm text-primary">LKR {product.price}/kg</p>
+                </div>
+
+                {/* Total Expenses */}
+                <div
+                  onClick={() => setShowMoneyModal('out')}
+                  className="bg-white rounded-xl p-5 border-l-4 border-red-500 border-t border-r border-b border-transparent hover:border-green-300 hover:bg-green-50/80 cursor-pointer shadow-md hover:shadow-xl transition-all duration-300 text-left"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-lg text-muted-foreground">Money Out</h3>
+                  </div>
+                  <p className="text-3xl text-red-600 font-bold mb-3">
+                    -LKR {rentalExpensesTotal.toLocaleString()}
+                  </p>
+                  <div className="space-y-1 border-t border-gray-200 pt-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground flex items-center gap-1">
+                        Equipment Rental:
+                      </span>
+                      <span className="text-foreground font-bold">LKR {rentalExpensesTotal.toLocaleString()}</span>
+                    </div>
                   </div>
                 </div>
-              );
-            })}
+
+                {/* Net Profit */}
+                <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-5 shadow-lg border border-transparent hover:border-green-300 hover:from-green-600 hover:to-green-700 transition-all duration-300 cursor-pointer text-left flex items-center justify-between mt-2">
+                  <div>
+                    <h3 className="text-sm text-white/95 font-bold uppercase tracking-wider mb-1">Net Profit Summary</h3>
+                    <p className="text-2xl text-white font-black">
+                      LKR {netProfit.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="bg-white/20 rounded-lg px-3 py-1.5">
+                    <p className="text-white text-xs font-bold">
+                      {netProfit > 0 ? '✅ Profit!' : '⚠️ Loss'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {products.length > 4 && (
+          {/* Weather - Big Visual */}
+          <div style={{ height: '476px' }} className="bg-white rounded-2xl shadow-lg border border-green-100 p-6 text-left flex flex-col justify-between transition-all duration-300">
+            <div>
+              <div className="flex items-center gap-3 mb-6">
+                <img src={weatherIcon} alt="" className="w-10 h-10 object-contain" />
+                <h2 className="text-2xl text-primary font-bold">Weather in {weatherData.district}</h2>
+              </div>
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 mb-4">
+                <div className="flex items-center gap-4 mb-4">
+                  <span className="text-5xl">{weatherData.emoji}</span>
+                  <div>
+                    <p className="text-4xl text-foreground font-black">{weatherData.temp}</p>
+                    <p className="text-lg text-muted-foreground font-semibold">{weatherData.status}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="text-center bg-white rounded-lg p-3">
+                    <Droplets className="w-6 h-6 text-blue-500 mx-auto" />
+                    <p className="text-xs text-slate-400 mt-0.5">Humidity</p>
+                    <p className="text-lg mt-1 font-bold">{weatherData.humidity}</p>
+                  </div>
+                  <div className="text-center bg-white rounded-lg p-3">
+                    <Wind className="w-6 h-6 text-gray-500 mx-auto" />
+                    <p className="text-xs text-slate-400 mt-0.5">Wind</p>
+                    <p className="text-lg mt-1 font-bold">{weatherData.wind}</p>
+                  </div>
+                  <div className="text-center bg-white rounded-lg p-3">
+                    <CloudRain className="w-6 h-6 text-blue-400 mx-auto" />
+                    <p className="text-xs text-slate-400 mt-0.5">Rain</p>
+                    <p className="text-lg mt-1 font-bold">{weatherData.rain}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg">
+              <p className="text-yellow-900 text-sm font-semibold">
+                {weatherData.alert}
+              </p>
+            </div>
+          </div>
+
+          {/* Crop Suggestions - Visual */}
+          <div style={{ height: '476px' }} className="bg-white rounded-2xl shadow-lg border border-green-100 p-6 text-left flex flex-col justify-between transition-all duration-300 hover:border-green-400 hover:ring-2 hover:ring-green-400/20 hover:-translate-y-1.5 hover:shadow-2xl">
+            <div>
+              <div className="flex items-center gap-3 mb-6">
+                <h2 className="text-2xl text-primary font-bold">Best Crops Now</h2>
+              </div>
+              <div className="space-y-4">
+                <div className="bg-green-50 rounded-xl p-4 border-l-4 border-green-500">
+                  <div className="flex items-center gap-3 mb-2">
+                    <p className="text-xl text-foreground font-bold">Paddy Rice</p>
+                  </div>
+                  <p className="text-lg text-muted-foreground ml-12">📅 Best: Feb-Apr</p>
+                  <span className="inline-block mt-2 ml-12 px-3 py-1 bg-green-200 text-green-800 rounded-full text-sm">
+                    ✅ Recommended
+                  </span>
+                </div>
+                <div className="bg-green-50 rounded-xl p-4 border-l-4 border-green-500">
+                  <div className="flex items-center gap-3 mb-2">
+                    <p className="text-xl text-foreground font-bold">Vegetables</p>
+                  </div>
+                  <p className="text-lg text-muted-foreground ml-12">📅 Good now</p>
+                  <span className="inline-block mt-2 ml-12 px-3 py-1 bg-green-200 text-green-800 rounded-full text-sm">
+                    ✅ Good Season
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+<<<<<<< HEAD
+            {/* Low Stock Alerts */}
+            {(products || []).filter(p => parseInt(p.quantity) <= 150).length > 0 && (
+              <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-xl mb-6">
+                <p className="text-yellow-900 text-lg font-bold mb-2 flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5" /> Low Stock Alert
+                </p>
+                {(products || []).filter(p => parseInt(p.quantity) <= 150).map(p => (
+                  <p key={p.id} className="text-yellow-800 text-sm font-medium">
+                    {p.emoji} {p.name}: Only {p.quantity} kg left (Need {150 - parseInt(p.quantity)} kg more)
+=======
+        {/* Right Half: Operations Hub */}
+        <div className="space-y-6">
+          
+          <div style={{ height: '390px' }} className="bg-white/90 backdrop-blur-md rounded-3xl shadow-sm border border-green-100 p-6 flex flex-col justify-between transition-all duration-300">
+            <div>
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <h2 className="text-lg text-primary font-bold">Products Inventory</h2>
+              </div>
+
+              {/* Low Stock Alerts */}
+              {(products || []).filter(p => parseInt(p.quantity) <= 150).length > 0 && (
+                <div className="bg-yellow-50 border-l-4 border-yellow-500 px-2 py-1 rounded-lg mb-2 text-left">
+                  <p className="text-yellow-900 text-[10px] font-bold flex items-center gap-1 truncate">
+                    <AlertCircle className="w-3.5 h-3.5" /> Low Stock: {(products || []).filter(p => parseInt(p.quantity) <= 150).slice(0, 1).map(p => `${p.name} (${p.quantity} kg)`)}
+>>>>>>> a03add07 (Implement farmer dashboard)
+                  </p>
+                </div>
+              )}
+
+              {/* Product Pie Chart */}
+              {(products || []).length > 0 ? (
+                <div className="h-28 w-full mb-1">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={pieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={25}
+                        outerRadius={42}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {pieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip formatter={(value) => `${value} kg`} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-8 font-medium text-xs">No products found.</p>
+              )}
+
+              {/* First 2 products quick list */}
+              <div className="space-y-1 max-h-[70px] overflow-y-auto pr-1 text-left">
+                {(products || []).slice(0, 2).map(p => (
+                  <div key={p.id} className="flex justify-between items-center text-[11px] bg-slate-50 border border-slate-100 rounded-lg p-1.5">
+                    <span className="font-semibold text-slate-700">{p.emoji || '🌾'} {p.name}</span>
+                    <span className="text-slate-500 font-bold">{p.quantity} kg</span>
+                  </div>
+                ))}
+              </div>
+<<<<<<< HEAD
+            )}
+            {/* Product Pie Chart */}
+            {(products || []).length > 0 ? (
+              <div className="h-64 w-full mb-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip formatter={(value) => `${value} kg`} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-10 font-medium">No products found. Add some to get started.</p>
+            )}
+
+            {(products || []).length > 0 && (
+              <button
+                onClick={() => onNavigate('farm-management')}
+                className="w-full py-3 bg-green-50 text-green-700 hover:bg-green-100 rounded-xl transition-colors font-bold flex justify-center items-center gap-2"
+              >
+                Manage All Products <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
+=======
+            </div>
+
             <button
-              onClick={() => onNavigate('products')}
-              className="mt-4 w-full py-2 text-primary hover:bg-green-50 rounded-lg transition-colors"
+              onClick={() => {
+                onNavigate('farm-management');
+                const el = document.getElementById('section-products');
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                  setTimeout(() => {
+                    document.getElementById('section-products')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }, 150);
+                }
+              }}
+              className="w-full py-2 bg-green-50 text-green-700 hover:bg-green-100 rounded-xl transition-colors font-bold flex justify-center items-center gap-1.5 text-xs mt-2 animate-pulse hover:animate-none"
             >
-              View All {products.length} Products →
+              Show More <ArrowRight className="w-3.5 h-3.5" />
             </button>
-          )}
-        </div>
-
-        {/* Recent Sales & Orders - Real-time */}
-        <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <h2 className="text-2xl text-primary font-bold">Recent Activity</h2>
+>>>>>>> a03add07 (Implement farmer dashboard)
           </div>
 
-          {/* Latest Sales Summary - Visual Card */}
-          <div className="mb-8">
-            <h3 className="text-lg text-foreground font-bold mb-3">Income Summary</h3>
-            <div className="bg-blue-50 rounded-xl p-5 border-l-4 border-blue-500 hover:shadow-md transition-all cursor-pointer" onClick={() => onNavigate('sales')}>
-              <div className="flex justify-between items-center mb-3">
-                <p className="text-sm text-blue-700 font-bold uppercase tracking-wider">Activity: High</p>
-                <TrendingUp className="w-5 h-5 text-blue-600" />
+          <div style={{ height: '380px' }} className="bg-white/90 backdrop-blur-md rounded-3xl shadow-sm border border-green-100 p-6 flex flex-col justify-between transition-all duration-300">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg text-primary font-bold">Recent Orders</h2>
+                {pendingOrdersCount > 0 && (
+                  <span className="bg-purple-100 text-purple-800 text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm border border-purple-200">{pendingOrdersCount} Pending</span>
+                )}
               </div>
-              <p className="text-3xl text-blue-900 font-black">
-                LKR {totalIncome.toLocaleString()}
-              </p>
-              <div className="grid grid-cols-2 gap-4 mt-4 border-t border-blue-100 pt-3">
-                <div>
-                  <p className="text-xs text-blue-600 font-bold uppercase">Products</p>
-                  <p className="text-sm text-blue-900 font-bold">LKR {salesTotal.toLocaleString()}</p>
+              
+              <div className="overflow-y-auto space-y-2 pr-2 max-h-[220px] custom-scrollbar text-left">
+                 {(!orders || orders.length === 0) ? (
+                    <div className="flex flex-col items-center justify-center h-32">
+                      <Package className="w-8 h-8 text-gray-300 mb-2" />
+                      <p className="text-gray-500 font-medium text-center text-xs">No orders yet.</p>
+                    </div>
+                 ) : (
+                    orders.slice(0, 2).map((customer, i) => (
+                      <div key={i} className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 hover:border-purple-200 transition-colors">
+                        <div className="flex justify-between items-start mb-1.5 pb-1.5 border-b border-gray-50">
+                          <p className="font-bold text-gray-800 text-[11px]">{customer.customerName}</p>
+                          <p className="text-[9px] text-gray-400 font-medium bg-gray-50 px-1.5 py-0.5 rounded-md">{new Date(customer.date).toLocaleDateString()}</p>
+                        </div>
+                        <div className="space-y-1.5">
+                          {(customer.products || []).map((p, idx) => (
+                            <div key={idx} className="flex justify-between items-center text-[10px]">
+                              <span className="flex items-center gap-1 font-medium text-gray-700">
+                                <span className="w-5 h-5 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-100 text-[10px]">{p.emoji || '📦'}</span> 
+                                {p.name}
+                              </span>
+                              <span className={`font-bold px-1 py-0.5 rounded text-[8px] tracking-wider uppercase ${p.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
+                                {p.status}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                 )}
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                onNavigate('business-management');
+                const el = document.getElementById('section-orders');
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                  setTimeout(() => {
+                    document.getElementById('section-orders')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }, 150);
+                }
+              }}
+              className="w-full py-2 bg-purple-50 text-purple-700 font-bold rounded-xl hover:bg-purple-100 transition-colors flex justify-center items-center gap-1.5 text-xs mt-2 animate-pulse hover:animate-none"
+            >
+              Show More <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div style={{ height: '380px' }} className="bg-white/90 backdrop-blur-md rounded-3xl shadow-sm border border-green-100 p-6 flex flex-col justify-between transition-all duration-300">
+            <div>
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <h2 className="text-lg text-primary font-bold">Sales & Income Trend</h2>
+              </div>
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl p-3 border border-blue-100 mb-2 text-left">
+                <div className="flex justify-between items-center mb-0.5">
+                  <p className="text-[9px] text-blue-700 font-bold uppercase tracking-wider">Total Income</p>
+                  <div className="p-0.5 bg-blue-100 rounded"><TrendingUp className="w-3.5 h-3.5 text-blue-600" /></div>
                 </div>
-                <div>
-                  <p className="text-xs text-blue-600 font-bold uppercase">Rentals</p>
-                  <p className="text-sm text-blue-900 font-bold">LKR {rentalIncomeTotal.toLocaleString()}</p>
+                <p className="text-xl text-blue-900 font-black">LKR {totalIncome.toLocaleString()}</p>
+                
+                {/* Income Area Chart */}
+                <div className="h-24 w-full -ml-4 mt-1">
+                  <ResponsiveContainer width="100%" height={90}>
+                    <AreaChart data={areaData}>
+                      <defs>
+                        <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 9, fill: '#64748b'}} />
+                      <RechartsTooltip 
+                        formatter={(value) => `LKR ${value.toLocaleString()}`}
+                        contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                      />
+                      <Area type="monotone" dataKey="income" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorIncome)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
-              <p className="text-sm text-blue-600 mt-4 font-medium">View full sales & income report →</p>
+
+              {/* First 2 sales quick list */}
+              <div className="space-y-1.5 max-h-[80px] overflow-y-auto pr-1 text-left">
+                {(sales || []).slice(0, 2).map((s, idx) => (
+                  <div key={idx} className="flex justify-between items-center text-[11px] bg-slate-50 border border-slate-100 rounded-lg p-1.5">
+                    <span className="font-semibold text-slate-700 truncate max-w-[150px]">{s.product}</span>
+                    <span className="text-emerald-600 font-bold">LKR {s.total.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
             </div>
+            <button
+              onClick={() => {
+                onNavigate('business-management');
+                const el = document.getElementById('section-sales');
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                  setTimeout(() => {
+                    document.getElementById('section-sales')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }, 150);
+                }
+              }}
+              className="w-full py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl transition-colors font-bold flex justify-center items-center gap-1.5 text-xs mt-2 animate-pulse hover:animate-none"
+            >
+              Show More <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
 
-          {/* Pending Orders Summary - Visual Card */}
-          <div>
-            <div className="flex items-center gap-3 mb-3">
-              <h3 className="text-lg text-foreground font-bold">Pending Orders Summary</h3>
-            </div>
-            <div className="bg-purple-50 rounded-xl p-4 border-l-4 border-purple-500 hover:shadow-md transition-all cursor-pointer" onClick={() => onNavigate('orders')}>
-              <div className="flex justify-between items-center mb-2">
-                <p className="text-sm text-purple-700 font-bold uppercase tracking-wider">Status: Action Required</p>
-                <span className="bg-purple-200 text-purple-800 text-xs px-2 py-1 rounded-full font-bold">Priority</span>
+          <div style={{ height: '380px' }} className="bg-white/90 backdrop-blur-md rounded-3xl shadow-sm border border-green-100 p-6 flex flex-col justify-between transition-all duration-300">
+            <div>
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <h2 className="text-lg text-primary font-bold">Expenses Summary</h2>
               </div>
-              <p className="text-3xl text-purple-900 font-black">
-                {pendingOrdersCount} Total Items
-              </p>
-              <p className="text-sm text-purple-600 mt-1 font-medium">Click to manage all pending customer orders →</p>
-            </div>
-          </div>
-        </div>
-      </div>
+              <div className="bg-gradient-to-br from-red-50 to-red-100/50 rounded-2xl p-3 border border-red-100 mb-2 text-left">
+                 <div className="flex justify-between items-center mb-0.5">
+                   <p className="text-[9px] text-red-700 font-bold uppercase tracking-wider">Total Expenses</p>
+                   <div className="p-0.5 bg-red-100 rounded"><TrendingDown className="w-3.5 h-3.5 text-red-600" /></div>
+                 </div>
+                 <p className="text-xl text-red-900 font-black">LKR {rentalExpensesTotal.toLocaleString()}</p>
 
-      {/* Weather & Crop Suggestions */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Weather - Big Visual */}
-        <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <img src={weatherIcon} alt="" className="w-10 h-10 object-contain" />
-            <h2 className="text-2xl text-primary font-bold">Today's Weather</h2>
-          </div>
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 mb-4">
-            <div className="flex items-center gap-4 mb-4">
-              <Sun className="w-16 h-16 text-yellow-500" />
-              <div>
-                <p className="text-4xl text-foreground">28°C</p>
-                <p className="text-lg text-muted-foreground">Partly Cloudy</p>
+                 {/* Expense Area Chart */}
+                 <div className="h-24 w-full -ml-4 mt-1">
+                   <ResponsiveContainer width="100%" height={90}>
+                     <AreaChart data={expenseAreaData}>
+                       <defs>
+                         <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
+                           <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                           <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                         </linearGradient>
+                       </defs>
+                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                       <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 9, fill: '#64748b'}} />
+                       <RechartsTooltip 
+                         formatter={(value) => `LKR ${value.toLocaleString()}`}
+                         contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                       />
+                       <Area type="monotone" dataKey="expense" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorExpense)" />
+                     </AreaChart>
+                   </ResponsiveContainer>
+                 </div>
+              </div>
+
+              {/* First 2 expenses quick list */}
+              <div className="space-y-1.5 max-h-[80px] overflow-y-auto pr-1 text-left">
+                {(rentalExpenses || []).slice(0, 2).map((e, idx) => (
+                  <div key={idx} className="flex justify-between items-center text-[11px] bg-slate-50 border border-slate-100 rounded-lg p-1.5">
+                    <span className="font-semibold text-slate-700 truncate max-w-[150px]">{e.equipment || 'Equipment Rental'}</span>
+                    <span className="text-red-600 font-bold">LKR {e.total.toLocaleString()}</span>
+                  </div>
+                ))}
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center bg-white rounded-lg p-3">
-                <Droplets className="w-6 h-6 text-blue-500 mx-auto" />
-                <p className="text-lg mt-1 font-bold">75%</p>
-              </div>
-              <div className="text-center bg-white rounded-lg p-3">
-                <Wind className="w-6 h-6 text-gray-500 mx-auto" />
-                <p className="text-lg mt-1 font-bold">12 km/h</p>
-              </div>
-              <div className="text-center bg-white rounded-lg p-3">
-                <CloudRain className="w-6 h-6 text-blue-400 mx-auto" />
-                <p className="text-lg mt-1 font-bold">20%</p>
-              </div>
-            </div>
+            <button
+              onClick={() => {
+                onNavigate('business-management');
+                const el = document.getElementById('section-expenses');
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                  setTimeout(() => {
+                    document.getElementById('section-expenses')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }, 150);
+                }
+              }}
+              className="w-full py-2 bg-red-50 text-red-700 hover:bg-red-100 rounded-xl transition-colors font-bold flex justify-center items-center gap-1.5 text-xs mt-2 animate-pulse hover:animate-none"
+            >
+              Show More <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
-          <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg">
-            <p className="text-yellow-900 text-lg">
-              ⚠️ Rain tomorrow - harvest ready crops!
-            </p>
-          </div>
+
         </div>
 
-        {/* Crop Suggestions - Visual */}
-        <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <h2 className="text-2xl text-primary font-bold">Best Crops Now</h2>
-          </div>
-          <div className="space-y-4">
-            <div className="bg-green-50 rounded-xl p-4 border-l-4 border-green-500">
-              <div className="flex items-center gap-3 mb-2">
-                <p className="text-xl text-foreground font-bold">Paddy Rice</p>
-              </div>
-              <p className="text-lg text-muted-foreground ml-12">📅 Best: Feb-Apr</p>
-              <span className="inline-block mt-2 ml-12 px-3 py-1 bg-green-200 text-green-800 rounded-full text-sm">
-                ✅ Recommended
-              </span>
-            </div>
-            <div className="bg-green-50 rounded-xl p-4 border-l-4 border-green-500">
-              <div className="flex items-center gap-3 mb-2">
-                <p className="text-xl text-foreground font-bold">Vegetables</p>
-              </div>
-              <p className="text-lg text-muted-foreground ml-12">📅 Good now</p>
-              <span className="inline-block mt-2 ml-12 px-3 py-1 bg-green-200 text-green-800 rounded-full text-sm">
-                ✅ Good Season
-              </span>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Money Detail Modal */}
       {showMoneyModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setShowMoneyModal(null)}>
-          <div className="bg-white rounded-2xl p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[9999] flex items-center justify-center p-4" onClick={() => setShowMoneyModal(null)}>
+          <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
             {/* Money In Details */}
             {showMoneyModal === 'in' && (
               <>
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div>
-                      <h2 className="text-3xl text-primary font-bold">Money In - Detailed Calculation</h2>
-                      <p className="text-muted-foreground">All the money you earned</p>
-                    </div>
+                <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-6 text-white flex justify-between items-center shrink-0">
+                  <div>
+                    <h2 className="text-xl font-bold">Money In - Detailed Calculation</h2>
+                    <p className="text-emerald-100 text-xs mt-0.5">All the money you earned</p>
                   </div>
                   <button
                     onClick={() => setShowMoneyModal(null)}
-                    className="text-3xl text-muted-foreground hover:text-red-500"
+                    className="bg-white/10 hover:bg-white/20 p-2 rounded-xl transition-all border border-white/10"
                   >
-                    ✕
+                    <X className="w-5 h-5 text-white" />
                   </button>
                 </div>
 
-                {/* Product Sales Details */}
-                <div className="mb-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <h3 className="text-2xl text-foreground font-bold">Product Sales</h3>
-                  </div>
-
-                  <div className="space-y-3">
-                    {sales.map((sale) => (
-                      <div key={sale.id} className="bg-green-50 rounded-xl p-5 border-l-4 border-green-500">
-                        <div className="flex items-center justify-between mb-2">
-                          <div>
-                            <p className="text-xl text-foreground font-bold">{sale.product}</p>
-                            <p className="text-sm text-muted-foreground">Sold to: {sale.customer}</p>
+                <div className="p-8 space-y-6 overflow-y-auto flex-1">
+                  {/* Product Sales Details */}
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">🌾 Product Sales</h3>
+                    <div style={{ maxHeight: '300px' }} className="space-y-3 overflow-y-auto pr-2 custom-scrollbar">
+                      {sales.map((sale) => (
+                        <div key={sale.id} className="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:bg-green-50 hover:border-green-300 transition-all cursor-default">
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                              <p className="text-base font-bold text-slate-800">{sale.product}</p>
+                              <p className="text-xs text-slate-400 mt-0.5">Sold to: {sale.customer}</p>
+                            </div>
+                            <p className="text-lg font-black text-emerald-600">LKR {sale.total.toLocaleString()}</p>
                           </div>
-                          <p className="text-2xl text-green-600 font-bold">LKR {sale.total.toLocaleString()}</p>
+                          <div className="grid grid-cols-3 gap-2 mt-4 bg-white border border-slate-100 rounded-xl p-3 text-center">
+                            <div>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Quantity</p>
+                              <p className="text-sm font-black text-slate-700 mt-0.5">{sale.quantity}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Price Each</p>
+                              <p className="text-sm font-black text-slate-700 mt-0.5">LKR {sale.price.toLocaleString()}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Date</p>
+                              <p className="text-sm font-black text-slate-700 mt-0.5">{sale.date}</p>
+                            </div>
+                          </div>
                         </div>
-                        <div className="grid grid-cols-3 gap-2 mt-3 bg-white rounded-lg p-3">
-                          <div>
-                            <p className="text-xs text-muted-foreground">Quantity</p>
-                            <p className="text-lg text-foreground font-bold">{sale.quantity}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">Price Each</p>
-                            <p className="text-lg text-foreground font-bold">LKR {sale.price.toLocaleString()}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">Date</p>
-                            <p className="text-lg text-foreground font-bold">{sale.date}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
 
-                  <div className="bg-green-100 rounded-xl p-4 mt-4">
-                    <div className="flex justify-between items-center">
-                      <p className="text-lg text-foreground font-bold">Total Product Sales:</p>
-                      <p className="text-2xl text-green-600 font-bold">LKR {salesTotal.toLocaleString()}</p>
+                    <div className="bg-emerald-50/50 border border-emerald-100/50 rounded-2xl p-4 mt-4 flex justify-between items-center text-emerald-800">
+                      <p className="text-xs font-bold uppercase tracking-wider">Total Product Sales:</p>
+                      <p className="text-lg font-black">LKR {salesTotal.toLocaleString()}</p>
                     </div>
                   </div>
-                </div>
 
-                {/* Rental Income Details */}
-                <div className="mb-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <h3 className="text-2xl text-foreground font-bold">Equipment Rental Income</h3>
-                  </div>
-
-                  <div className="space-y-3">
-                    {rentalIncome.map((rental) => (
-                      <div key={rental.id} className="bg-blue-50 rounded-xl p-5 border-l-4 border-blue-500">
-                        <div className="flex items-center justify-between mb-2">
-                          <div>
-                            <p className="text-xl text-foreground font-bold">{rental.equipment}</p>
-                            <p className="text-sm text-muted-foreground">Rented to: {rental.renter || rental.rentedTo}</p>
+                  {/* Rental Income Details */}
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">🚜 Equipment Rental Income</h3>
+                    <div style={{ maxHeight: '300px' }} className="space-y-3 overflow-y-auto pr-2 custom-scrollbar">
+                      {rentalIncome.map((rental) => (
+                        <div key={rental.id} className="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:bg-green-50 hover:border-green-300 transition-all cursor-default">
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                              <p className="text-base font-bold text-slate-800">{rental.equipment}</p>
+                              <p className="text-xs text-slate-400 mt-0.5">Rented to: {rental.renter || rental.rentedTo}</p>
+                            </div>
+                            <p className="text-lg font-black text-blue-600">LKR {rental.total.toLocaleString()}</p>
                           </div>
-                          <p className="text-2xl text-blue-600 font-bold">LKR {rental.total.toLocaleString()}</p>
-                        </div>
-                        <div className="grid grid-cols-3 gap-2 mt-3 bg-white rounded-lg p-3">
-                          <div>
-                            <p className="text-xs text-muted-foreground">Days</p>
-                            <p className="text-lg text-foreground font-bold">{rental.days}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">Rate/Day</p>
-                            <p className="text-lg text-foreground font-bold">LKR {rental.pricePerDay.toLocaleString()}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">Date</p>
-                            <p className="text-lg text-foreground font-bold">{rental.date}</p>
+                          <div className="grid grid-cols-3 gap-2 mt-4 bg-white border border-slate-100 rounded-xl p-3 text-center">
+                            <div>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Days</p>
+                              <p className="text-sm font-black text-slate-700 mt-0.5">{rental.days}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Rate/Day</p>
+                              <p className="text-sm font-black text-slate-700 mt-0.5">LKR {rental.pricePerDay.toLocaleString()}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Date</p>
+                              <p className="text-sm font-black text-slate-700 mt-0.5">{rental.date}</p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
 
-                  <div className="bg-blue-100 rounded-xl p-4 mt-4">
-                    <div className="flex justify-between items-center">
-                      <p className="text-lg text-foreground font-bold">Total Rental Income:</p>
-                      <p className="text-2xl text-blue-600 font-bold">LKR {rentalIncomeTotal.toLocaleString()}</p>
+                    <div className="bg-blue-50 border border-blue-100/50 rounded-2xl p-4 mt-4 flex justify-between items-center text-blue-800">
+                      <p className="text-xs font-bold uppercase tracking-wider">Total Rental Income:</p>
+                      <p className="text-lg font-black">LKR {rentalIncomeTotal.toLocaleString()}</p>
                     </div>
                   </div>
-                </div>
 
-                {/* Final Calculation */}
-                <div className="bg-gradient-to-br from-green-100 to-blue-100 rounded-xl p-6 border-2 border-green-500">
-                  <div className="text-center">
-                    <p className="text-2xl text-foreground font-bold mb-4 flex items-center justify-center gap-2">
-                      Total Money In Calculation
-                    </p>
-                    <div className="space-y-2 mb-4">
-                      <p className="text-xl text-foreground flex items-center justify-center gap-2">
-                        Product Sales = LKR {salesTotal.toLocaleString()}
-                      </p>
-                      <p className="text-xl text-foreground flex items-center justify-center gap-2">
-                        Rental Income = LKR {rentalIncomeTotal.toLocaleString()}
-                      </p>
-                      <div className="border-t-2 border-green-500 pt-3 mt-3">
-                        <p className="text-3xl text-green-600 font-bold">
-                          Total Money In = LKR {totalIncome.toLocaleString()}
+                  {/* Final Calculation */}
+                  <div className="bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-blue-500/10 rounded-2xl p-6 border border-emerald-100">
+                    <div className="text-center">
+                      <p className="text-base font-bold text-slate-700 mb-4 uppercase tracking-wider">Income Breakdown</p>
+                      <div className="space-y-2 mb-4 text-sm text-slate-600 font-medium">
+                        <div className="flex justify-between max-w-xs mx-auto">
+                          <span>Product Sales:</span>
+                          <span className="font-bold text-slate-800">LKR {salesTotal.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between max-w-xs mx-auto">
+                          <span>Rental Income:</span>
+                          <span className="font-bold text-slate-800">LKR {rentalIncomeTotal.toLocaleString()}</span>
+                        </div>
+                        <div className="border-t border-slate-200 pt-3 mt-3 flex justify-between max-w-xs mx-auto">
+                          <span className="font-bold text-slate-800">Total Money In:</span>
+                          <span className="text-xl font-black text-emerald-600">LKR {totalIncome.toLocaleString()}</span>
+                        </div>
+                      </div>
+                      <div className="bg-white/80 backdrop-blur border border-emerald-100 rounded-2xl p-4 mt-4 max-w-md mx-auto">
+                        <p className="text-sm text-slate-700 font-semibold leading-relaxed">
+                          🎉 Great work! You earned a total of <span className="font-black text-emerald-600">LKR {totalIncome.toLocaleString()}</span>. Keep it up!
                         </p>
                       </div>
-                    </div>
-                    <div className="bg-white rounded-lg p-4">
-                      <p className="text-lg text-foreground">
-                        🎉 Great work! You earned a total of <span className="font-bold text-green-600">LKR {totalIncome.toLocaleString()}</span>
-                      </p>
                     </div>
                   </div>
                 </div>
@@ -1453,105 +1909,96 @@ function DashboardContent({ onNavigate, products, rentedEquipment, sales, orders
             {/* Money Out Details */}
             {showMoneyModal === 'out' && (
               <>
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div>
-                      <h2 className="text-3xl text-primary font-bold">Money Out - Detailed Calculation</h2>
-                      <p className="text-muted-foreground">All your expenses</p>
-                    </div>
+                <div className="bg-gradient-to-r from-rose-600 to-red-600 p-6 text-white flex justify-between items-center shrink-0">
+                  <div>
+                    <h2 className="text-xl font-bold">Money Out - Detailed Calculation</h2>
+                    <p className="text-rose-100 text-xs mt-0.5">All your expenses</p>
                   </div>
                   <button
                     onClick={() => setShowMoneyModal(null)}
-                    className="text-3xl text-muted-foreground hover:text-red-500"
+                    className="bg-white/10 hover:bg-white/20 p-2 rounded-xl transition-all border border-white/10"
                   >
-                    ✕
+                    <X className="w-5 h-5 text-white" />
                   </button>
                 </div>
 
-                {/* Expenses Details */}
-                <div className="mb-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <h3 className="text-2xl text-foreground font-bold">Equipment Rental Expenses</h3>
-                  </div>
-
-                  <div className="space-y-3">
-                    {rentalExpenses.map((expense) => (
-                      <div key={expense.id} className="bg-red-50 rounded-xl p-5 border-l-4 border-red-500">
-                        <div className="flex items-center justify-between mb-2">
-                          <div>
-                            <p className="text-xl text-foreground font-bold">{expense.equipment}</p>
-                            <p className="text-sm text-muted-foreground">Rented from: {expense.owner || expense.rentedFrom}</p>
-                          </div>
-                          <p className="text-2xl text-red-600 font-bold">-LKR {expense.total.toLocaleString()}</p>
-                        </div>
-                        <div className="grid grid-cols-3 gap-2 mt-3 bg-white rounded-lg p-3">
-                          <div>
-                            <p className="text-xs text-muted-foreground">Days</p>
-                            <p className="text-lg text-foreground font-bold">{expense.days}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">Rate/Day</p>
-                            <p className="text-lg text-foreground font-bold">LKR {expense.pricePerDay.toLocaleString()}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">Date</p>
-                            <p className="text-lg text-foreground font-bold">{expense.date}</p>
-                          </div>
-                        </div>
-                        <div className="mt-3 bg-white rounded-lg p-3">
-                          <p className="text-sm text-muted-foreground mb-1">Calculation:</p>
-                          <p className="text-lg text-foreground">
-                            {expense.days} days × LKR {expense.pricePerDay.toLocaleString()} =
-                            <span className="font-bold text-red-600"> LKR {expense.total.toLocaleString()}</span>
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="bg-red-100 rounded-xl p-4 mt-4">
-                    <div className="flex justify-between items-center">
-                      <p className="text-lg text-foreground font-bold">Total Expenses:</p>
-                      <p className="text-2xl text-red-600 font-bold">LKR {rentalExpensesTotal.toLocaleString()}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Final Calculation */}
-                <div className="bg-gradient-to-br from-red-100 to-orange-100 rounded-xl p-6 border-2 border-red-500">
-                  <div className="text-center">
-                    <p className="text-2xl text-foreground font-bold mb-4">📝 Total Money Out Calculation</p>
-                    <div className="space-y-2 mb-4">
+                <div className="p-8 space-y-6 overflow-y-auto flex-1">
+                  {/* Expenses Details */}
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">🚜 Equipment Rental Expenses</h3>
+                    <div style={{ maxHeight: '300px' }} className="space-y-3 overflow-y-auto pr-2 custom-scrollbar">
                       {rentalExpenses.map((expense) => (
-                        <div key={expense.id} className="bg-white rounded-lg p-3">
-                          <p className="text-lg text-foreground">
-                            {expense.equipment}: {expense.days} days × LKR {expense.pricePerDay.toLocaleString()} =
-                            <span className="font-bold text-red-600"> LKR {expense.total.toLocaleString()}</span>
-                          </p>
+                        <div key={expense.id} className="bg-slate-50 border border-slate-100 rounded-2xl p-5 hover:bg-green-50 hover:border-green-300 transition-all cursor-default">
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                              <p className="text-base font-bold text-slate-800">{expense.equipment}</p>
+                              <p className="text-xs text-slate-400 mt-0.5">Rented from: {expense.owner || expense.rentedFrom}</p>
+                            </div>
+                            <p className="text-lg font-black text-rose-600">-LKR {expense.total.toLocaleString()}</p>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2 mt-4 bg-white border border-slate-100 rounded-xl p-3 text-center">
+                            <div>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Days</p>
+                              <p className="text-sm font-black text-slate-700 mt-0.5">{expense.days}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Rate/Day</p>
+                              <p className="text-sm font-black text-slate-700 mt-0.5">LKR {expense.pricePerDay.toLocaleString()}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Date</p>
+                              <p className="text-sm font-black text-slate-700 mt-0.5">{expense.date}</p>
+                            </div>
+                          </div>
+                          <div className="mt-3 bg-rose-50/30 border border-rose-100/30 rounded-xl p-3 text-xs text-slate-500 font-medium">
+                            Calculation: {expense.days} days × LKR {expense.pricePerDay.toLocaleString()} =
+                            <span className="font-bold text-rose-600"> LKR {expense.total.toLocaleString()}</span>
+                          </div>
                         </div>
                       ))}
-                      <div className="border-t-2 border-red-500 pt-3 mt-3">
-                        <p className="text-3xl text-red-600 font-bold">
-                          Total Money Out = LKR {rentalExpensesTotal.toLocaleString()}
+                    </div>
+
+                    <div className="bg-rose-50 border border-rose-100/50 rounded-2xl p-4 mt-4 flex justify-between items-center text-rose-800">
+                      <p className="text-xs font-bold uppercase tracking-wider">Total Expenses:</p>
+                      <p className="text-lg font-black">LKR {rentalExpensesTotal.toLocaleString()}</p>
+                    </div>
+                  </div>
+
+                  {/* Final Calculation */}
+                  <div className="bg-gradient-to-br from-rose-500/10 to-orange-500/10 rounded-2xl p-6 border border-rose-100">
+                    <div className="text-center">
+                      <p className="text-base font-bold text-slate-700 mb-4 uppercase tracking-wider">Expenses Calculation</p>
+                      <div style={{ maxHeight: '200px' }} className="space-y-2 mb-4 text-sm text-slate-600 font-medium max-w-md mx-auto overflow-y-auto pr-2 custom-scrollbar">
+                        {rentalExpenses.map((expense) => (
+                          <div key={expense.id} className="flex justify-between border-b border-slate-100 pb-2">
+                            <span className="text-left font-medium text-slate-600">{expense.equipment}:</span>
+                            <span className="text-right font-bold text-slate-700">{expense.days}d × LKR {expense.pricePerDay.toLocaleString()} = <span className="text-rose-600">LKR {expense.total.toLocaleString()}</span></span>
+                          </div>
+                        ))}
+                        <div className="pt-3 mt-3 flex justify-between font-bold text-slate-800">
+                          <span>Total Money Out:</span>
+                          <span className="text-xl font-black text-rose-600">LKR {rentalExpensesTotal.toLocaleString()}</span>
+                        </div>
+                      </div>
+                      <div className="bg-white/80 backdrop-blur border border-rose-100 rounded-2xl p-4 mt-4 max-w-md mx-auto">
+                        <p className="text-sm text-slate-700 font-semibold">
+                          💰 You spent a total of <span className="font-black text-rose-600">LKR {rentalExpensesTotal.toLocaleString()}</span> on equipment rentals.
                         </p>
                       </div>
-                    </div>
-                    <div className="bg-white rounded-lg p-4">
-                      <p className="text-lg text-foreground">
-                        💰 You spent <span className="font-bold text-red-600">LKR {rentalExpensesTotal.toLocaleString()}</span> on equipment rentals
-                      </p>
                     </div>
                   </div>
                 </div>
               </>
             )}
 
-            <button
-              onClick={() => setShowMoneyModal(null)}
-              className="w-full mt-6 bg-primary text-white rounded-xl py-4 text-xl font-bold hover:bg-green-700 transition-colors"
-            >
-              Close ✓
-            </button>
+            <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 shrink-0">
+              <button
+                onClick={() => setShowMoneyModal(null)}
+                className="w-full py-3 bg-slate-800 text-white rounded-2xl font-bold hover:bg-slate-900 transition-all active:scale-95 text-sm"
+              >
+                Close ✓
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1817,52 +2264,54 @@ export function SalesContent({ customerPurchases = [], equipmentRentals = [] }) 
 
       {/* Product Details Modal */}
       {selectedProductCustomer && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-[2rem] w-fit max-px-4 max-w-4xl max-h-[85vh] overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in duration-300">
-            <div className="bg-green-600 p-5 text-white flex justify-between items-center shrink-0">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[9999] flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[85vh] overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-6 text-white flex justify-between items-center shrink-0">
               <div className="flex items-center gap-4">
-                <span className="text-3xl bg-white/20 p-2 rounded-xl backdrop-blur-sm">{selectedProductCustomer.icon}</span>
+                <span className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-2xl font-bold backdrop-blur-md">
+                  {selectedProductCustomer.icon || '👨'}
+                </span>
                 <div>
-                  <h2 className="text-xl font-black">{selectedProductCustomer.customerName}</h2>
-                  <p className="text-green-100 text-xs mt-0.5">{selectedProductCustomer.location} • {selectedProductCustomer.phone}</p>
+                  <h2 className="text-xl font-bold">{selectedProductCustomer.customerName}</h2>
+                  <p className="text-emerald-100 text-xs mt-0.5">📍 {selectedProductCustomer.location} • 📞 {selectedProductCustomer.phone}</p>
                 </div>
               </div>
               <button
                 onClick={() => setSelectedProductCustomer(null)}
-                className="bg-white hover:bg-green-50 p-2 rounded-full transition-all shadow-md group"
+                className="bg-white/10 hover:bg-white/20 p-2 rounded-xl transition-all border border-white/10"
               >
-                <span className="text-xl font-bold text-green-600">✕</span>
+                <X className="w-5 h-5 text-white" />
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto flex justify-center">
-              <div className="flex flex-wrap justify-center gap-6">
+            <div className="p-6 overflow-y-auto flex-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 justify-items-center">
                 {selectedProductCustomer.products.map((product, idx) => {
                   const itemTotal = product.quantity * product.pricePerUnit;
                   return (
-                    <div key={idx} className="bg-gray-50 rounded-2xl p-5 border-2 border-gray-100 hover:border-green-200 hover:bg-white hover:shadow-2xl transition-all flex flex-col items-center text-center w-64">
-                      <div className="w-28 h-28 bg-white rounded-2xl p-2 mb-3 flex items-center justify-center border-4 border-green-50 shadow-inner group transition-transform hover:scale-105">
+                    <div key={idx} className="bg-slate-50 border border-slate-100 rounded-3xl p-5 hover:bg-white hover:border-emerald-100 hover:shadow-xl transition-all duration-300 flex flex-col items-center text-center w-64">
+                      <div className="w-24 h-24 bg-white rounded-2xl p-2 mb-3.5 flex items-center justify-center border border-slate-200/60 shadow-sm transition-transform duration-300 hover:scale-105">
                         {product.productImage ? (
-                          <img src={product.productImage} alt="" className="w-full h-full object-cover" />
+                          <img src={product.productImage} alt="" className="w-full h-full object-contain" />
                         ) : (
-                          <span className="text-4xl">🌾</span>
+                          <span className="text-3xl">🌾</span>
                         )}
                       </div>
 
                       <div className="mb-3">
-                        <p className="font-black text-gray-800 text-base leading-tight">{product.productName}</p>
-                        <p className="text-[10px] font-bold text-muted-foreground mt-1 bg-gray-200/50 px-2 py-0.5 rounded-full">{product.date}</p>
+                        <p className="font-bold text-slate-800 text-sm leading-snug">{product.productName}</p>
+                        <p className="text-[10px] font-bold text-slate-400 mt-1 bg-slate-100 px-2 py-0.5 rounded-full inline-block">{product.date}</p>
                       </div>
 
-                      <div className="w-full pt-3 border-t-2 border-dashed border-gray-200">
-                        <p className="text-[9px] text-green-600 font-extrabold mb-1.5 uppercase tracking-[0.2em]">Calculation</p>
+                      <div className="w-full pt-3 mt-auto border-t border-slate-100">
+                        <p className="text-[10px] text-emerald-600 font-extrabold mb-1.5 uppercase tracking-wider">Calculation</p>
                         <div className="flex flex-col gap-1">
-                          <p className="text-sm text-gray-600 font-medium">
-                            <span className="font-black text-gray-900">{product.quantity} kg</span> × LKR {product.pricePerUnit.toLocaleString()}
+                          <p className="text-xs text-slate-500 font-medium">
+                            <span className="font-bold text-slate-800">{product.quantity} kg</span> × LKR {product.pricePerUnit.toLocaleString()}
                           </p>
-                          <div className="bg-green-600 text-white rounded-xl py-2 px-3 mt-1 inline-block shadow-lg shadow-green-100">
-                            <p className="text-[10px] opacity-80 font-bold uppercase tracking-wider">Total Price</p>
-                            <p className="text-lg font-black">LKR {itemTotal.toLocaleString()}</p>
+                          <div className="bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-700 border border-emerald-100/50 rounded-2xl py-2 px-3 mt-2 inline-block w-full">
+                            <p className="text-[9px] opacity-75 font-bold uppercase tracking-wider">Total Price</p>
+                            <p className="text-base font-black">LKR {itemTotal.toLocaleString()}</p>
                           </div>
                         </div>
                       </div>
@@ -1872,12 +2321,12 @@ export function SalesContent({ customerPurchases = [], equipmentRentals = [] }) 
               </div>
             </div>
 
-            <div className="bg-green-50 p-6 border-t-2 border-green-100 shrink-0">
+            <div className="bg-slate-50 p-6 border-t border-slate-100 shrink-0">
               <div className="flex flex-row justify-between items-center gap-4">
-                <p className="text-green-800 font-black text-lg">
+                <p className="text-slate-500 font-bold text-sm uppercase tracking-wider flex items-center gap-2">
                   📊 Transaction Grand Total
                 </p>
-                <p className="text-xl font-black text-green-600 bg-white px-6 py-2 rounded-xl shadow-sm border-2 border-green-100">
+                <p className="text-lg font-black text-slate-900 bg-white px-6 py-2.5 rounded-2xl shadow-sm border border-slate-200/50">
                   LKR {selectedProductCustomer.products.reduce((sum, p) => sum + (p.quantity * p.pricePerUnit), 0).toLocaleString()}
                 </p>
               </div>
@@ -1888,51 +2337,53 @@ export function SalesContent({ customerPurchases = [], equipmentRentals = [] }) 
 
       {/* Rental Details Modal */}
       {selectedRentalCustomer && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-[2rem] w-fit max-w-4xl max-h-[85vh] overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in duration-300">
-            <div className="bg-orange-600 p-5 text-white flex justify-between items-center shrink-0">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[9999] flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[85vh] overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-gradient-to-r from-amber-500 to-orange-600 p-6 text-white flex justify-between items-center shrink-0">
               <div className="flex items-center gap-4">
-                <span className="text-3xl bg-white/20 p-2 rounded-xl backdrop-blur-sm">{selectedRentalCustomer.icon}</span>
+                <span className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-2xl font-bold backdrop-blur-md">
+                  {selectedRentalCustomer.icon || '👨'}
+                </span>
                 <div>
-                  <h2 className="text-xl font-black">{selectedRentalCustomer.customerName}</h2>
-                  <p className="text-orange-100 text-xs mt-0.5">{selectedRentalCustomer.location} • {selectedRentalCustomer.phone}</p>
+                  <h2 className="text-xl font-bold">{selectedRentalCustomer.customerName}</h2>
+                  <p className="text-amber-100 text-xs mt-0.5">📍 {selectedRentalCustomer.location} • 📞 {selectedRentalCustomer.phone}</p>
                 </div>
               </div>
               <button
                 onClick={() => setSelectedRentalCustomer(null)}
-                className="bg-white hover:bg-green-50 p-2 rounded-full transition-all shadow-md group"
+                className="bg-white/10 hover:bg-white/20 p-2 rounded-xl transition-all border border-white/10"
               >
-                <span className="text-xl font-bold text-green-600">✕</span>
+                <X className="w-5 h-5 text-white" />
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto flex justify-center">
-              <div className="flex flex-wrap justify-center gap-6">
+            <div className="p-6 overflow-y-auto flex-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 justify-items-center">
                 {selectedRentalCustomer.rentals.map((rental, idx) => {
                   return (
-                    <div key={idx} className="bg-orange-50/20 rounded-2xl p-5 border-2 border-orange-100 hover:border-orange-300 hover:bg-white hover:shadow-2xl transition-all flex flex-col items-center text-center w-64">
-                      <div className="w-28 h-28 bg-white rounded-2xl p-2 mb-3 flex items-center justify-center border-4 border-orange-50 shadow-inner group transition-transform hover:scale-105">
+                    <div key={idx} className="bg-slate-50 border border-slate-100 rounded-3xl p-5 hover:bg-white hover:border-orange-100 hover:shadow-xl transition-all duration-300 flex flex-col items-center text-center w-64">
+                      <div className="w-24 h-24 bg-white rounded-2xl p-2 mb-3.5 flex items-center justify-center border border-slate-200/60 shadow-sm transition-transform duration-300 hover:scale-105">
                         {rental.equipmentImage ? (
-                          <img src={rental.equipmentImage} alt="" className="w-full h-full object-cover" />
+                          <img src={rental.equipmentImage} alt="" className="w-full h-full object-contain" />
                         ) : (
-                          <span className="text-4xl">🚜</span>
+                          <span className="text-3xl">🚜</span>
                         )}
                       </div>
 
                       <div className="mb-3">
-                        <p className="font-black text-gray-800 text-base leading-tight">{rental.equipmentName}</p>
-                        <p className="text-[10px] font-bold text-muted-foreground mt-1 bg-orange-100/50 px-2 py-0.5 rounded-full">{rental.date}</p>
+                        <p className="font-bold text-slate-800 text-sm leading-snug">{rental.equipmentName}</p>
+                        <p className="text-[10px] font-bold text-slate-400 mt-1 bg-slate-100 px-2 py-0.5 rounded-full inline-block">{rental.date}</p>
                       </div>
 
-                      <div className="w-full pt-3 border-t-2 border-dashed border-orange-200">
-                        <p className="text-[9px] text-orange-600 font-extrabold mb-1.5 uppercase tracking-[0.2em]">Rental Breakdown</p>
+                      <div className="w-full pt-3 mt-auto border-t border-slate-100">
+                        <p className="text-[10px] text-orange-600 font-extrabold mb-1.5 uppercase tracking-wider">Rental Breakdown</p>
                         <div className="flex flex-col gap-1">
-                          <p className="text-sm text-gray-600 font-medium">
-                            <span className="font-black text-gray-900">{rental.days} days</span> × LKR {rental.costPerDay.toLocaleString()}
+                          <p className="text-xs text-slate-500 font-medium">
+                            <span className="font-bold text-slate-800">{rental.days} days</span> × LKR {rental.costPerDay.toLocaleString()}
                           </p>
-                          <div className="bg-orange-600 text-white rounded-xl py-2 px-3 mt-1 inline-block shadow-lg shadow-orange-100">
-                            <p className="text-[10px] opacity-80 font-bold uppercase tracking-wider">Total Fee</p>
-                            <p className="text-lg font-black">LKR {rental.totalCost.toLocaleString()}</p>
+                          <div className="bg-gradient-to-r from-amber-50 to-orange-50 text-orange-700 border border-orange-100/50 rounded-2xl py-2 px-3 mt-2 inline-block w-full">
+                            <p className="text-[9px] opacity-75 font-bold uppercase tracking-wider">Total Fee</p>
+                            <p className="text-base font-black">LKR {rental.totalCost.toLocaleString()}</p>
                           </div>
                         </div>
                       </div>
@@ -1942,12 +2393,12 @@ export function SalesContent({ customerPurchases = [], equipmentRentals = [] }) 
               </div>
             </div>
 
-            <div className="bg-orange-50 p-6 border-t-2 border-orange-100 shrink-0">
+            <div className="bg-slate-50 p-6 border-t-2 border-slate-100 shrink-0">
               <div className="flex flex-row justify-between items-center gap-4">
-                <p className="text-orange-800 font-black text-lg">
+                <p className="text-slate-500 font-bold text-sm uppercase tracking-wider flex items-center gap-2">
                   📊 Rental Grand Total
                 </p>
-                <p className="text-xl font-black text-orange-600 bg-white px-6 py-2 rounded-xl shadow-sm border-2 border-orange-100">
+                <p className="text-lg font-black text-slate-900 bg-white px-6 py-2.5 rounded-2xl shadow-sm border border-slate-200/50">
                   LKR {selectedRentalCustomer.rentals.reduce((sum, r) => sum + r.totalCost, 0).toLocaleString()}
                 </p>
               </div>
@@ -1958,36 +2409,36 @@ export function SalesContent({ customerPurchases = [], equipmentRentals = [] }) 
 
       {/* Product Revenue Summary Modal */}
       {showProductSummaryModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-          <div className="bg-white rounded-[2rem] w-fit min-w-[320px] max-w-md overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in duration-300">
-            <div className="bg-green-600 p-5 text-white flex justify-between items-center">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-5 text-white flex justify-between items-center shrink-0">
               <div className="flex items-center gap-3">
                 <span className="text-2xl bg-white/20 p-2 rounded-xl">🌾</span>
-                <h2 className="font-black text-lg">Product Revenue Breakdown</h2>
+                <h2 className="font-bold text-lg">Product Revenue Breakdown</h2>
               </div>
               <button
                 onClick={() => setShowProductSummaryModal(false)}
-                className="bg-white p-2 rounded-full shadow-md group border-none"
+                className="bg-white/10 hover:bg-white/20 p-2 rounded-xl transition-all border border-white/10"
               >
-                <span className="text-green-600 font-bold">✕</span>
+                <X className="w-5 h-5 text-white" />
               </button>
             </div>
 
-            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+            <div style={{ maxHeight: '300px' }} className="p-6 space-y-3 overflow-y-auto flex-1 pr-2 custom-scrollbar">
               {filteredPurchases.map((customer, idx) => {
                 const customerTotal = customer.products.reduce((sum, p) => sum + (p.quantity * p.pricePerUnit), 0);
                 return (
-                  <div key={idx} className="flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <span className="font-bold text-gray-700">{customer.customerName}</span>
-                    <span className="font-black text-green-600 ml-8">LKR {customerTotal.toLocaleString()}</span>
+                  <div key={idx} className="flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-100 hover:border-emerald-100 hover:bg-white transition-all">
+                    <span className="font-bold text-slate-700">{customer.customerName}</span>
+                    <span className="font-black text-emerald-600 ml-8 text-sm">LKR {customerTotal.toLocaleString()}</span>
                   </div>
                 );
               })}
             </div>
 
-            <div className="bg-green-50 p-6 border-t-2 border-green-100">
-              <div className="flex justify-between items-center text-green-800">
-                <span className="font-black">GRAND TOTAL</span>
+            <div className="bg-emerald-50 p-6 border-t border-emerald-100 shrink-0">
+              <div className="flex justify-between items-center text-emerald-800">
+                <span className="font-bold text-xs uppercase tracking-wider">GRAND TOTAL</span>
                 <span className="text-2xl font-black ml-8">LKR {totalProductRevenue.toLocaleString()}</span>
               </div>
             </div>
@@ -1997,36 +2448,36 @@ export function SalesContent({ customerPurchases = [], equipmentRentals = [] }) 
 
       {/* Equipment Revenue Summary Modal */}
       {showRentalSummaryModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-          <div className="bg-white rounded-[2rem] w-fit min-w-[320px] max-w-md overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in duration-300">
-            <div className="bg-blue-600 p-5 text-white flex justify-between items-center">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-5 text-white flex justify-between items-center shrink-0">
               <div className="flex items-center gap-3">
                 <span className="text-2xl bg-white/20 p-2 rounded-xl">🚜</span>
-                <h2 className="font-black text-lg">Rental Revenue Breakdown</h2>
+                <h2 className="font-bold text-lg">Rental Revenue Breakdown</h2>
               </div>
               <button
                 onClick={() => setShowRentalSummaryModal(false)}
-                className="bg-white p-2 rounded-full shadow-md group border-none"
+                className="bg-white/10 hover:bg-white/20 p-2 rounded-xl transition-all border border-white/10"
               >
-                <span className="text-blue-600 font-bold">✕</span>
+                <X className="w-5 h-5 text-white" />
               </button>
             </div>
 
-            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+            <div style={{ maxHeight: '300px' }} className="p-6 space-y-3 overflow-y-auto flex-1 pr-2 custom-scrollbar">
               {filteredRentals.map((customer, idx) => {
                 const customerTotal = customer.rentals.reduce((sum, r) => sum + r.totalCost, 0);
                 return (
-                  <div key={idx} className="flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <span className="font-bold text-gray-700">{customer.customerName}</span>
-                    <span className="font-black text-blue-600 ml-8">LKR {customerTotal.toLocaleString()}</span>
+                  <div key={idx} className="flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-100 hover:border-blue-100 hover:bg-white transition-all">
+                    <span className="font-bold text-slate-700">{customer.customerName}</span>
+                    <span className="font-black text-blue-600 ml-8 text-sm">LKR {customerTotal.toLocaleString()}</span>
                   </div>
                 );
               })}
             </div>
 
-            <div className="bg-blue-50 p-6 border-t-2 border-blue-100">
+            <div className="bg-blue-50 p-6 border-t border-blue-100 shrink-0">
               <div className="flex justify-between items-center text-blue-800">
-                <span className="font-black">GRAND TOTAL</span>
+                <span className="font-bold text-xs uppercase tracking-wider">GRAND TOTAL</span>
                 <span className="text-2xl font-black ml-8">LKR {totalEquipmentRevenue.toLocaleString()}</span>
               </div>
             </div>
@@ -2077,11 +2528,6 @@ function ImageWithFallback({ src, alt, className }) {
 function OrdersContent({ orders }) {
   const [ordersList, setOrdersList] = useState(orders);
 
-  // Sync ordersList with prop when it changes
-  useEffect(() => {
-    setOrdersList(orders);
-  }, [orders]);
-
   // Auto-delete completed orders after 1 day
   useEffect(() => {
     const checkAndCleanOrders = () => {
@@ -2111,17 +2557,17 @@ function OrdersContent({ orders }) {
   }, []);
 
   // Toggle order status (pending <-> completed)
-  const toggleProductStatus = async (orderId, productId) => {
+  const toggleProductStatus = async (customerId, productId) => {
     // Find the new status first
-    const customer = ordersList.find(c => c.id === orderId);
+    const customer = ordersList.find(c => c.id === customerId);
     const product = customer?.products.find(p => p.id === productId);
     if (!product) return;
 
     const newStatus = product.status === 'pending' ? 'completed' : 'pending';
 
     // Update UI immediately (optimistic update)
-    const updatedOrdersList = ordersList.map(customer => {
-      if (customer.id === orderId) {
+    setOrdersList(ordersList.map(customer => {
+      if (customer.id === customerId) {
         const updatedProducts = customer.products.map(p => {
           if (p.id === productId) {
             return { ...p, status: newStatus };
@@ -2135,19 +2581,16 @@ function OrdersContent({ orders }) {
         return {
           ...customer,
           products: updatedProducts,
-          completedAt: allCompleted ? new Date().toISOString() : null,
-          status: allCompleted ? 'completed' : 'pending' // Also update overall status if needed
+          completedAt: allCompleted ? new Date().toISOString() : null
         };
       }
       return customer;
-    });
-
-    setOrdersList(updatedOrdersList);
+    }));
 
     // Sync to backend
     try {
       const { updateOrderStatus } = await import('../../services/farmerApi');
-      await updateOrderStatus(orderId, newStatus, productId);
+      await updateOrderStatus(productId, newStatus);
     } catch (err) {
       console.warn('Backend unavailable, order status updated locally only:', err.message);
     }
@@ -2960,42 +3403,43 @@ function EquipmentContent({ myEquipment, onAddClick, onDeleteEquipment, onRentCl
 }
 // Weather Content
 function WeatherContent({ userLocation }) {
+  const weatherData = getWeatherData(userLocation);
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-left">
       <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl p-8 text-white">
         <h1 className="text-3xl mb-2 flex items-center gap-3">
           <img src={weatherIcon} alt="" className="w-10 h-10 object-contain brightness-0 invert" />
           Weather Forecast
         </h1>
-        <p className="text-blue-100 text-lg">7-day weather forecast for your farm</p>
+        <p className="text-blue-100 text-lg font-medium">7-day weather forecast for your farm in {weatherData.district}</p>
       </div>
 
       {/* Current Weather - Large */}
       <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-8">
-        <h2 className="text-2xl text-primary mb-6">Today - {userLocation}</h2>
+        <h2 className="text-2xl text-primary font-bold mb-6">Today - {weatherData.district}</h2>
         <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-8">
           <div className="flex items-center gap-6 mb-6">
-            <span className="text-8xl">☀️</span>
+            <span className="text-8xl">{weatherData.emoji}</span>
             <div>
-              <p className="text-6xl text-foreground">28°C</p>
-              <p className="text-2xl text-muted-foreground">Partly Cloudy</p>
+              <p className="text-6xl text-foreground font-black">{weatherData.temp}</p>
+              <p className="text-2xl text-muted-foreground font-semibold">{weatherData.status}</p>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center bg-white rounded-lg p-4">
               <Droplets className="w-10 h-10 text-blue-500 mx-auto mb-2" />
-              <p className="text-xl mt-2">Humidity</p>
-              <p className="text-2xl font-bold">75%</p>
+              <p className="text-sm text-slate-400 mt-2">Humidity</p>
+              <p className="text-2xl font-bold">{weatherData.humidity}</p>
             </div>
             <div className="text-center bg-white rounded-lg p-4">
               <Wind className="w-10 h-10 text-gray-500 mx-auto mb-2" />
-              <p className="text-xl mt-2">Wind</p>
-              <p className="text-2xl font-bold">12 km/h</p>
+              <p className="text-sm text-slate-400 mt-2">Wind</p>
+              <p className="text-2xl font-bold">{weatherData.wind}</p>
             </div>
             <div className="text-center bg-white rounded-lg p-4">
               <CloudRain className="w-10 h-10 text-blue-400 mx-auto mb-2" />
-              <p className="text-xl mt-2">Rain</p>
-              <p className="text-2xl font-bold">20%</p>
+              <p className="text-sm text-slate-400 mt-2">Rain</p>
+              <p className="text-2xl font-bold">{weatherData.rain}</p>
             </div>
           </div>
         </div>
@@ -3005,24 +3449,20 @@ function WeatherContent({ userLocation }) {
       <div className="bg-yellow-50 border-l-4 border-yellow-500 rounded-lg p-6">
         <div className="flex items-center gap-3 mb-2">
           <span className="text-3xl">⚠️</span>
-          <h3 className="text-2xl text-yellow-900">Weather Alert</h3>
+          <h3 className="text-2xl text-yellow-900 font-bold">Weather Alert</h3>
         </div>
-        <p className="text-xl text-yellow-900 ml-12">
-          Moderate rain expected tomorrow. Consider harvesting ready crops today!
+        <p className="text-lg text-yellow-900 ml-12">
+          {weatherData.alert}
         </p>
       </div>
 
       {/* 7-Day Forecast */}
       <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
-        <h2 className="text-2xl text-primary mb-6">7-Day Forecast</h2>
+        <h2 className="text-2xl text-primary font-bold mb-6">7-Day Forecast</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-          <WeatherDayCard day="Mon" emoji="☀️" temp="29°C" />
-          <WeatherDayCard day="Tue" emoji="☁️" temp="26°C" />
-          <WeatherDayCard day="Wed" emoji="⛈️" temp="25°C" />
-          <WeatherDayCard day="Thu" emoji="⛅" temp="27°C" />
-          <WeatherDayCard day="Fri" emoji="☀️" temp="30°C" />
-          <WeatherDayCard day="Sat" emoji="☀️" temp="28°C" />
-          <WeatherDayCard day="Sun" emoji="🔥" temp="31°C" />
+          {weatherData.forecast.map((dayData, idx) => (
+            <WeatherDayCard key={idx} day={dayData.day} emoji={dayData.emoji} temp={dayData.temp} />
+          ))}
         </div>
       </div>
     </div>
@@ -3242,7 +3682,19 @@ function SettingsContent({
       console.error('Profile update error:', err);
       // Fallback for demo
       localStorage.setItem('userProfile', JSON.stringify(profileData));
+      localStorage.setItem('userName', profileData.name);
+      localStorage.setItem('userEmail', profileData.email);
+      localStorage.setItem('userPhone', profileData.phone);
+      localStorage.setItem('userLocation', profileData.location);
+      localStorage.setItem('userNIC', profileData.nic);
+      localStorage.setItem('profilePicture', profilePicture);
+
       setUserName(profileData.name);
+      setUserEmail(profileData.email);
+      setUserPhone(profileData.phone);
+      setUserLocation(profileData.location);
+      setUserNIC(profileData.nic);
+
       alert('⚠️ Backend unavailable. Data saved locally for now.');
     }
   };
@@ -3853,33 +4305,35 @@ function SettingsContent({
 
       {/* Delete Account Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-8 w-full max-w-md">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
             <div className="text-center mb-6">
-              <span className="text-6xl block mb-4">⚠️</span>
+              <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-red-500">
+                <AlertCircle className="w-10 h-10" />
+              </div>
               <h2 className="text-2xl text-red-600 font-bold mb-2">Are You Sure?</h2>
-              <p className="text-muted-foreground text-lg">
-                This action cannot be undone. All your data will be permanently deleted.
+              <p className="text-slate-500 text-sm leading-relaxed">
+                This action cannot be undone. All your data will be permanently deleted from NagroMS.
               </p>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-muted-foreground mb-1 block">
+                <label className="text-xs font-bold text-slate-400 mb-1.5 block uppercase tracking-wider">
                   🔒 Enter your password to confirm
                 </label>
                 <input
                   type="password"
                   value={deletePassword}
                   onChange={(e) => setDeletePassword(e.target.value)}
-                  placeholder="Enter your password"
-                  className="w-full px-4 py-3 border border-red-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-lg"
+                  placeholder="Password"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 text-sm focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10 outline-none transition-all font-medium"
                 />
               </div>
 
-              <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
-                <p className="text-sm text-red-900 font-bold mb-1">⚠️ Warning:</p>
-                <ul className="text-sm text-red-800 space-y-1 list-disc list-inside">
+              <div className="bg-red-50 border border-red-100 p-4 rounded-2xl">
+                <p className="text-xs font-bold text-red-700 mb-1 uppercase tracking-wider">⚠️ Warnings:</p>
+                <ul className="text-xs text-red-600 space-y-1 list-disc list-inside">
                   <li>All your products will be deleted</li>
                   <li>Your farm data will be lost</li>
                   <li>All contacts will be removed</li>
@@ -3890,7 +4344,7 @@ function SettingsContent({
 
             <div className="flex gap-3 mt-6">
               <button
-                className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-bold"
+                className="flex-1 px-4 py-3 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all active:scale-95 text-sm"
                 onClick={() => {
                   setShowDeleteModal(false);
                   setDeletePassword('');
@@ -3899,10 +4353,10 @@ function SettingsContent({
                 Cancel
               </button>
               <button
-                className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-bold"
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white rounded-2xl font-bold transition-all shadow-lg shadow-red-500/20 hover:shadow-xl hover:shadow-red-500/30 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 text-sm"
                 onClick={handleDeleteAccount}
               >
-                Yes, Delete Account
+                Delete Account
               </button>
             </div>
           </div>
@@ -3915,7 +4369,10 @@ function SettingsContent({
 // Component Cards
 function QuickActionCard({ icon, title, subtitle, color, onClick }) {
   return (
-    <div className={`${color} rounded-xl p-6 hover:shadow-lg transition-shadow cursor-pointer ${onClick ? 'cursor-pointer' : ''}`} onClick={onClick}>
+    <div 
+      className={`${color} rounded-xl p-6 border border-transparent hover:border-green-300 hover:bg-green-100/80 hover:shadow-lg transition-all duration-300 cursor-pointer text-left`} 
+      onClick={onClick}
+    >
       {icon && (
         <span className="w-12 h-12 flex items-center justify-center mb-3">
           {typeof icon === 'string' && icon.length <= 4 ? (
@@ -4296,16 +4753,28 @@ function OrderCard({ product, quantity, customer, phone, status, date }) {
 // Confirmation Dialog
 function ConfirmDialog({ title, message, onConfirm, onCancel }) {
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-      <div className="bg-white rounded-2xl p-8 w-96">
-        <h2 className="text-xl text-primary mb-4">{title}</h2>
-        <p className="text-lg text-muted-foreground mb-6">{message}</p>
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex items-center gap-3.5 mb-4 text-amber-500">
+          <div className="p-3 bg-amber-50 rounded-2xl">
+            <AlertCircle className="w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900">{title}</h2>
+        </div>
+        <p className="text-slate-600 text-sm leading-relaxed mb-6">{message}</p>
         <div className="flex justify-end gap-3">
-          <button className="px-4 py-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100" onClick={onCancel}>
+          <button 
+            className="px-5 py-3 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 hover:shadow-sm transition-all active:scale-95 text-sm" 
+            onClick={onCancel}
+          >
             Cancel
           </button>
-          <button className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600" onClick={onConfirm}>
-            Delete
+          <button 
+            style={{ backgroundColor: '#22c55e', color: '#ffffff' }}
+            className="px-5 py-3 hover:bg-green-600 text-white rounded-2xl font-bold transition-all shadow-md active:scale-95 text-sm" 
+            onClick={onConfirm}
+          >
+            Confirm
           </button>
         </div>
       </div>
@@ -4316,29 +4785,61 @@ function ConfirmDialog({ title, message, onConfirm, onCancel }) {
 // Edit Product Modal
 function EditProductModal({ product, onChange, onSave, onCancel }) {
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-      <div className="bg-white rounded-2xl p-8 w-[500px]">
-        <h2 className="text-2xl text-primary mb-6">Edit Product</h2>
-        <div className="space-y-4">
-
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
+      <div style={{ maxWidth: '440px', width: '100%' }} className="bg-white rounded-3xl shadow-2xl border border-green-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div style={{ backgroundColor: '#f0fdf4' }} className="px-8 py-5 border-b border-green-200 flex justify-between items-center">
+          <h2 className="text-xl font-bold text-green-800 flex items-center gap-2">
+            <Edit className="w-5 h-5 text-green-600" /> Edit Product
+          </h2>
+          <button onClick={onCancel} className="p-1.5 hover:bg-green-100/50 rounded-xl transition-all">
+            <X className="w-5 h-5 text-green-600" />
+          </button>
+        </div>
+        <div className="p-8 space-y-6">
           <div>
-            <label className="block text-sm text-muted-foreground mb-1">Name (Read-only)</label>
-            <input type="text" value={product.name} readOnly className="w-full p-3 border rounded-lg text-lg bg-gray-50 cursor-not-allowed" />
+            <label className="block text-xs font-bold text-green-700 mb-1.5 uppercase tracking-wider">Product Name (Read-only)</label>
+            <input 
+              type="text" 
+              value={product.name} 
+              readOnly 
+              className="w-full px-4 py-3 bg-slate-100/80 border border-slate-200/50 rounded-2xl text-slate-500 text-sm cursor-not-allowed font-medium" 
+            />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-muted-foreground mb-1">Quantity (kg)</label>
-              <input type="number" value={product.quantity} onChange={e => onChange('quantity', e.target.value)} className="w-full p-3 border rounded-lg text-lg" />
+              <label className="block text-xs font-bold text-green-700 mb-1.5 uppercase tracking-wider">Quantity (kg)</label>
+              <input 
+                type="number" 
+                value={product.quantity} 
+                onChange={e => onChange('quantity', e.target.value)} 
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 text-sm focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-medium" 
+              />
             </div>
             <div>
-              <label className="block text-sm text-muted-foreground mb-1">Price (LKR/kg)</label>
-              <input type="number" value={product.price} onChange={e => onChange('price', e.target.value)} className="w-full p-3 border rounded-lg text-lg" />
+              <label className="block text-xs font-bold text-green-700 mb-1.5 uppercase tracking-wider">Price (LKR/kg)</label>
+              <input 
+                type="number" 
+                value={product.price} 
+                onChange={e => onChange('price', e.target.value)} 
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 text-sm focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-medium" 
+              />
             </div>
           </div>
         </div>
-        <div className="flex gap-3 mt-8">
-          <button className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl" onClick={onCancel}>Cancel</button>
-          <button className="flex-1 py-3 bg-primary text-white rounded-xl" onClick={onSave}>Save Changes</button>
+        <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex gap-3">
+          <button 
+            className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all active:scale-95 text-sm" 
+            onClick={onCancel}
+          >
+            Cancel
+          </button>
+          <button 
+            style={{ backgroundColor: '#22c55e', color: '#ffffff' }}
+            className="flex-1 py-3 hover:bg-green-600 text-white rounded-2xl font-bold transition-all shadow-lg shadow-green-500/20 hover:shadow-xl active:scale-95 text-sm" 
+            onClick={onSave}
+          >
+            Save Changes
+          </button>
         </div>
       </div>
     </div>
@@ -4348,52 +4849,65 @@ function EditProductModal({ product, onChange, onSave, onCancel }) {
 // Edit Inventory Modal
 function EditInventoryModal({ item, onChange, onSave, onCancel }) {
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl p-6 w-96 shadow-2xl animate-in fade-in zoom-in duration-200">
-        <h2 className="text-xl text-primary font-bold mb-4">✏️ Edit Status</h2>
-
-        <div className="space-y-4">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
+      <div style={{ maxWidth: '440px', width: '100%' }} className="bg-white rounded-3xl shadow-2xl border border-green-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div style={{ backgroundColor: '#f0fdf4' }} className="px-8 py-5 border-b border-green-200 flex justify-between items-center">
+          <h2 className="text-xl font-bold text-green-800 flex items-center gap-2">
+            <Edit className="w-5 h-5 text-green-600" /> Edit Status
+          </h2>
+          <button onClick={onCancel} className="p-1.5 hover:bg-green-100/50 rounded-xl transition-all">
+            <X className="w-5 h-5 text-green-600" />
+          </button>
+        </div>
+        
+        <div className="p-8 space-y-6">
           <div>
-            <label className="block text-xs font-bold text-muted-foreground mb-1 uppercase tracking-wider">Item Name</label>
-            <div className="px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-foreground font-bold">
+            <label className="block text-xs font-bold text-green-700 mb-1.5 uppercase tracking-wider">Item Name</label>
+            <div className="px-4 py-3 bg-slate-100/80 border border-slate-200/50 rounded-2xl text-slate-500 text-sm font-semibold">
               {item.name}
             </div>
           </div>
-
+ 
           <div>
-            <label className="block text-xs font-bold text-muted-foreground mb-1 uppercase tracking-wider">Quantity</label>
+            <label className="block text-xs font-bold text-green-700 mb-1.5 uppercase tracking-wider">Quantity</label>
             <input
               type="text"
               placeholder="e.g. 500 kg"
               value={item.quantity}
               onChange={(e) => onChange('quantity', e.target.value)}
-              className="w-full px-4 py-3 border border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 text-sm focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-medium"
             />
           </div>
-
+ 
           <div>
-            <label className="block text-xs font-bold text-muted-foreground mb-1 uppercase tracking-wider">Stock Status</label>
-            <select
-              value={item.status}
-              onChange={(e) => onChange('status', e.target.value)}
-              className="w-full px-4 py-3 border border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-lg appearance-none bg-white cursor-pointer"
-            >
-              <option value="In Stock">✅ In Stock</option>
-              <option value="Low Stock">⚠️ Low Stock</option>
-              <option value="Out of Stock">❌ Out of Stock</option>
-            </select>
+            <label className="block text-xs font-bold text-green-700 mb-1.5 uppercase tracking-wider">Stock Status</label>
+            <div className="relative">
+              <select
+                value={item.status}
+                onChange={(e) => onChange('status', e.target.value)}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 text-sm focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all cursor-pointer font-medium appearance-none"
+              >
+                <option value="In Stock">✅ In Stock</option>
+                <option value="Low Stock">⚠️ Low Stock</option>
+                <option value="Out of Stock">❌ Out of Stock</option>
+              </select>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                <ChevronDown className="w-4 h-4" />
+              </div>
+            </div>
           </div>
         </div>
-
-        <div className="flex gap-3 mt-8">
+ 
+        <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex gap-3">
           <button
-            className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+            className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all active:scale-95 text-sm"
             onClick={onCancel}
           >
             Cancel
           </button>
           <button
-            className="flex-1 py-3 bg-primary text-white rounded-xl font-bold hover:bg-green-700 transition-colors shadow-lg"
+            style={{ backgroundColor: '#22c55e', color: '#ffffff' }}
+            className="flex-1 py-3 hover:bg-green-600 text-white rounded-2xl font-bold transition-all shadow-lg shadow-green-500/20 hover:shadow-xl active:scale-95 text-sm"
             onClick={onSave}
           >
             Save
@@ -4407,92 +4921,62 @@ function EditInventoryModal({ item, onChange, onSave, onCancel }) {
 // Add Product Modal
 function AddProductModal({ product, onChange, onSave, onCancel }) {
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-      <div className="bg-white rounded-2xl p-8 w-[500px]">
-        <h2 className="text-2xl text-primary mb-6">Add New Product</h2>
-        <div className="space-y-4">
-
-
-
-          {/* Category */}
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
+      <div style={{ maxWidth: '440px', width: '100%' }} className="bg-white rounded-3xl shadow-2xl border border-green-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div style={{ backgroundColor: '#f0fdf4' }} className="px-8 py-5 border-b border-green-200 flex justify-between items-center">
+          <h2 className="text-xl font-bold text-green-800 flex items-center gap-2">
+            <Plus className="w-5 h-5 text-green-600" /> Add Product
+          </h2>
+          <button onClick={onCancel} className="p-1.5 hover:bg-green-100/50 rounded-xl transition-all">
+            <X className="w-5 h-5 text-green-600" />
+          </button>
+        </div>
+        <div className="p-8 space-y-6">
           <div>
-            <label className="block text-sm text-muted-foreground mb-1">Category</label>
-            <select
-              value={product.category || 'vegetables'}
-              onChange={e => onChange('category', e.target.value)}
-              className="w-full p-3 border rounded-lg text-lg bg-white"
-            >
-              <option value="vegetables">Vegetables</option>
-              <option value="fruits">Fruits</option>
-              <option value="grains">Grains</option>
-            </select>
-          </div>
-
-          {/* Name */}
-          <div>
-            <label className="block text-sm text-muted-foreground mb-1">Name</label>
+            <label className="block text-xs font-bold text-green-700 mb-1.5 uppercase tracking-wider">Product Name</label>
             <input
               type="text"
               placeholder="e.g. Fresh Tomatoes"
               value={product.name}
               onChange={e => onChange('name', e.target.value)}
-              className="w-full p-3 border rounded-lg text-lg"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 text-sm focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-medium"
             />
           </div>
 
-
-          {/* Quantity & Price */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-muted-foreground mb-1">Quantity (kg)</label>
+              <label className="block text-xs font-bold text-green-700 mb-1.5 uppercase tracking-wider">Quantity (kg)</label>
               <input
                 type="number"
-                placeholder="50"
+                placeholder="e.g. 50"
                 value={product.quantity}
                 onChange={e => onChange('quantity', e.target.value)}
-                className="w-full p-3 border rounded-lg text-lg"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 text-sm focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-medium"
               />
             </div>
             <div>
-              <label className="block text-sm text-muted-foreground mb-1">Price (LKR/kg)</label>
+              <label className="block text-xs font-bold text-green-700 mb-1.5 uppercase tracking-wider">Price (LKR/kg)</label>
               <input
                 type="number"
-                placeholder="200"
+                placeholder="e.g. 200"
                 value={product.price}
                 onChange={e => onChange('price', e.target.value)}
-                className="w-full p-3 border rounded-lg text-lg"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 text-sm focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-medium"
               />
             </div>
           </div>
-
-          {/* Unit */}
-          <div>
-            <label className="block text-sm text-muted-foreground mb-1">Unit of Measurement</label>
-            <select
-              value={product.unit || 'kg'}
-              onChange={e => onChange('unit', e.target.value)}
-              className="w-full p-3 border rounded-lg text-lg bg-white"
-            >
-              <option value="kg">Kilogram (kg)</option>
-              <option value="g">Gram (g)</option>
-              <option value="unit">Per Unit / Each</option>
-              <option value="bunch">Bunch</option>
-              <option value="liter">Liter</option>
-            </select>
-          </div>
-
         </div>
 
-        {/* Buttons */}
-        <div className="flex gap-3 mt-8">
+        <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex gap-3">
           <button
-            className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200"
+            className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all active:scale-95 text-sm"
             onClick={onCancel}
           >
             Cancel
           </button>
           <button
-            className="flex-1 py-3 bg-primary text-white rounded-xl hover:bg-green-700"
+            style={{ backgroundColor: '#22c55e', color: '#ffffff' }}
+            className="flex-1 py-3 hover:bg-green-600 text-white rounded-2xl font-bold transition-all shadow-lg shadow-green-500/20 hover:shadow-xl active:scale-95 text-sm"
             onClick={onSave}
           >
             Add Product
@@ -4506,44 +4990,48 @@ function AddProductModal({ product, onChange, onSave, onCancel }) {
 // Add Equipment Modal
 function AddEquipmentModal({ equipment, onChange, onSave, onCancel }) {
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-      <div className="bg-white rounded-2xl p-8 w-96 shadow-2xl">
-        <h2 className="text-2xl text-primary font-bold mb-6">Add My Equipment</h2>
-        <div className="space-y-4">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
+      <div style={{ maxWidth: '440px', width: '100%' }} className="bg-white rounded-3xl shadow-2xl border border-green-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div style={{ backgroundColor: '#f0fdf4' }} className="px-8 py-5 border-b border-green-200 flex justify-between items-center">
+          <h2 className="text-xl font-bold text-green-800 flex items-center gap-2">
+            <Plus className="w-5 h-5 text-green-600" /> Add Equipment
+          </h2>
+          <button onClick={onCancel} className="p-1.5 hover:bg-green-100/50 rounded-xl transition-all">
+            <X className="w-5 h-5 text-green-600" />
+          </button>
+        </div>
+        <div className="p-8 space-y-6">
           <div>
-            <label className="block text-sm font-semibold text-muted-foreground mb-2">
-              Equipment Name
-            </label>
+            <label className="block text-xs font-bold text-green-700 mb-1.5 uppercase tracking-wider">Equipment Name</label>
             <input
               type="text"
               placeholder="e.g. Tractor, Sprayer..."
               value={equipment.name}
               onChange={(e) => onChange('name', e.target.value)}
-              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 text-sm focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-medium"
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-muted-foreground mb-2">
-              Rent Price (LKR/day)
-            </label>
+            <label className="block text-xs font-bold text-green-700 mb-1.5 uppercase tracking-wider">Rent Price (LKR/day)</label>
             <input
               type="number"
               placeholder="e.g. 5000"
               value={equipment.price}
               onChange={(e) => onChange('price', e.target.value)}
-              className="w-full px-4 py-3 border border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 text-sm focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-medium"
             />
           </div>
         </div>
-        <div className="flex gap-3 mt-8">
+        <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex gap-3">
           <button
-            className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors font-semibold"
+            className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all active:scale-95 text-sm"
             onClick={onCancel}
           >
             Cancel
           </button>
           <button
-            className="flex-1 py-3 bg-primary text-white rounded-xl hover:bg-green-700 transition-colors font-semibold"
+            style={{ backgroundColor: '#22c55e', color: '#ffffff' }}
+            className="flex-1 py-3 hover:bg-green-600 text-white rounded-2xl font-bold transition-all shadow-lg shadow-green-500/20 hover:shadow-xl active:scale-95 text-sm"
             onClick={onSave}
           >
             Add Equipment
@@ -4554,61 +5042,71 @@ function AddEquipmentModal({ equipment, onChange, onSave, onCancel }) {
   );
 }
 
-
 // Add Inventory Modal
 function AddInventoryModal({ item, onChange, onSave, onCancel }) {
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="bg-white rounded-[2rem] p-8 w-[400px] shadow-2xl border border-green-100 animate-in fade-in zoom-in duration-200">
-        <h2 className="text-2xl font-bold text-primary mb-6 flex items-center gap-2">
-          <Plus className="w-6 h-6" /> Add Supplies
-        </h2>
-        <div className="space-y-5">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
+      <div style={{ maxWidth: '440px', width: '100%' }} className="bg-white rounded-3xl shadow-2xl border border-green-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div style={{ backgroundColor: '#f0fdf4' }} className="px-8 py-5 border-b border-green-200 flex justify-between items-center">
+          <h2 className="text-xl font-bold text-green-800 flex items-center gap-2">
+            <Plus className="w-5 h-5 text-green-600" /> Add Inventory Item
+          </h2>
+          <button onClick={onCancel} className="p-1.5 hover:bg-green-100/50 rounded-xl transition-all">
+            <X className="w-5 h-5 text-green-600" />
+          </button>
+        </div>
+        <div className="p-8 space-y-6">
           <div>
-            <label className="block text-xs font-black text-gray-400 mb-2 uppercase tracking-[0.1em]">Item Name</label>
+            <label className="block text-xs font-bold text-green-700 mb-1.5 uppercase tracking-wider">Item Name</label>
             <input
               type="text"
               placeholder="e.g. Rice Seeds"
               value={item.name}
               onChange={(e) => onChange('name', e.target.value)}
-              className="w-full px-4 py-3 border border-green-100 rounded-2xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-lg font-bold"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 text-sm focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-medium"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-black text-gray-400 mb-2 uppercase tracking-[0.1em]">Quantity</label>
+            <label className="block text-xs font-bold text-green-700 mb-1.5 uppercase tracking-wider">Quantity</label>
             <input
               type="text"
               placeholder="e.g. 500 kg"
               value={item.quantity}
               onChange={(e) => onChange('quantity', e.target.value)}
-              className="w-full px-4 py-3 border border-green-100 rounded-2xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-lg font-bold"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 text-sm focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-medium"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-black text-gray-400 mb-2 uppercase tracking-[0.1em]">Current Status</label>
-            <select
-              value={item.status}
-              onChange={(e) => onChange('status', e.target.value)}
-              className="w-full px-4 py-3 border border-green-100 rounded-2xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-lg font-bold bg-white cursor-pointer"
-            >
-              <option value="In Stock">✅ In Stock</option>
-              <option value="Low Stock">⚠️ Low Stock</option>
-              <option value="Out of Stock">❌ Out of Stock</option>
-            </select>
+            <label className="block text-xs font-bold text-green-700 mb-1.5 uppercase tracking-wider">Current Status</label>
+            <div className="relative">
+              <select
+                value={item.status}
+                onChange={(e) => onChange('status', e.target.value)}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 text-sm focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all cursor-pointer font-medium appearance-none"
+              >
+                <option value="In Stock">✅ In Stock</option>
+                <option value="Low Stock">⚠️ Low Stock</option>
+                <option value="Out of Stock">❌ Out of Stock</option>
+              </select>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                <ChevronDown className="w-4 h-4" />
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="flex gap-3 mt-10">
+        <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex gap-3">
           <button
-            className="flex-1 py-4 bg-gray-50 text-gray-500 rounded-2xl font-bold hover:bg-gray-100 transition-all active:scale-95"
+            className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all active:scale-95 text-sm"
             onClick={onCancel}
           >
             Cancel
           </button>
           <button
-            className="flex-1 py-4 bg-primary text-white rounded-2xl font-black hover:bg-green-700 transition-all shadow-xl shadow-green-200/50 active:scale-95"
+            style={{ backgroundColor: '#22c55e', color: '#ffffff' }}
+            className="flex-1 py-3 hover:bg-green-600 text-white rounded-2xl font-bold transition-all shadow-lg shadow-green-500/20 hover:shadow-xl active:scale-95 text-sm"
             onClick={onSave}
           >
             Add Item
@@ -4625,93 +5123,98 @@ function RentEquipmentModal({ equipment, quantity, days, onQuantityChange, onDay
   const totalPrice = equipment.price * quantity * days;
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="bg-white rounded-[2rem] p-8 w-[380px] h-[580px] shadow-2xl border border-green-100 animate-in fade-in zoom-in duration-200 flex flex-col relative overflow-hidden">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-primary flex items-center gap-2">
-            <Calendar className="w-5 h-5" />
-            Rent {equipment.name}
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
+      <div style={{ maxWidth: '440px', width: '100%' }} className="bg-white rounded-3xl shadow-2xl border border-green-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col">
+        <div style={{ backgroundColor: '#f0fdf4' }} className="px-8 py-5 border-b border-green-200 flex justify-between items-center">
+          <h2 className="text-xl font-bold text-green-800 flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-green-600" /> Rent {equipment.name}
           </h2>
-          <button onClick={onCancel} className="p-1.5 hover:bg-gray-100 rounded-full transition-colors">
-            <X className="w-5 h-5 text-gray-400" />
+          <button onClick={onCancel} className="p-1.5 hover:bg-green-100/50 rounded-xl transition-all">
+            <X className="w-5 h-5 text-green-600" />
           </button>
         </div>
 
-        <div className="bg-green-50/50 p-5 rounded-2xl mb-6 space-y-3 text-base border border-green-100/50">
-          <div className="flex items-center justify-between">
-            <p className="text-gray-500 font-medium">Provider:</p>
-            <p className="font-bold text-foreground">{equipment.owner?.name}</p>
-          </div>
-          <div className="flex items-center justify-between">
-            <p className="text-gray-500 font-medium">Contact:</p>
-            <p className="font-bold text-green-600 flex items-center gap-1">
-              <Phone className="w-4 h-4" /> {equipment.owner?.phone}
-            </p>
-          </div>
-          <div className="flex items-center justify-between">
-            <p className="text-gray-500 font-medium">Price/Day:</p>
-            <p className="font-bold text-primary">LKR {equipment.price.toLocaleString()}</p>
-          </div>
-        </div>
-
-        <div className="space-y-6 flex-1">
-          <div>
-            <label className="block text-xs font-black text-gray-400 mb-3 uppercase tracking-[0.15em]">Quantity</label>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => onQuantityChange(Math.max(1, quantity - 1))}
-                className="w-12 h-12 rounded-2xl border-2 border-green-100 flex items-center justify-center hover:bg-green-50 hover:border-primary transition-all text-2xl font-bold active:scale-95"
-              >-</button>
-              <input
-                type="number"
-                value={quantity}
-                onChange={(e) => onQuantityChange(Math.max(1, parseInt(e.target.value) || 1))}
-                className="flex-1 text-center py-2 border-b-2 border-green-100 font-black text-2xl focus:border-primary outline-none bg-transparent"
-              />
-              <button
-                onClick={() => onQuantityChange(quantity + 1)}
-                className="w-12 h-12 rounded-2xl border-2 border-green-100 flex items-center justify-center hover:bg-green-50 hover:border-primary transition-all text-2xl font-bold active:scale-95"
-              >+</button>
+        <div className="p-8 space-y-8 flex-1 text-left">
+          {/* Provider details */}
+          <div className="bg-green-50/30 p-5 rounded-2xl border border-green-100/30 space-y-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500 font-medium">Provider:</span>
+              <span className="font-bold text-slate-800">{equipment.owner?.name}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500 font-medium">Contact:</span>
+              <span className="font-bold text-green-600 flex items-center gap-1.5">
+                <Phone className="w-4 h-4" /> {equipment.owner?.phone}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500 font-medium">Price / Day:</span>
+              <span className="font-bold text-slate-800">LKR {equipment.price.toLocaleString()}</span>
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-black text-gray-400 mb-3 uppercase tracking-[0.15em]">Rental Duration (Days)</label>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => onDaysChange(Math.max(1, days - 1))}
-                className="w-12 h-12 rounded-2xl border-2 border-green-100 flex items-center justify-center hover:bg-green-50 hover:border-primary transition-all text-2xl font-bold active:scale-95"
-              >-</button>
-              <input
-                type="number"
-                value={days}
-                onChange={(e) => onDaysChange(Math.max(1, parseInt(e.target.value) || 1))}
-                className="flex-1 text-center py-2 border-b-2 border-green-100 font-black text-2xl focus:border-primary outline-none bg-transparent"
-              />
-              <button
-                onClick={() => onDaysChange(days + 1)}
-                className="w-12 h-12 rounded-2xl border-2 border-green-100 flex items-center justify-center hover:bg-green-50 hover:border-primary transition-all text-2xl font-bold active:scale-95"
-              >+</button>
+          {/* Controls */}
+          <div className="space-y-6">
+            <div>
+              <label className="block text-xs font-bold text-green-700 mb-2 uppercase tracking-wider">Quantity</label>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => onQuantityChange(Math.max(1, quantity - 1))}
+                  className="w-11 h-11 rounded-xl border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-all text-xl font-bold text-slate-600 active:scale-95"
+                >-</button>
+                <input
+                  type="number"
+                  value={quantity}
+                  onChange={(e) => onQuantityChange(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="flex-1 text-center py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-lg text-slate-800 focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all"
+                />
+                <button
+                  onClick={() => onQuantityChange(quantity + 1)}
+                  className="w-11 h-11 rounded-xl border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-all text-xl font-bold text-slate-600 active:scale-95"
+                >+</button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-green-700 mb-2 uppercase tracking-wider">Rental Duration (Days)</label>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => onDaysChange(Math.max(1, days - 1))}
+                  className="w-11 h-11 rounded-xl border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-all text-xl font-bold text-slate-600 active:scale-95"
+                >-</button>
+                <input
+                  type="number"
+                  value={days}
+                  onChange={(e) => onDaysChange(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="flex-1 text-center py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-lg text-slate-800 focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all"
+                />
+                <button
+                  onClick={() => onDaysChange(days + 1)}
+                  className="w-11 h-11 rounded-xl border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-all text-xl font-bold text-slate-600 active:scale-95"
+                >+</button>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="mt-8 space-y-4">
-          <div className="bg-primary/5 p-5 rounded-2xl border-2 border-primary/10 flex items-center justify-between">
-            <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Total Amount</p>
-            <p className="text-3xl font-black text-primary">LKR {totalPrice.toLocaleString()}</p>
+        {/* Footer */}
+        <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 space-y-4">
+          <div className="bg-green-500/5 px-5 py-3 rounded-2xl border border-green-500/10 flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Amount</span>
+            <span className="text-2xl font-black text-green-600">LKR {totalPrice.toLocaleString()}</span>
           </div>
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
             <button
               onClick={onConfirm}
-              className="w-full py-4 bg-primary text-white rounded-2xl font-black hover:bg-green-700 transition-all shadow-xl shadow-green-200/50 flex items-center justify-center gap-2 text-lg active:scale-[0.98]"
+              style={{ backgroundColor: '#22c55e', color: '#ffffff' }}
+              className="w-full py-3.5 hover:bg-green-600 text-white rounded-2xl font-bold transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 text-sm"
             >
               Confirm Rental
             </button>
             <button
               onClick={onCancel}
-              className="w-full py-3 text-gray-400 font-bold hover:text-gray-600 transition-colors text-sm"
+              className="w-full py-2.5 text-slate-400 font-bold hover:text-slate-600 transition-colors text-xs text-center"
             >
               Maybe Later
             </button>
