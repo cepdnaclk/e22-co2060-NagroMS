@@ -772,6 +772,43 @@ input[type="number"]::-webkit-outer-spin-button {
   font-size: 1.125rem;
 }
 
+/* Language switcher */
+.nagro-lang-switcher {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.nagro-lang-globe {
+  color: #6b7280;
+  margin-right: 2px;
+}
+
+.nagro-lang-btn {
+  border: 1px solid rgba(21, 128, 61, 0.25);
+  background: rgba(255, 255, 255, 0.6);
+  color: #1a3a1a;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 5px 11px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.nagro-lang-btn:hover {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(21, 128, 61, 0.4);
+}
+
+.nagro-lang-btn.active {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #fff;
+}
+
 /* Form header */
 .nagro-form-header {
   margin-bottom: 28px;
@@ -1188,6 +1225,14 @@ input[type="number"]::-webkit-outer-spin-button {
   padding: 5px 12px;
   border-radius: 99px;
   border: 1px solid #e5e7eb;
+}
+.nagro-signup-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.nagro-signup-topbar-right .nagro-lang-switcher {
+  margin-bottom: 0;
 }
 
 /* Progress bar */
