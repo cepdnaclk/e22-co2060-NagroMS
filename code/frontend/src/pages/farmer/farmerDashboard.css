@@ -4,6 +4,266 @@
   box-sizing: border-box;
 }
 
+/* ============================================================
+   FARMER DASHBOARD — SIDEBAR LAYOUT
+   ============================================================ */
+
+/* Root layout: sidebar + main side-by-side */
+.fd-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f3f4f6;
+}
+
+/* ── Sidebar ── */
+.fd-sidebar {
+  width: 230px;
+  min-width: 230px;
+  background: #111827;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
+  z-index: 100;
+  flex-shrink: 0;
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Logo area */
+.fd-sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 18px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.fd-sidebar-logo-icon {
+  width: 34px;
+  height: 34px;
+  background: #16a34a;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.fd-sidebar-logo-text {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.01em;
+}
+
+/* Nav scroll area */
+.fd-sidebar-nav {
+  flex: 1;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+/* Group */
+.fd-nav-group {
+  margin-bottom: 6px;
+}
+.fd-nav-group-label {
+  display: block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.30);
+  padding: 8px 10px 4px;
+}
+
+/* Nav item */
+.fd-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  color: rgba(255,255,255,0.60);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: background 0.15s ease, color 0.15s ease;
+  position: relative;
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+}
+.fd-nav-item:hover {
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.90);
+}
+.fd-nav-active {
+  background: rgba(22, 163, 74, 0.20) !important;
+  color: #4ade80 !important;
+}
+.fd-nav-active .fd-nav-icon {
+  color: #4ade80 !important;
+}
+.fd-nav-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: rgba(255,255,255,0.45);
+  transition: color 0.15s ease;
+}
+.fd-nav-item:hover .fd-nav-icon {
+  color: rgba(255,255,255,0.80);
+}
+.fd-nav-label {
+  flex: 1;
+  line-height: 1.3;
+}
+.fd-nav-badge {
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 99px;
+  padding: 1px 6px;
+  min-width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Logout style */
+.fd-nav-logout {
+  color: rgba(239,68,68,0.70) !important;
+}
+.fd-nav-logout:hover {
+  background: rgba(239,68,68,0.10) !important;
+  color: #f87171 !important;
+}
+.fd-nav-logout .fd-nav-icon {
+  color: rgba(239,68,68,0.70) !important;
+}
+
+/* Bottom pinned area */
+.fd-sidebar-bottom {
+  padding: 10px 10px 16px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ── Main content area ── */
+.fd-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Top header */
+.fd-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 58px;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  flex-shrink: 0;
+}
+.fd-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.fd-header-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+}
+.fd-hamburger {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #374151;
+  padding: 4px;
+  border-radius: 6px;
+}
+.fd-hamburger:hover { background: #f3f4f6; }
+
+.fd-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.fd-header-profile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 99px;
+  padding: 5px 14px 5px 8px;
+  cursor: pointer;
+}
+.fd-profile-emoji {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+.fd-profile-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #15803d;
+}
+
+/* Main page content */
+.fd-content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+/* Mobile overlay when sidebar open */
+.fd-sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 99;
+}
+
+/* ── Mobile responsive ── */
+@media (max-width: 768px) {
+  .fd-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100%;
+    transform: translateX(-100%);
+    z-index: 200;
+  }
+  .fd-sidebar.fd-sidebar-open {
+    transform: translateX(0);
+  }
+  .fd-hamburger { display: flex; }
+  .fd-sidebar-overlay { display: block; }
+  .fd-content { padding: 16px; }
+  .fd-header { padding: 0 16px; }
+}
+
+
+
 /* Colors - Agricultural Theme */
 :root {
   --primary: #16a34a;

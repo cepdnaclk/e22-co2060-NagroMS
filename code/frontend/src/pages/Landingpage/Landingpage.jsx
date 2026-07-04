@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import imageFallback from './assets/images/imagefallback.jpg';
 
 import farmImg from './assets/images/farm.png';
@@ -186,10 +187,11 @@ function FeatureCard({ img, imgAlt, title, description }) {
   );
 }
 
-/* ─────────────────────────────────────────────
-   Floating Hero Card (mini dashboard cards)
-───────────────────────────────────────────── */
-function FloatingCard({ style, children }) {
+// Landing Page
+function LandingPage() {
+  const navigate = useNavigate();
+
+
   return (
     <div
       style={{
@@ -488,9 +490,22 @@ function LandingPage({ onNavigate }) {
             </button>
           ))}
           <button
+<<<<<<< HEAD
+            onClick={() => navigate('/login')}
+            style={{
+              padding: '12px 24px',
+              color: '#1a7f37',
+              border: '1px solid #1a7f37',
+              borderRadius: '8px',
+              background: 'white',
+              cursor: 'pointer',
+              fontSize: '16px',
+            }}
+=======
             className="nag-btn"
             onClick={() => nav('login')}
             style={S.btnPrimary}
+>>>>>>> origin/main
           >
             Login
           </button>
@@ -573,8 +588,12 @@ function LandingPage({ onNavigate }) {
 
           <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
             <button
+<<<<<<< HEAD
+              onClick={() => navigate('/signup')}
+=======
               className="nag-btn"
               onClick={() => nav('signup')}
+>>>>>>> origin/main
               style={{
                 padding: '15px 40px',
                 background: 'linear-gradient(135deg,#22c55e,#15803d)',
@@ -591,8 +610,12 @@ function LandingPage({ onNavigate }) {
               Get Started
             </button>
             <button
+<<<<<<< HEAD
+              onClick={() => navigate('/login')}
+=======
               className="nag-outline"
               onClick={() => nav('login')}
+>>>>>>> origin/main
               style={{
                 padding: '15px 40px',
                 background: 'rgba(255,255,255,0.06)',
@@ -957,4 +980,8 @@ function LandingPage({ onNavigate }) {
   );
 }
 
+<<<<<<< HEAD
+
+=======
+>>>>>>> origin/main
 export default LandingPage;

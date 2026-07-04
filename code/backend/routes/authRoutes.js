@@ -7,14 +7,15 @@ const router  = express.Router();
 
 const {
   register, loginVerify, socialLogin,
-  sendOTP, verifyOTP, resetPassword, findUser,
+  sendOTP, verifyOTP, resetPassword, findUser, checkAvailability,
   getProfile, updateUserRoles,
-} = require('../controllers/authcontroller');
+} = require('../controllers/authController');
 
 const { verifyToken, requireRole } = require('../middleware/authMiddleware');
 
 // ── Public routes ────────────────────────────────────────────
-router.post('/register',        register);
+router.post('/register',          register);
+router.post('/check-availability', checkAvailability);
 router.post('/find-user',         findUser);
 router.post('/login',           loginVerify);
 router.post('/social-login',    socialLogin);
