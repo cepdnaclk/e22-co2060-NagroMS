@@ -3,24 +3,34 @@
 // Initialize Firebase Admin SDK using environment variables
 // ============================================================
 
-const admin = require('firebase-admin');
+const path = require("path");
+require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
+
+const admin = require("firebase-admin");
+
+const requiredEnv = [
+  "FIREBASE_PROJECT_ID",
+  "FIREBASE_PRIVATE_KEY",
+  "FIREBASE_CLIENT_EMAIL",
+];
+
+const missingEnv = requiredEnv.filter((key) => !process.env[key]);
+
+if (missingEnv.length > 0) {
+  throw new Error(`Missing Firebase environment variables: ${missingEnv.join(", ")}`);
+}
 
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert({
-      projectId:    process.env.FIREBASE_PROJECT_ID,
-      privateKeyId: process.env.FIREBASE_PRIVATE_KEY_ID,
-      // The private key is stored in .env with \n escaped — restore actual newlines
-      privateKey:   process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      clientEmail:  process.env.FIREBASE_CLIENT_EMAIL,
-      clientId:     process.env.FIREBASE_CLIENT_ID,
-      authUri:      process.env.FIREBASE_AUTH_URI,
-      tokenUri:     process.env.FIREBASE_TOKEN_URI,
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
     }),
   });
 }
 
-const db   = admin.firestore();
+const db = admin.firestore();
 const auth = admin.auth();
 
 module.exports = { admin, db, auth };
