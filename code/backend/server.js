@@ -59,7 +59,7 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/farmer', farmerRoutes);
 
 // Add other routes when ready:
-// app.use('/api/expert',   require('./routes/expertRoutes'));
+app.use('/api/expert',   require('./routes/expertRoutes'));
 // app.use('/api/farmer',   require('./routes/farmerRoutes'));
 
 // ── 404 handler ──────────────────────────────────────────────

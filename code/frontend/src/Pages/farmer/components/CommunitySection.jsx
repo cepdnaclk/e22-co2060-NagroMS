@@ -158,11 +158,21 @@ export default function CommunitySection() {
   const handleFollow = async (targetUserId, targetUserName) => {
     if (!auth.currentUser || !profile) return;
     try {
+      // 1. Create the follow record for the farmer's "Following" count
       await addDoc(collection(db, 'follows'), {
         followerId: auth.currentUser.uid,
         followingId: targetUserId,
         followerName: profile.fullName || profile.name || profile.email?.split('@')[0] || 'Farmer',
         followingName: targetUserName,
+        createdAt: new Date()
+      });
+
+      // 2. Create the connection record for the Expert Dashboard's "Connection Requests"
+      await addDoc(collection(db, 'connections'), {
+        requesterId: auth.currentUser.uid,
+        targetId: targetUserId,
+        status: 'pending',
+        expertAcknowledged: false,
         createdAt: new Date()
       });
     } catch (err) {
