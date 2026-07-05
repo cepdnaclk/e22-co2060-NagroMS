@@ -31,13 +31,7 @@ export default function QAForum() {
         if (!replyText.trim()) return;
         setSending(true);
         try {
-            await addAnswer(q.id, expertId, replyText.trim(), {
-                question: q.question,
-                farmerName: q.farmerName,
-                createdAt: q.createdAt,
-                tags: q.tags || [],
-                replyCount: q.replyCount || 0
-            });
+            await addAnswer(q.id, expertId, replyText.trim());
             setReplyText('');
             setExpanded(null);
         } catch (err) {

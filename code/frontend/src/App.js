@@ -14,6 +14,7 @@ import Consultations from './Pages/expert/Consultations.jsx';
 import QAForum from './Pages/expert/QAForum.jsx';
 import KnowledgeBase from './Pages/expert/Knowledgebase.jsx';
 import MyFarmers from './Pages/expert/MyFarmers.jsx';
+import ConnectionRequests from './Pages/expert/ConnectionRequests.jsx';
 import Settings from './Pages/expert/Settings.jsx';
 // Farmer dashboard
 import { FarmerDashboard } from './Pages/farmer/farmerDashboard.jsx';
@@ -53,6 +54,7 @@ export default function App() {
         {/* Expert Dashboard Routes */}
         <Route path="/expert-dashboard" element={<ExpertLayout />}>
           <Route index element={<ExpertDashboard />} />
+          <Route path="connections" element={<ConnectionRequests />} />
           <Route path="consultations" element={<Consultations />} />
           <Route path="qa" element={<QAForum />} />
           <Route path="knowledge" element={<KnowledgeBase />} />
