@@ -6,7 +6,8 @@ import {
   MessageSquare, 
   Users, 
   Settings, 
-  Leaf
+  Leaf,
+  Bell
 } from 'lucide-react';
 import OverviewSection from './components/OverviewSection';
 import ManagementSection from './components/ManagementSection';
@@ -14,6 +15,7 @@ import ServicesSection from './components/ServicesSection';
 import ChatbotSection from './components/ChatbotSection';
 import CommunitySection from './components/CommunitySection';
 import SettingsSection from './components/SettingsSection';
+import NotificationsSection from './components/NotificationsSection';
 import './farmerDashboard.css';
 
 export function FarmerDashboard() {
@@ -24,7 +26,7 @@ export function FarmerDashboard() {
   const renderContent = () => {
     switch (activeTab) {
       case 'overview':
-        return <OverviewSection isNewFarmer={isNewFarmer} />;
+        return <OverviewSection isNewFarmer={isNewFarmer} setActiveTab={setActiveTab} />;
       case 'management':
         return <ManagementSection />;
       case 'services':
@@ -33,10 +35,12 @@ export function FarmerDashboard() {
         return <ChatbotSection />;
       case 'community':
         return <CommunitySection />;
+      case 'notifications':
+        return <NotificationsSection />;
       case 'settings':
         return <SettingsSection />;
       default:
-        return <OverviewSection isNewFarmer={isNewFarmer} />;
+        return <OverviewSection isNewFarmer={isNewFarmer} setActiveTab={setActiveTab} />;
     }
   };
 
@@ -82,6 +86,12 @@ export function FarmerDashboard() {
             label="Community" 
             isActive={activeTab === 'community'} 
             onClick={() => setActiveTab('community')} 
+          />
+          <SidebarItem 
+            icon={<Bell size={20} />} 
+            label="Notifications" 
+            isActive={activeTab === 'notifications'} 
+            onClick={() => setActiveTab('notifications')} 
           />
         </nav>
 

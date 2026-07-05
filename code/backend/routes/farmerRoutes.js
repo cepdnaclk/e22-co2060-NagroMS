@@ -11,7 +11,11 @@ const {
   getOrders, updateOrderStatus, getSales,
   getEquipment, addEquipment, updateEquipment, deleteEquipment,
   getInventory, addInventory, updateInventory, deleteInventory,
-  getLoans, addLoan, getExpenses, addExpense
+  getLoans, addLoan, getExpenses, addExpense,
+  getIncome, addIncome, addUpdate,
+  getExperts, requestConsultation,
+  markNotificationRead,
+  createCommunityPost, addCommunityComment, toggleCommunityLike
 } = require('../controllers/farmerController');
 
 const { verifyToken, requireRole } = require('../middleware/authMiddleware');
@@ -54,5 +58,24 @@ router.post('/loans', addLoan);
 // ── Expense routes ────────────────────────────────────────────
 router.get('/expenses', getExpenses);
 router.post('/expenses', addExpense);
+
+// ── Income routes ─────────────────────────────────────────────
+router.get('/income', getIncome);
+router.post('/income', addIncome);
+
+// ── Updates routes ────────────────────────────────────────────
+router.post('/updates', addUpdate);
+
+// ── Consultations routes ──────────────────────────────────────
+router.get('/consultations/experts', getExperts);
+router.post('/consultations/request', requestConsultation);
+
+// ── Notifications routes ──────────────────────────────────────
+router.put('/notifications/:id/read', markNotificationRead);
+
+// ── Community routes ──────────────────────────────────────────
+router.post('/community/posts', createCommunityPost);
+router.post('/community/posts/:id/comments', addCommunityComment);
+router.post('/community/posts/:id/like', toggleCommunityLike);
 
 module.exports = router;

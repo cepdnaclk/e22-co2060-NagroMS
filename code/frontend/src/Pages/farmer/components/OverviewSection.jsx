@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { auth, db } from '../../../utils/firebase';
-import { doc, onSnapshot, collection, addDoc, serverTimestamp, query, where, updateDoc } from 'firebase/firestore';
+import { auth, db, storage } from '../../../utils/firebase';
+import { doc, onSnapshot, collection, query, where, updateDoc, addDoc, serverTimestamp, orderBy } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useLanguage } from '../../../i18n/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 
-export default function OverviewSection({ isNewFarmer: initialIsNewFarmer }) {
+export default function OverviewSection({ isNewFarmer: initialIsNewFarmer, setActiveTab }) {
   const { lang, setLang } = useLanguage();
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
@@ -17,9 +18,23 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer }) {
     quantity: '',
     unit: 'kg',
     pricePerUnit: '',
-    stockStatus: 'Full Stock'
+    stockStatus: 'Full Stock',
+    imageFile: null
   });
+
+  const resetProductForm = () => {
+    setFormData({
+      productName: '',
+      quantity: '',
+      unit: 'kg',
+      pricePerUnit: '',
+      stockStatus: 'Full Stock',
+      imageFile: null
+    });
+  };
+
   const [orders, setOrders] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   
   // Weather state
   const [weather, setWeather] = useState({
@@ -85,6 +100,7 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer }) {
     let unsubscribeDoc = null;
     let unsubscribeProducts = null;
     let unsubscribeOrders = null;
+    let unsubscribeNotifs = null;
 
     const unsubscribeAuth = auth.onAuthStateChanged((user) => {
       if (user) {
@@ -95,13 +111,19 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer }) {
           }
         });
 
-        const q = query(collection(db, 'products'), where('farmerId', '==', user.uid));
+        const q = query(
+          collection(db, 'products'), 
+          where('farmerId', '==', user.uid),
+          orderBy('createdAt', 'desc')
+        );
         unsubscribeProducts = onSnapshot(q, (snapshot) => {
           const productList = [];
           snapshot.forEach((doc) => {
             productList.push({ id: doc.id, ...doc.data() });
           });
           setProducts(productList);
+        }, (error) => {
+          console.error("Products onSnapshot error:", error);
         });
 
         const ordersQuery = query(collection(db, 'orders'), where('farmerId', '==', user.uid));
@@ -112,10 +134,20 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer }) {
           });
           setOrders(ordersList);
         });
+
+        const notifQuery = query(collection(db, 'notifications'), where('userId', '==', user.uid));
+        unsubscribeNotifs = onSnapshot(notifQuery, (snapshot) => {
+          const notifs = [];
+          snapshot.forEach((doc) => {
+            notifs.push({ id: doc.id, ...doc.data() });
+          });
+          setNotifications(notifs);
+        });
       } else {
         setProfile(null);
         setProducts([]);
         setOrders([]);
+        setNotifications([]);
       }
     });
     return () => {
@@ -123,16 +155,41 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer }) {
       if (unsubscribeDoc) unsubscribeDoc();
       if (unsubscribeProducts) unsubscribeProducts();
       if (unsubscribeOrders) unsubscribeOrders();
+      if (unsubscribeNotifs) unsubscribeNotifs();
     };
   }, []);
 
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
     try {
-      await updateDoc(doc(db, 'orders', orderId), {
-        status: newStatus
+      const user = auth.currentUser;
+      if (!user) return;
+      const token = await user.getIdToken();
+      const order = orders.find(o => o.id === orderId);
+      await fetch(`http://localhost:5000/api/farmer/orders/${orderId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: newStatus, productId: order.productId, customerId: order.customerId })
       });
     } catch (error) {
       console.error('Error updating order status:', error);
+    }
+  };
+
+  const handleDeleteProduct = async (productId) => {
+    try {
+      if (!window.confirm('Are you sure you want to delete this product?')) return;
+      const token = await auth.currentUser.getIdToken();
+      await fetch(`http://localhost:5000/api/farmer/products/${productId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+    } catch (error) {
+      console.error('Error deleting product:', error);
     }
   };
 
@@ -141,33 +198,44 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer }) {
 
   const handleAddProduct = async (e) => {
     e.preventDefault();
+    console.log("Add product clicked");
+    
     if (!auth.currentUser) return;
+    console.log("Current user:", auth.currentUser.uid);
 
     try {
       const quantityNum = Number(formData.quantity);
       const priceNum = Number(formData.pricePerUnit);
+      let imageUrl = '';
+
+      if (formData.imageFile) {
+        const imageRef = ref(storage, `products/${auth.currentUser.uid}/${Date.now()}-${formData.imageFile.name}`);
+        const snapshot = await uploadBytes(imageRef, formData.imageFile);
+        imageUrl = await getDownloadURL(snapshot.ref);
+      }
       
-      await addDoc(collection(db, 'products'), {
+      const newProduct = {
         productName: formData.productName,
         quantity: quantityNum,
         unit: formData.unit,
         pricePerUnit: priceNum,
         totalPrice: quantityNum * priceNum,
         stockStatus: formData.stockStatus,
+        imageUrl: imageUrl,
         farmerId: auth.currentUser.uid,
-        createdAt: serverTimestamp()
-      });
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+
+      const docRef = await addDoc(collection(db, 'products'), newProduct);
+      console.log('Product saved:', docRef.id);
 
       setShowModal(false);
-      setFormData({
-        productName: '',
-        quantity: '',
-        unit: 'kg',
-        pricePerUnit: '',
-        stockStatus: 'Full Stock'
-      });
+      resetProductForm();
+      alert('Product added successfully');
     } catch (error) {
-      console.error('Error adding product:', error);
+      console.error('Add product error:', error);
+      alert('Failed to add product: ' + error.message);
     }
   };
 
@@ -234,21 +302,53 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer }) {
           )}
 
           {/* Farmer Profile */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingLeft: '20px', borderLeft: '1px solid #e5e7eb' }}>
-            {profile?.profileImage ? (
-              <img src={profile.profileImage} alt="Profile" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
-            ) : (
-              <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#166534', fontWeight: 'bold', fontSize: '18px' }}>
-                {profile?.name ? profile.name.charAt(0).toUpperCase() : 'F'}
+          <div 
+            onClick={() => setActiveTab && setActiveTab('settings')}
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '12px', 
+              padding: '8px 16px', 
+              borderLeft: '1px solid #e5e7eb',
+              cursor: 'pointer',
+              borderRadius: '8px',
+              transition: 'background-color 0.2s',
+              backgroundColor: 'transparent'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+          >
+            {!profile ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#e5e7eb', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <div style={{ width: '80px', height: '14px', backgroundColor: '#e5e7eb', borderRadius: '4px', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></div>
+                  <div style={{ width: '120px', height: '12px', backgroundColor: '#e5e7eb', borderRadius: '4px', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></div>
+                </div>
               </div>
+            ) : (
+              <>
+                {profile.profileImage ? (
+                  <img src={profile.profileImage} alt="Profile" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#166534', fontWeight: 'bold', fontSize: '18px' }}>
+                    {(profile.fullName || profile.name || profile.email || 'F').charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>
+                    {profile.fullName || profile.name || profile.email?.split('@')[0]}
+                  </span>
+                  <span style={{ fontSize: '12px', color: '#6b7280' }}>
+                    {profile.email || 'Farmer'}
+                  </span>
+                </div>
+              </>
             )}
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827' }}>{profile?.name || 'Loading...'}</span>
-              <span style={{ fontSize: '12px', color: '#6b7280' }}>{profile?.email || profile?.role || 'Farmer'}</span>
-            </div>
           </div>
         </div>
       </div>
+
 
       {isNewFarmer ? (
         <div style={{ padding: '40px', backgroundColor: '#f9fafb', borderRadius: '12px', textAlign: 'center', border: '1px dashed #d1d5db' }}>
@@ -274,13 +374,23 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer }) {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
             {products.map((product) => (
               <div key={product.id} style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937' }}>{product.productName}</h3>
+                {product.imageUrl && (
+                  <img src={product.imageUrl} alt={product.productName || product.name} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '8px', marginBottom: '12px' }} />
+                )}
+                <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937' }}>{product.productName || product.name}</h3>
                 <p style={{ fontSize: '24px', fontWeight: 700, color: '#22c55e', margin: '8px 0' }}>
-                  Rs {product.pricePerUnit} <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: 400 }}>/ {product.unit}</span>
+                  Rs {product.pricePerUnit || product.price} <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: 400 }}>/ {product.unit}</span>
                 </p>
                 <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '8px' }}>Available: {product.quantity} {product.unit}</p>
-                <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '16px' }}>Status: {product.stockStatus}</p>
-                <button style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #22c55e', color: '#22c55e', backgroundColor: 'transparent', cursor: 'pointer' }}>Update Item</button>
+                <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '8px' }}>Total Price: Rs {product.totalPrice}</p>
+                <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '8px' }}>Status: {product.stockStatus}</p>
+                <p style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '16px' }}>
+                  Added: {product.createdAt?.toDate ? product.createdAt.toDate().toLocaleDateString() : 'Just now'}
+                </p>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #22c55e', color: '#22c55e', backgroundColor: 'transparent', cursor: 'pointer' }}>Edit</button>
+                  <button onClick={() => handleDeleteProduct(product.id)} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #ef4444', color: '#ef4444', backgroundColor: 'transparent', cursor: 'pointer' }}>Delete</button>
+                </div>
               </div>
             ))}
           </div>
@@ -443,6 +553,11 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer }) {
                 </select>
               </div>
 
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Product Image</label>
+                <input type="file" accept="image/*" onChange={(e) => setFormData({...formData, imageFile: e.target.files[0]})} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db' }} />
+              </div>
+
               {formData.quantity && formData.pricePerUnit && !isNaN(formData.quantity) && !isNaN(formData.pricePerUnit) && (
                 <div style={{ padding: '12px', backgroundColor: '#f0fdf4', borderRadius: '6px', border: '1px solid #bbf7d0', marginTop: '8px' }}>
                   <p style={{ margin: 0, fontSize: '14px', color: '#166534', fontWeight: 500 }}>
@@ -452,7 +567,7 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer }) {
               )}
 
               <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-                <button type="button" onClick={() => setShowModal(false)} style={{ flex: 1, padding: '10px', backgroundColor: 'white', color: '#374151', borderRadius: '8px', border: '1px solid #d1d5db', cursor: 'pointer', fontWeight: 500 }}>
+                <button type="button" onClick={() => { setShowModal(false); resetProductForm(); }} style={{ flex: 1, padding: '10px', backgroundColor: 'white', color: '#374151', borderRadius: '8px', border: '1px solid #d1d5db', cursor: 'pointer', fontWeight: 500 }}>
                   Cancel
                 </button>
                 <button type="submit" style={{ flex: 1, padding: '10px', backgroundColor: '#22c55e', color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
