@@ -2,7 +2,41 @@ import { useState } from 'react';
 import { LoginPage } from './pages/LoginPage';
 import { SignUpPage } from './pages/SignUpPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+// App.jsx — plug this into your existing router
+// Assumes you already have <BrowserRouter> wrapping your app
 
+import { Routes, Route } from 'react-router-dom';
+
+// Your existing pages
+// import Login from './pages/Login';
+
+// Expert dashboard
+import ExpertLayout from './layouts/ExpertLayout';
+import ExpertDashboard from './pages/expert/ExpertDashboard';
+import Consultations from './pages/expert/Consultations';
+import QAForum from './pages/expert/QAForum';
+import KnowledgeBase from './pages/expert/KnowledgeBase';
+import MyFarmers from './pages/expert/MyFarmers';
+import Settings from './pages/expert/Settings';
+
+export default function App() {
+  return (
+    <Routes>
+      {/* Your existing routes */}
+      {/* <Route path="/login" element={<Login />} /> */}
+
+      {/* Expert dashboard — all nested under /expert */}
+      <Route path="/expert" element={<ExpertLayout />}>
+        <Route index element={<ExpertDashboard />} />
+        <Route path="consultations" element={<Consultations />} />
+        <Route path="qa" element={<QAForum />} />
+        <Route path="knowledge" element={<KnowledgeBase />} />
+        <Route path="farmers" element={<MyFarmers />} />
+        <Route path="settings" element={<Settings />} />
+      </Route>
+    </Routes>
+  );
+}
 // Placeholder dashboard stubs — replace with your real dashboard components
 function PlaceholderDashboard({ role, onNavigate }) {
   return (
