@@ -13,7 +13,7 @@ const {
   deleteArticle,
   getProfile,
   updateProfile,
-} = require("../controllers/expertController");
+} = require("../controllers/expertControllers");
 
 // All expert routes require login + expert role
 router.use(authMiddleware);
