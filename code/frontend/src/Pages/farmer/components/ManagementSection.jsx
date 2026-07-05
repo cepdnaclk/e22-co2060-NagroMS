@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { auth, db } from '../../../utils/firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 export default function ManagementSection() {
   const [expenses, setExpenses] = useState([]);
@@ -14,6 +16,40 @@ export default function ManagementSection() {
 
   const [expenseForm, setExpenseForm] = useState({ title: '', category: 'Seeds', amount: '', date: '', description: '' });
   const [incomeForm, setIncomeForm] = useState({ title: '', source: 'Product Sale', amount: '', date: '', description: '' });
+
+  useEffect(() => {
+    let unsubscribeExpenses = null;
+    let unsubscribeIncomes = null;
+
+    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+      if (user) {
+        const qExp = query(collection(db, 'expenses'), where('farmerId', '==', user.uid));
+        unsubscribeExpenses = onSnapshot(qExp, (snapshot) => {
+          const arr = [];
+          snapshot.forEach(doc => arr.push({ id: doc.id, ...doc.data() }));
+          arr.sort((a,b) => new Date(b.date) - new Date(a.date));
+          setExpenses(arr);
+        });
+
+        const qInc = query(collection(db, 'income'), where('farmerId', '==', user.uid));
+        unsubscribeIncomes = onSnapshot(qInc, (snapshot) => {
+          const arr = [];
+          snapshot.forEach(doc => arr.push({ id: doc.id, ...doc.data() }));
+          arr.sort((a,b) => new Date(b.date) - new Date(a.date));
+          setIncomes(arr);
+        });
+      } else {
+        setExpenses([]);
+        setIncomes([]);
+      }
+    });
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeExpenses) unsubscribeExpenses();
+      if (unsubscribeIncomes) unsubscribeIncomes();
+    };
+  }, []);
 
   const getStartDate = (period) => {
     const date = new Date();
@@ -45,28 +81,50 @@ export default function ManagementSection() {
   const profitTotalIncome = profitIncomes.reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const netProfit = profitTotalIncome - profitTotalExpense;
 
-  const handleAddExpense = (e) => {
+  const handleAddExpense = async (e) => {
     e.preventDefault();
-    const newExpense = {
-      id: Date.now().toString(),
-      ...expenseForm,
-      amount: Number(expenseForm.amount)
-    };
-    setExpenses([newExpense, ...expenses]);
-    setShowExpenseModal(false);
-    setExpenseForm({ title: '', category: 'Seeds', amount: '', date: '', description: '' });
+    if (!auth.currentUser) return;
+    try {
+      const token = await auth.currentUser.getIdToken();
+      await fetch('http://localhost:5000/api/farmer/expenses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...expenseForm,
+          amount: Number(expenseForm.amount)
+        })
+      });
+      setShowExpenseModal(false);
+      setExpenseForm({ title: '', category: 'Seeds', amount: '', date: '', description: '' });
+    } catch (error) {
+      console.error('Error adding expense:', error);
+    }
   };
 
-  const handleAddIncome = (e) => {
+  const handleAddIncome = async (e) => {
     e.preventDefault();
-    const newIncome = {
-      id: Date.now().toString(),
-      ...incomeForm,
-      amount: Number(incomeForm.amount)
-    };
-    setIncomes([newIncome, ...incomes]);
-    setShowIncomeModal(false);
-    setIncomeForm({ title: '', source: 'Product Sale', amount: '', date: '', description: '' });
+    if (!auth.currentUser) return;
+    try {
+      const token = await auth.currentUser.getIdToken();
+      await fetch('http://localhost:5000/api/farmer/income', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...incomeForm,
+          amount: Number(incomeForm.amount)
+        })
+      });
+      setShowIncomeModal(false);
+      setIncomeForm({ title: '', source: 'Product Sale', amount: '', date: '', description: '' });
+    } catch (error) {
+      console.error('Error adding income:', error);
+    }
   };
 
   const getChartData = (records) => {
