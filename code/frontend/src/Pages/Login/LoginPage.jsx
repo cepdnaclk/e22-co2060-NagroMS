@@ -1,3 +1,4 @@
+// Force recompile to fix fast refresh error
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Phone, CreditCard, ArrowRight, AlertCircle, Leaf, Globe } from 'lucide-react';
