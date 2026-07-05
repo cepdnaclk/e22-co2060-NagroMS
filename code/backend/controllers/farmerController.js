@@ -153,8 +153,20 @@ exports.getOrders = async (req, res) => {
  */
 exports.updateOrderStatus = async (req, res) => {
   try {
-    const { status, productId } = req.body;
+    const { status, productId, customerId } = req.body;
     await orderModel.updateOrderStatus(req.params.id, status, productId);
+    
+    // Create notification for customer
+    if (customerId) {
+      const notificationModel = require('../models/notificationModel');
+      await notificationModel.createNotification({
+        userId: customerId,
+        title: "Order status updated",
+        message: `Your order has been ${status}`,
+        type: "order"
+      });
+    }
+
     res.status(200).json({ success: true, message: 'Order status updated' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -311,6 +323,143 @@ exports.addExpense = async (req, res) => {
   try {
     const expense = await expenseModel.createExpense({ ...req.body, farmerId: req.user.uid });
     res.status(201).json({ success: true, data: expense });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ── Income Methods ──────────────────────────────────────────
+
+const incomeModel = require('../models/incomeModel');
+
+exports.getIncome = async (req, res) => {
+  try {
+    const income = await incomeModel.getIncomeByFarmer(req.user.uid);
+    res.status(200).json({ success: true, data: income });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.addIncome = async (req, res) => {
+  try {
+    const income = await incomeModel.createIncome({ ...req.body, farmerId: req.user.uid });
+    res.status(201).json({ success: true, data: income });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ── Updates Methods ──────────────────────────────────────────
+
+const updateModel = require('../models/farmerUpdateModel');
+const subscriptionModel = require('../models/subscriptionModel');
+const notificationModel = require('../models/notificationModel');
+
+exports.addUpdate = async (req, res) => {
+  try {
+    const update = await updateModel.createUpdate({ ...req.body, farmerId: req.user.uid });
+    
+    // Notify subscribers
+    const subscriptions = await subscriptionModel.getSubscriptionsByFarmer(req.user.uid);
+    for (const sub of subscriptions) {
+      await notificationModel.createNotification({
+        userId: sub.customerId,
+        title: "New Update from Farmer",
+        message: req.body.title || "A farmer you follow has posted an update.",
+        type: "update"
+      });
+    }
+    
+    res.status(201).json({ success: true, data: update });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ── Consultations Methods ────────────────────────────────────
+
+const consultationModel = require('../models/consultationModel');
+
+exports.getExperts = async (req, res) => {
+  try {
+    const { db } = require('../config/firebase');
+    const snapshot = await db.collection('users').where('role', '==', 'expert').where('available', '==', true).get();
+    const experts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.status(200).json({ success: true, data: experts });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.requestConsultation = async (req, res) => {
+  try {
+    const request = await consultationModel.createConsultationRequest({
+      ...req.body,
+      farmerId: req.user.uid
+    });
+    
+    // Notify expert
+    if (req.body.expertId) {
+      await notificationModel.createNotification({
+        userId: req.body.expertId,
+        title: "New Consultation Request",
+        message: "A farmer has requested a consultation.",
+        type: "consultation"
+      });
+    }
+    
+    res.status(201).json({ success: true, data: request });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ── Notifications Methods ────────────────────────────────────
+
+exports.markNotificationRead = async (req, res) => {
+  try {
+    await notificationModel.markAsRead(req.params.id);
+    res.status(200).json({ success: true, message: "Marked as read" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ── Community Methods ────────────────────────────────────────
+
+const communityModel = require('../models/communityModel');
+
+exports.createCommunityPost = async (req, res) => {
+  try {
+    const post = await communityModel.createPost({
+      ...req.body,
+      authorId: req.user.uid,
+      authorRole: 'farmer'
+    });
+    res.status(201).json({ success: true, data: post });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.addCommunityComment = async (req, res) => {
+  try {
+    const comment = await communityModel.addComment(req.params.id, {
+      ...req.body,
+      authorId: req.user.uid,
+      authorRole: 'farmer'
+    });
+    res.status(201).json({ success: true, data: comment });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.toggleCommunityLike = async (req, res) => {
+  try {
+    const count = await communityModel.toggleLike(req.params.id, req.user.uid);
+    res.status(200).json({ success: true, count });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
