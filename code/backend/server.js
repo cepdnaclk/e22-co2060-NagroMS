@@ -58,7 +58,6 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/farmer', farmerRoutes);
 
-
 // Add other routes when ready:
 // app.use('/api/expert',   require('./routes/expertRoutes'));
 // app.use('/api/farmer',   require('./routes/farmerRoutes'));
@@ -90,7 +89,6 @@ const startServer = (port) => {
   server.on('error', (err) => {
     if (err && err.code === 'EADDRINUSE') {
       console.warn(`⚠️  Port ${port} in use — trying ${port + 1}...`);
-      // try next port
       startServer(port + 1);
     } else {
       console.error('❌ Server error:', err);
