@@ -98,9 +98,14 @@ export default function SettingsSection() {
       
       // Upload photo if selected
       if (photoFile) {
-        const fileRef = ref(storage, `farmers/${uid}/profile/profile-photo-${Date.now()}`);
-        await uploadBytes(fileRef, photoFile);
-        finalProfileImage = await getDownloadURL(fileRef);
+        try {
+          const fileRef = ref(storage, `farmers/${uid}/profile/profile-photo-${Date.now()}`);
+          await uploadBytes(fileRef, photoFile);
+          finalProfileImage = await getDownloadURL(fileRef);
+        } catch (imgError) {
+          console.warn('Profile image upload failed, proceeding without image update:', imgError);
+          finalProfileImage = formData.profileImage || '';
+        }
       }
 
       // Password change if requested
