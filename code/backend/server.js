@@ -11,6 +11,7 @@ const rateLimit = require('express-rate-limit');
 
 const authRoutes = require('./routes/authRoutes');
 const farmerRoutes = require('./routes/farmerRoutes');
+const weatherRoutes = require('./routes/weatherRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -57,6 +58,7 @@ app.get('/health', (req, res) => {
 // ── Routes ───────────────────────────────────────────────────
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/farmer', farmerRoutes);
+app.use('/api/weather', weatherRoutes);
 
 // Add other routes when ready:
 // app.use('/api/expert',   require('./routes/expertRoutes'));
