@@ -75,10 +75,16 @@ exports.addProduct = async (req, res) => {
       return res.status(400).json({ success: false, message: 'A valid quantity is required.' });
     }
 
+    const user = await userModel.getUserById(req.user.uid);
+
     const productData = {
       ...req.body,
       name: name.trim(),
       farmerId: req.user.uid,
+      farmer: user?.fullName || 'Farmer',
+      location: user?.district || '',
+      district: user?.district || '',
+      farmerPhone: user?.phone || '',
     };
     const newProduct = await productModel.createProduct(productData);
     res.status(201).json({ success: true, data: newProduct });
@@ -147,8 +153,8 @@ exports.getOrders = async (req, res) => {
  */
 exports.updateOrderStatus = async (req, res) => {
   try {
-    const { status } = req.body;
-    await orderModel.updateOrderStatus(req.params.id, status);
+    const { status, productId } = req.body;
+    await orderModel.updateOrderStatus(req.params.id, status, productId);
     res.status(200).json({ success: true, message: 'Order status updated' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
