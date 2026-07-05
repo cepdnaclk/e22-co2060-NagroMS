@@ -91,9 +91,14 @@ export default function CommunitySection() {
       const token = await auth.currentUser.getIdToken();
       let imageUrl = '';
       if (updateImage) {
-        const imageRef = ref(storage, `farmerUpdates/${auth.currentUser.uid}/${Date.now()}_${updateImage.name}`);
-        const snap = await uploadBytes(imageRef, updateImage);
-        imageUrl = await getDownloadURL(snap.ref);
+        try {
+          const imageRef = ref(storage, `farmerUpdates/${auth.currentUser.uid}/${Date.now()}_${updateImage.name}`);
+          const snap = await uploadBytes(imageRef, updateImage);
+          imageUrl = await getDownloadURL(snap.ref);
+        } catch (imgError) {
+          console.warn('Image upload failed, proceeding without image:', imgError);
+          imageUrl = '';
+        }
       }
 
       await fetch('http://localhost:5000/api/farmer/updates', {
