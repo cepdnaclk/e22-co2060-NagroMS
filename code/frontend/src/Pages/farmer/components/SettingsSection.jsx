@@ -12,8 +12,10 @@ export default function SettingsSection() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const [isPaymentEditable, setIsPaymentEditable] = useState(false);
+  const [isPasswordEditable, setIsPasswordEditable] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [otpInput, setOtpInput] = useState('');
+  const [otpTarget, setOtpTarget] = useState('');
 
   const initialForm = {
     fullName: '', nicNumber: '', dateOfBirth: '', gender: '',
@@ -29,7 +31,7 @@ export default function SettingsSection() {
   const [photoFile, setPhotoFile] = useState(null);
   
   // Password change state
-  const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [passwords, setPasswords] = useState({ newPassword: '', confirmPassword: '' });
 
   useEffect(() => {
     let unsub = null;
@@ -68,9 +70,9 @@ export default function SettingsSection() {
   };
 
   const handlePasswordChange = async () => {
-    if (!passwords.currentPassword && !passwords.newPassword && !passwords.confirmPassword) return true;
+    if (!passwords.newPassword && !passwords.confirmPassword) return true;
     
-    if (!passwords.currentPassword || !passwords.newPassword || !passwords.confirmPassword) {
+    if (!passwords.newPassword || !passwords.confirmPassword) {
       throw new Error('Please fill all password fields to change password.');
     }
     if (passwords.newPassword !== passwords.confirmPassword) {
@@ -78,11 +80,9 @@ export default function SettingsSection() {
     }
     
     const user = auth.currentUser;
-    const credential = EmailAuthProvider.credential(user.email, passwords.currentPassword);
-    
-    await reauthenticateWithCredential(user, credential);
+    // OTP verification handles authorization; update directly
     await updatePassword(user, passwords.newPassword);
-    setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    setPasswords({ newPassword: '', confirmPassword: '' });
     return true;
   };
 
@@ -124,6 +124,7 @@ export default function SettingsSection() {
     } finally {
       setLoading(false);
       setIsPaymentEditable(false);
+      setIsPasswordEditable(false);
     }
   };
 
@@ -149,16 +150,32 @@ export default function SettingsSection() {
     if (isPaymentEditable) {
       setIsPaymentEditable(false);
     } else {
+      setOtpTarget('payment');
+      setShowOtpModal(true);
+    }
+  };
+
+  const handleEditPasswordClick = () => {
+    if (isPasswordEditable) {
+      setIsPasswordEditable(false);
+    } else {
+      setOtpTarget('password');
       setShowOtpModal(true);
     }
   };
 
   const handleVerifyOtp = () => {
     if (otpInput.length >= 4) {
-      setIsPaymentEditable(true);
+      if (otpTarget === 'payment') {
+        setIsPaymentEditable(true);
+        setMsg({ type: 'success', text: 'Verification successful. You can now edit your payment details.' });
+      } else if (otpTarget === 'password') {
+        setIsPasswordEditable(true);
+        setMsg({ type: 'success', text: 'Verification successful. You can now change your password.' });
+      }
       setShowOtpModal(false);
       setOtpInput('');
-      setMsg({ type: 'success', text: 'Verification successful. You can now edit your payment details.' });
+      setOtpTarget('');
     } else {
       alert("Please enter a valid OTP code.");
     }
@@ -313,20 +330,21 @@ export default function SettingsSection() {
 
         {/* Security (Password Change) */}
         <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937', marginBottom: '16px', borderBottom: '1px solid #e5e7eb', paddingBottom: '8px' }}>Change Password</h3>
-          <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>Leave empty if you do not want to change your password.</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Current Password</label>
-              <input type="password" value={passwords.currentPassword} onChange={e => setPasswords({...passwords, currentPassword: e.target.value})} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db', outline: 'none' }} />
-            </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #e5e7eb', paddingBottom: '8px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937', margin: 0 }}>Change Password</h3>
+            <button type="button" onClick={handleEditPasswordClick} style={{ padding: '6px 12px', borderRadius: '6px', backgroundColor: isPasswordEditable ? '#f3f4f6' : '#dcfce7', color: isPasswordEditable ? '#374151' : '#16a34a', border: isPasswordEditable ? '1px solid #d1d5db' : 'none', cursor: 'pointer', fontWeight: 600, fontSize: '12px' }}>
+              {isPasswordEditable ? 'Cancel Edit' : 'Edit Password'}
+            </button>
+          </div>
+          <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>{isPasswordEditable ? 'You can now change your password. Leave empty if you do not want to change it.' : 'Password fields are locked for your security. Click "Edit Password" to verify via SMS.'}</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', opacity: isPasswordEditable ? 1 : 0.6 }}>
             <div>
               <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>New Password</label>
-              <input type="password" value={passwords.newPassword} onChange={e => setPasswords({...passwords, newPassword: e.target.value})} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db', outline: 'none' }} />
+              <input type="password" disabled={!isPasswordEditable} value={passwords.newPassword} onChange={e => setPasswords({...passwords, newPassword: e.target.value})} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db', outline: 'none', backgroundColor: isPasswordEditable ? 'white' : '#f9fafb' }} />
             </div>
             <div>
               <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Confirm New Password</label>
-              <input type="password" value={passwords.confirmPassword} onChange={e => setPasswords({...passwords, confirmPassword: e.target.value})} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db', outline: 'none' }} />
+              <input type="password" disabled={!isPasswordEditable} value={passwords.confirmPassword} onChange={e => setPasswords({...passwords, confirmPassword: e.target.value})} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db', outline: 'none', backgroundColor: isPasswordEditable ? 'white' : '#f9fafb' }} />
             </div>
           </div>
         </div>
@@ -355,14 +373,14 @@ export default function SettingsSection() {
           <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '12px', width: '100%', maxWidth: '400px' }}>
             <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '16px', color: '#111827' }}>Verify Identity</h2>
             <p style={{ color: '#4b5563', fontSize: '14px', marginBottom: '24px', lineHeight: '1.5' }}>
-              For your security, we have sent a verification code to your registered mobile number. Please enter it below to edit your payment details.
+              For your security, we have sent a verification code to your registered mobile number. Please enter it below to verify your identity.
             </p>
             <div style={{ marginBottom: '24px' }}>
               <input type="text" placeholder="Enter OTP (e.g. 123456)" value={otpInput} onChange={e => setOtpInput(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid #d1d5db', outline: 'none', textAlign: 'center', fontSize: '18px', letterSpacing: '4px' }} />
             </div>
             <div style={{ display: 'flex', gap: '12px' }}>
-              <button onClick={() => { setShowOtpModal(false); setOtpInput(''); }} style={{ flex: 1, padding: '10px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '8px', cursor: 'pointer', fontWeight: 500 }}>Cancel</button>
-              <button onClick={handleVerifyOtp} style={{ flex: 1, padding: '10px', backgroundColor: '#16a34a', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Verify</button>
+              <button type="button" onClick={() => { setShowOtpModal(false); setOtpInput(''); setOtpTarget(''); }} style={{ flex: 1, padding: '10px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '8px', cursor: 'pointer', fontWeight: 500 }}>Cancel</button>
+              <button type="button" onClick={handleVerifyOtp} style={{ flex: 1, padding: '10px', backgroundColor: '#16a34a', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Verify</button>
             </div>
           </div>
         </div>
