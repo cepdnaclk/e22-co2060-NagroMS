@@ -77,7 +77,7 @@ export default function OverviewSection({ setActiveTab }) {
               country: weatherData.country,
               loading: false,
               error: null,
-              fallbackUsed: (!profile.villageTown && !profile.district)
+              fallbackUsed: weatherData.fallbackUsed || (!profile.villageTown && !profile.district)
             });
           } else {
             setWeather(prev => ({ ...prev, loading: false, error: t('farmer.overview.weatherError') || 'Unable to load weather right now.' }));
@@ -649,8 +649,8 @@ export default function OverviewSection({ setActiveTab }) {
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>{t('farmer.overview.stockStatus') || 'Stock Status'}</label>
                 <select value={formData.stockStatus} onChange={(e) => setFormData({...formData, stockStatus: e.target.value})} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db' }}>
                   <option value="Full Stock">{t('farmer.overview.fullStock') || 'Full Stock'}</option>
-                  <option value="Medium Stock">{t('farmer.overview.mediumStock') || 'Medium Stock'}</option>
                   <option value="Low Stock">{t('farmer.overview.lowStock') || 'Low Stock'}</option>
+                  <option value="Out of Stock">{t('farmer.overview.outOfStock') || 'Out of Stock'}</option>
                 </select>
               </div>
 
