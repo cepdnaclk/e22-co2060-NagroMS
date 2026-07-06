@@ -1,8 +1,11 @@
+import { useLanguage } from '../../../i18n/LanguageContext';
 import React, { useState, useEffect } from 'react';
 import { auth, db } from '../../../utils/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 export default function NotificationsSection() {
+  const { t } = useLanguage();
+
   const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
@@ -52,16 +55,16 @@ export default function NotificationsSection() {
 
   return (
     <div className="nagro-section-content" style={{ paddingBottom: '40px' }}>
-      <h2 style={{ fontSize: '24px', fontWeight: 600, color: '#111827', marginBottom: '24px' }}>Notifications</h2>
+      <h2 style={{ fontSize: '24px', fontWeight: 600, color: '#111827', marginBottom: '24px' }}>{t('farmer.notifications.title')}</h2>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         
         {/* Unread Notifications */}
         <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#dc2626', marginBottom: '16px' }}>Unread Notifications</h3>
+          <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#dc2626', marginBottom: '16px' }}>{t('farmer.notifications.unread')}</h3>
           
           {unreadNotifs.length === 0 ? (
-            <p style={{ color: '#6b7280' }}>No unread notifications.</p>
+            <p style={{ color: '#6b7280' }}>{t('farmer.notifications.noNotifications')}</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {unreadNotifs.map(n => (
@@ -71,7 +74,7 @@ export default function NotificationsSection() {
                     <p style={{ margin: 0, fontSize: '14px', color: '#4b5563' }}>{n.message}</p>
                     {n.createdAt && <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#9ca3af' }}>{new Date(n.createdAt?.toDate ? n.createdAt.toDate() : n.createdAt).toLocaleString()}</p>}
                   </div>
-                  <button onClick={() => markAsRead(n.id)} style={{ padding: '8px 12px', backgroundColor: '#ef4444', color: 'white', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '12px' }}>Mark as Read</button>
+                  <button onClick={() => markAsRead(n.id)} style={{ padding: '8px 12px', backgroundColor: '#ef4444', color: 'white', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '12px' }}>{t('farmer.notifications.markAsRead')}</button>
                 </div>
               ))}
             </div>
@@ -80,10 +83,10 @@ export default function NotificationsSection() {
 
         {/* Read Notifications */}
         <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937', marginBottom: '16px' }}>Older Notifications</h3>
+          <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937', marginBottom: '16px' }}>{t('farmer.notifications.read')}</h3>
           
           {readNotifs.length === 0 ? (
-            <p style={{ color: '#6b7280' }}>No previous notifications.</p>
+            <p style={{ color: '#6b7280' }}>{t('farmer.notifications.noNotifications')}</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {readNotifs.map(n => (
