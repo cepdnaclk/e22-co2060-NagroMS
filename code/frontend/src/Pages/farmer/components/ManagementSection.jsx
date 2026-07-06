@@ -1,9 +1,12 @@
+import { useLanguage } from '../../../i18n/LanguageContext';
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { auth, db } from '../../../utils/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 export default function ManagementSection() {
+  const { t } = useLanguage();
+
   const [expenses, setExpenses] = useState([]);
   const [incomes, setIncomes] = useState([]);
   
@@ -142,13 +145,13 @@ export default function ManagementSection() {
     });
 
     return [
-      { name: 'Mon', amount: dayTotals['Monday'] },
-      { name: 'Tue', amount: dayTotals['Tuesday'] },
-      { name: 'Wed', amount: dayTotals['Wednesday'] },
-      { name: 'Thu', amount: dayTotals['Thursday'] },
-      { name: 'Fri', amount: dayTotals['Friday'] },
-      { name: 'Sat', amount: dayTotals['Saturday'] },
-      { name: 'Sun', amount: dayTotals['Sunday'] },
+      { name: t('farmer.management.monday').substring(0,3), amount: dayTotals['Monday'] },
+      { name: t('farmer.management.tuesday').substring(0,3), amount: dayTotals['Tuesday'] },
+      { name: t('farmer.management.wednesday').substring(0,3), amount: dayTotals['Wednesday'] },
+      { name: t('farmer.management.thursday').substring(0,3), amount: dayTotals['Thursday'] },
+      { name: t('farmer.management.friday').substring(0,3), amount: dayTotals['Friday'] },
+      { name: t('farmer.management.saturday').substring(0,3), amount: dayTotals['Saturday'] },
+      { name: t('farmer.management.sunday').substring(0,3), amount: dayTotals['Sunday'] },
     ];
   };
 
@@ -157,7 +160,7 @@ export default function ManagementSection() {
 
   return (
     <div className="nagro-section-content" style={{ paddingBottom: '40px' }}>
-      <h2 style={{ fontSize: '24px', fontWeight: 600, color: '#111827', marginBottom: '24px' }}>Management</h2>
+      <h2 style={{ fontSize: '24px', fontWeight: 600, color: '#111827', marginBottom: '24px' }}>{t('farmer.management.title')}</h2>
       
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
         
@@ -165,7 +168,7 @@ export default function ManagementSection() {
         <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', display: 'flex', flexDirection: 'column', height: '600px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#dc2626' }}>Total Expenses</h3>
+              <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#dc2626' }}>{t('farmer.management.totalExpenses')}</h3>
               {expenses.length > 0 && (
                 <>
                   <p style={{ fontSize: '32px', fontWeight: 700, color: '#111827', margin: '8px 0' }}>Rs {totalExpense.toLocaleString()}</p>
@@ -174,11 +177,11 @@ export default function ManagementSection() {
               )}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-              <button onClick={() => setShowExpenseModal(true)} style={{ padding: '8px 16px', borderRadius: '6px', backgroundColor: '#fee2e2', color: '#dc2626', border: 'none', cursor: 'pointer', fontWeight: 600 }}>+ Add Expense</button>
+              <button onClick={() => setShowExpenseModal(true)} style={{ padding: '8px 16px', borderRadius: '6px', backgroundColor: '#fee2e2', color: '#dc2626', border: 'none', cursor: 'pointer', fontWeight: 600 }}>{t('farmer.management.addExpense')}</button>
               <select value={expensePeriod} onChange={e => setExpensePeriod(e.target.value)} style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #d1d5db', fontSize: '12px', outline: 'none' }}>
-                <option value="Last 1 Week">Last 1 Week</option>
-                <option value="Last 1 Month">Last 1 Month</option>
-                <option value="Last 3 Months">Last 3 Months</option>
+                <option value="Last 1 Week">{t('farmer.management.lastWeek')}</option>
+                <option value="Last 1 Month">{t('farmer.management.lastMonth')}</option>
+                <option value="Last 3 Months">{t('farmer.management.lastThreeMonths')}</option>
               </select>
             </div>
           </div>
@@ -197,9 +200,9 @@ export default function ManagementSection() {
             
             <div style={{ flex: 1, overflowY: 'auto', paddingRight: '8px', borderTop: '1px solid #f3f4f6', paddingTop: '8px' }}>
               {expenses.length === 0 ? (
-                <p style={{ color: '#9ca3af', fontSize: '14px', textAlign: 'center', marginTop: '20px' }}>No expenses recorded yet.</p>
+                <p style={{ color: '#9ca3af', fontSize: '14px', textAlign: 'center', marginTop: '20px' }}>{t('farmer.management.noExpenses')}</p>
               ) : filteredExpenses.length === 0 ? (
-                <p style={{ color: '#9ca3af', fontSize: '14px', textAlign: 'center', marginTop: '20px' }}>No expenses in this period.</p>
+                <p style={{ color: '#9ca3af', fontSize: '14px', textAlign: 'center', marginTop: '20px' }}>{t('farmer.management.noExpenses')}</p>
               ) : (
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                   {filteredExpenses.map(exp => (
@@ -222,7 +225,7 @@ export default function ManagementSection() {
         <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', display: 'flex', flexDirection: 'column', height: '600px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#22c55e' }}>Total Income</h3>
+              <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#22c55e' }}>{t('farmer.management.totalIncome')}</h3>
               {incomes.length > 0 && (
                 <>
                   <p style={{ fontSize: '32px', fontWeight: 700, color: '#111827', margin: '8px 0' }}>Rs {totalIncome.toLocaleString()}</p>
@@ -231,11 +234,11 @@ export default function ManagementSection() {
               )}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-              <button onClick={() => setShowIncomeModal(true)} style={{ padding: '8px 16px', borderRadius: '6px', backgroundColor: '#dcfce7', color: '#16a34a', border: 'none', cursor: 'pointer', fontWeight: 600 }}>+ Add Income</button>
+              <button onClick={() => setShowIncomeModal(true)} style={{ padding: '8px 16px', borderRadius: '6px', backgroundColor: '#dcfce7', color: '#16a34a', border: 'none', cursor: 'pointer', fontWeight: 600 }}>{t('farmer.management.addIncome')}</button>
               <select value={incomePeriod} onChange={e => setIncomePeriod(e.target.value)} style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #d1d5db', fontSize: '12px', outline: 'none' }}>
-                <option value="Last 1 Week">Last 1 Week</option>
-                <option value="Last 1 Month">Last 1 Month</option>
-                <option value="Last 3 Months">Last 3 Months</option>
+                <option value="Last 1 Week">{t('farmer.management.lastWeek')}</option>
+                <option value="Last 1 Month">{t('farmer.management.lastMonth')}</option>
+                <option value="Last 3 Months">{t('farmer.management.lastThreeMonths')}</option>
               </select>
             </div>
           </div>
@@ -254,9 +257,9 @@ export default function ManagementSection() {
             
             <div style={{ flex: 1, overflowY: 'auto', paddingRight: '8px', borderTop: '1px solid #f3f4f6', paddingTop: '8px' }}>
               {incomes.length === 0 ? (
-                <p style={{ color: '#9ca3af', fontSize: '14px', textAlign: 'center', marginTop: '20px' }}>No income recorded yet.</p>
+                <p style={{ color: '#9ca3af', fontSize: '14px', textAlign: 'center', marginTop: '20px' }}>{t('farmer.management.noIncome')}</p>
               ) : filteredIncomes.length === 0 ? (
-                <p style={{ color: '#9ca3af', fontSize: '14px', textAlign: 'center', marginTop: '20px' }}>No income in this period.</p>
+                <p style={{ color: '#9ca3af', fontSize: '14px', textAlign: 'center', marginTop: '20px' }}>{t('farmer.management.noIncome')}</p>
               ) : (
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                   {filteredIncomes.map(inc => (
@@ -280,30 +283,30 @@ export default function ManagementSection() {
       {/* Profit Section */}
       <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', marginTop: '24px', display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f3f4f6', paddingBottom: '16px', marginBottom: '24px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#111827', margin: 0 }}>Profit Summary</h3>
+          <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#111827', margin: 0 }}>{t('farmer.management.profitSummary')}</h3>
           <select value={profitPeriod} onChange={e => setProfitPeriod(e.target.value)} style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '14px', outline: 'none' }}>
-            <option value="Last 1 Week">Last 1 Week</option>
-            <option value="Last 1 Month">Last 1 Month</option>
-            <option value="Last 3 Months">Last 3 Months</option>
+            <option value="Last 1 Week">{t('farmer.management.lastWeek')}</option>
+            <option value="Last 1 Month">{t('farmer.management.lastMonth')}</option>
+            <option value="Last 3 Months">{t('farmer.management.lastThreeMonths')}</option>
           </select>
         </div>
 
         <div>
           {(expenses.length === 0 && incomes.length === 0) ? (
-            <p style={{ color: '#9ca3af', fontSize: '14px', textAlign: 'center', padding: '20px 0' }}>No profit data available yet.</p>
+            <p style={{ color: '#9ca3af', fontSize: '14px', textAlign: 'center', padding: '20px 0' }}>{t('farmer.management.noProfitData')}</p>
           ) : (
             <div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
                 <div style={{ textAlign: 'center', padding: '16px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
-                  <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '8px', fontWeight: 500 }}>Total Income</p>
+                  <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '8px', fontWeight: 500 }}>{t('farmer.management.totalIncome')}</p>
                   <p style={{ fontSize: '24px', fontWeight: 600, color: '#22c55e', margin: 0 }}>Rs {profitTotalIncome.toLocaleString()}</p>
                 </div>
                 <div style={{ textAlign: 'center', padding: '16px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
-                  <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '8px', fontWeight: 500 }}>Total Expenses</p>
+                  <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '8px', fontWeight: 500 }}>{t('farmer.management.totalExpenses')}</p>
                   <p style={{ fontSize: '24px', fontWeight: 600, color: '#dc2626', margin: 0 }}>Rs {profitTotalExpense.toLocaleString()}</p>
                 </div>
                 <div style={{ textAlign: 'center', padding: '16px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
-                  <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '8px', fontWeight: 500 }}>Net Profit</p>
+                  <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '8px', fontWeight: 500 }}>{t('farmer.management.netProfit')}</p>
                   <p style={{ fontSize: '24px', fontWeight: 700, margin: 0, color: netProfit > 0 ? '#22c55e' : netProfit < 0 ? '#dc2626' : '#374151' }}>
                     {netProfit < 0 ? '-' : ''}Rs {Math.abs(netProfit).toLocaleString()}
                   </p>
@@ -312,7 +315,7 @@ export default function ManagementSection() {
               
               <div style={{ textAlign: 'center', padding: '16px', borderRadius: '8px', backgroundColor: netProfit > 0 ? '#dcfce7' : netProfit < 0 ? '#fee2e2' : '#f3f4f6' }}>
                 <p style={{ fontWeight: 600, margin: 0, fontSize: '16px', color: netProfit > 0 ? '#16a34a' : netProfit < 0 ? '#dc2626' : '#4b5563' }}>
-                  {netProfit > 0 ? 'You are making a profit' : netProfit < 0 ? 'You are at a loss' : 'No profit or loss'}
+                  {netProfit > 0 ? t('farmer.management.makingProfit') : netProfit < 0 ? t('farmer.management.atLoss') : t('farmer.management.noProfitLoss')}
                 </p>
               </div>
             </div>
@@ -324,43 +327,43 @@ export default function ManagementSection() {
       {showExpenseModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '12px', width: '100%', maxWidth: '400px' }}>
-            <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '24px' }}>Add Expense</h2>
+            <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '24px' }}>{t('farmer.management.addExpense')}</h2>
             <form onSubmit={handleAddExpense} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>Expense title</label>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>{t('farmer.management.expenseTitle')}</label>
                 <input required type="text" value={expenseForm.title} onChange={e => setExpenseForm({...expenseForm, title: e.target.value})} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db', outline: 'none' }} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>Category</label>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>{t('farmer.management.category')}</label>
                 <select value={expenseForm.category} onChange={e => setExpenseForm({...expenseForm, category: e.target.value})} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db', outline: 'none' }}>
-                  <option value="Seeds">Seeds</option>
-                  <option value="Fertilizer">Fertilizer</option>
-                  <option value="Transport">Transport</option>
-                  <option value="Labor">Labor</option>
-                  <option value="Pesticide">Pesticide</option>
-                  <option value="Equipment">Equipment</option>
-                  <option value="Water/Electricity">Water/Electricity</option>
-                  <option value="Packaging">Packaging</option>
-                  <option value="Other">Other</option>
+                  <option value="Seeds">{t('farmer.management.category')}</option>
+                  <option value="Fertilizer">{t('management.fertilizer') || 'Fertilizer'}</option>
+                  <option value="Transport">{t('management.transport') || 'Transport'}</option>
+                  <option value="Labor">{t('management.labor') || 'Labor'}</option>
+                  <option value="Pesticide">{t('management.pesticide') || 'Pesticide'}</option>
+                  <option value="Equipment">{t('management.equipment') || 'Equipment'}</option>
+                  <option value="Water/Electricity">{t('management.waterElec') || 'Water/Electricity'}</option>
+                  <option value="Packaging">{t('management.packaging') || 'Packaging'}</option>
+                  <option value="Other">{t('management.other') || 'Other'}</option>
                 </select>
               </div>
               <div style={{ display: 'flex', gap: '12px' }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>Amount (Rs)</label>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>{t('farmer.management.amount')}</label>
                   <input required type="number" min="0" value={expenseForm.amount} onChange={e => setExpenseForm({...expenseForm, amount: e.target.value})} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db', outline: 'none' }} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>Date</label>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>{t('farmer.management.date')}</label>
                   <input required type="date" value={expenseForm.date} onChange={e => setExpenseForm({...expenseForm, date: e.target.value})} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db', outline: 'none' }} />
                 </div>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>Description</label>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>{t('farmer.management.description')}</label>
                 <textarea rows="2" value={expenseForm.description} onChange={e => setExpenseForm({...expenseForm, description: e.target.value})} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db', outline: 'none' }}></textarea>
               </div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-                <button type="button" onClick={() => setShowExpenseModal(false)} style={{ flex: 1, padding: '10px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '8px', cursor: 'pointer', fontWeight: 500 }}>Cancel</button>
-                <button type="submit" style={{ flex: 1, padding: '10px', backgroundColor: '#dc2626', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Add Expense</button>
+                <button type="button" onClick={() => setShowExpenseModal(false)} style={{ flex: 1, padding: '10px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '8px', cursor: 'pointer', fontWeight: 500 }}>{t('farmer.common.cancel')}</button>
+                <button type="submit" style={{ flex: 1, padding: '10px', backgroundColor: '#dc2626', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>{t('farmer.management.addExpense')}</button>
               </div>
             </form>
           </div>
@@ -371,41 +374,41 @@ export default function ManagementSection() {
       {showIncomeModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '12px', width: '100%', maxWidth: '400px' }}>
-            <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '24px' }}>Add Income</h2>
+            <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '24px' }}>{t('farmer.management.addIncome')}</h2>
             <form onSubmit={handleAddIncome} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>Income title</label>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>{t('farmer.management.incomeTitle')}</label>
                 <input required type="text" value={incomeForm.title} onChange={e => setIncomeForm({...incomeForm, title: e.target.value})} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db', outline: 'none' }} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>Source</label>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>{t('farmer.management.source')}</label>
                 <select value={incomeForm.source} onChange={e => setIncomeForm({...incomeForm, source: e.target.value})} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db', outline: 'none' }}>
-                  <option value="Product Sale">Product Sale</option>
-                  <option value="Direct Customer Sale">Direct Customer Sale</option>
-                  <option value="Wholesale Sale">Wholesale Sale</option>
-                  <option value="Delivery Income">Delivery Income</option>
-                  <option value="Farming Service">Farming Service</option>
-                  <option value="Government Support">Government Support</option>
-                  <option value="Other">Other</option>
+                  <option value="Product Sale">{t('farmer.management.source')}</option>
+                  <option value="Direct Customer Sale">{t('management.directCustomer') || 'Direct Customer Sale'}</option>
+                  <option value="Wholesale Sale">{t('management.wholesale') || 'Wholesale Sale'}</option>
+                  <option value="Delivery Income">{t('management.deliveryIncome') || 'Delivery Income'}</option>
+                  <option value="Farming Service">{t('management.farmingService') || 'Farming Service'}</option>
+                  <option value="Government Support">{t('management.govSupport') || 'Government Support'}</option>
+                  <option value="Other">{t('management.other') || 'Other'}</option>
                 </select>
               </div>
               <div style={{ display: 'flex', gap: '12px' }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>Amount (Rs)</label>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>{t('farmer.management.amount')}</label>
                   <input required type="number" min="0" value={incomeForm.amount} onChange={e => setIncomeForm({...incomeForm, amount: e.target.value})} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db', outline: 'none' }} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>Date</label>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>{t('farmer.management.date')}</label>
                   <input required type="date" value={incomeForm.date} onChange={e => setIncomeForm({...incomeForm, date: e.target.value})} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db', outline: 'none' }} />
                 </div>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>Description</label>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>{t('farmer.management.description')}</label>
                 <textarea rows="2" value={incomeForm.description} onChange={e => setIncomeForm({...incomeForm, description: e.target.value})} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db', outline: 'none' }}></textarea>
               </div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-                <button type="button" onClick={() => setShowIncomeModal(false)} style={{ flex: 1, padding: '10px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '8px', cursor: 'pointer', fontWeight: 500 }}>Cancel</button>
-                <button type="submit" style={{ flex: 1, padding: '10px', backgroundColor: '#16a34a', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>Add Income</button>
+                <button type="button" onClick={() => setShowIncomeModal(false)} style={{ flex: 1, padding: '10px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '8px', cursor: 'pointer', fontWeight: 500 }}>{t('farmer.common.cancel')}</button>
+                <button type="submit" style={{ flex: 1, padding: '10px', backgroundColor: '#16a34a', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>{t('farmer.management.addIncome')}</button>
               </div>
             </form>
           </div>
