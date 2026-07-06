@@ -3,18 +3,16 @@ const router = express.Router();
 const https = require('https');
 
 router.get('/current', (req, res) => {
-  const { lat, lon } = req.query;
-
-  if (!lat || !lon) {
-    return res.status(400).json({ success: false, message: 'Latitude and longitude are required' });
-  }
+  let { city } = req.query;
+  if (!city) city = 'Colombo';
 
   const apiKey = process.env.OPENWEATHER_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ success: false, message: 'OpenWeather API key is not configured' });
+    console.error('OpenWeather API Error: Missing API Key');
+    return res.status(200).json({ success: false, message: "Unable to load weather right now." });
   }
 
-  const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+  const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)},LK&appid=${apiKey}&units=metric`;
 
   https.get(url, (response) => {
     let data = '';
@@ -28,7 +26,8 @@ router.get('/current', (req, res) => {
         const parsedData = JSON.parse(data);
 
         if (parsedData.cod !== 200) {
-          return res.status(parsedData.cod || 500).json({ success: false, message: parsedData.message || 'Failed to fetch weather' });
+          console.error('OpenWeather API Error:', parsedData);
+          return res.status(200).json({ success: false, message: "Unable to load weather right now." });
         }
 
         const result = {
@@ -46,12 +45,14 @@ router.get('/current', (req, res) => {
 
         res.status(200).json(result);
       } catch (e) {
-        res.status(500).json({ success: false, message: 'Error parsing weather data' });
+        console.error('OpenWeather API Error: JSON parse failed', e);
+        res.status(200).json({ success: false, message: "Unable to load weather right now." });
       }
     });
 
   }).on('error', (err) => {
-    res.status(500).json({ success: false, message: 'Network error fetching weather' });
+    console.error('OpenWeather API Error:', err);
+    res.status(200).json({ success: false, message: "Unable to load weather right now." });
   });
 });
 
