@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db, storage } from '../../../utils/firebase';
-import { doc, onSnapshot, collection, query, where, updateDoc, addDoc, serverTimestamp, orderBy } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, where, updateDoc, addDoc, deleteDoc, serverTimestamp, orderBy, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useLanguage } from '../../../i18n/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 
-export default function OverviewSection({ isNewFarmer: initialIsNewFarmer, setActiveTab }) {
-  const { lang, setLang } = useLanguage();
+export default function OverviewSection({ setActiveTab }) {
+  const { lang, setLang, t } = useLanguage();
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
-  
+
   // Products and modal state
   const [products, setProducts] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [editProductId, setEditProductId] = useState(null);
+  const [productToDelete, setProductToDelete] = useState(null);
   const [formData, setFormData] = useState({
     productName: '',
     quantity: '',
@@ -35,68 +37,60 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer, setAc
 
   const [orders, setOrders] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  
+
   // Weather state
   const [weather, setWeather] = useState({
     temp: null,
+    feelsLike: null,
+    humidity: null,
+    windSpeed: null,
     condition: null,
+    description: null,
+    icon: null,
     city: null,
+    country: null,
     loading: true,
     error: null
   });
 
+  const [weatherFetched, setWeatherFetched] = useState(false);
+
   useEffect(() => {
-    // Weather fetch logic
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          try {
-            // Fetch weather
-            const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
-            const weatherData = await weatherRes.json();
-            
-            // Fetch city name (reverse geocoding)
-            let city = 'Unknown Location';
-            try {
-              const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-              const geoData = await geoRes.json();
-              city = geoData.address.city || geoData.address.town || geoData.address.village || geoData.address.county || 'Unknown Location';
-            } catch (e) {
-              console.warn('Could not fetch city name', e);
-            }
+    if (profile && !weatherFetched) {
+      setWeatherFetched(true);
+      const fetchWeather = async () => {
+        const cityName = profile.villageTown || profile.district || 'Colombo';
+        try {
+          const weatherRes = await fetch(`http://localhost:5000/api/weather/current?city=${encodeURIComponent(cityName)}`);
+          const weatherData = await weatherRes.json();
 
-            // Map open-meteo weather code to a simple emoji/condition (simplified)
-            const code = weatherData.current_weather.weathercode;
-            let condition = 'Clear';
-            let emoji = '☀️';
-            if (code >= 1 && code <= 3) { condition = 'Partly Cloudy'; emoji = '🌤️'; }
-            else if (code >= 45 && code <= 48) { condition = 'Foggy'; emoji = '🌫️'; }
-            else if (code >= 51 && code <= 67) { condition = 'Rainy'; emoji = '🌧️'; }
-            else if (code >= 71 && code <= 77) { condition = 'Snowy'; emoji = '❄️'; }
-            else if (code >= 80 && code <= 82) { condition = 'Showers'; emoji = '🌦️'; }
-            else if (code >= 95 && code <= 99) { condition = 'Thunderstorm'; emoji = '⛈️'; }
-
+          if (weatherData.success) {
             setWeather({
-              temp: weatherData.current_weather.temperature,
-              condition: condition,
-              emoji: emoji,
-              city: city,
+              temp: Math.round(weatherData.temperature),
+              feelsLike: Math.round(weatherData.feelsLike),
+              humidity: weatherData.humidity,
+              windSpeed: weatherData.windSpeed,
+              condition: weatherData.condition,
+              description: weatherData.description,
+              icon: weatherData.icon,
+              city: weatherData.city,
+              country: weatherData.country,
               loading: false,
-              error: null
+              error: null,
+              fallbackUsed: (!profile.villageTown && !profile.district)
             });
-          } catch (err) {
-            setWeather(prev => ({ ...prev, loading: false, error: 'Failed to fetch weather data.' }));
+          } else {
+            setWeather(prev => ({ ...prev, loading: false, error: t('farmer.overview.weatherError') || 'Unable to load weather right now.' }));
           }
-        },
-        (err) => {
-          setWeather({ loading: false, error: 'Location permission needed to show live weather.', temp: null, condition: null, city: null });
+        } catch (err) {
+          setWeather(prev => ({ ...prev, loading: false, error: t('farmer.overview.weatherError') || 'Unable to load weather right now.' }));
         }
-      );
-    } else {
-      setWeather({ loading: false, error: 'Geolocation is not supported by this browser.', temp: null, condition: null, city: null });
+      };
+      fetchWeather();
     }
+  }, [profile, weatherFetched, t]);
 
+  useEffect(() => {
     let unsubscribeDoc = null;
     let unsubscribeProducts = null;
     let unsubscribeOrders = null;
@@ -112,14 +106,18 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer, setAc
         });
 
         const q = query(
-          collection(db, 'products'), 
-          where('farmerId', '==', user.uid),
-          orderBy('createdAt', 'desc')
+          collection(db, 'products'),
+          where('farmerId', '==', user.uid)
         );
         unsubscribeProducts = onSnapshot(q, (snapshot) => {
           const productList = [];
           snapshot.forEach((doc) => {
             productList.push({ id: doc.id, ...doc.data() });
+          });
+          productList.sort((a, b) => {
+            const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+            const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+            return timeB - timeA;
           });
           setProducts(productList);
         }, (error) => {
@@ -127,11 +125,35 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer, setAc
         });
 
         const ordersQuery = query(collection(db, 'orders'), where('farmerId', '==', user.uid));
-        unsubscribeOrders = onSnapshot(ordersQuery, (snapshot) => {
+        unsubscribeOrders = onSnapshot(ordersQuery, async (snapshot) => {
           const ordersList = [];
-          snapshot.forEach((doc) => {
-            ordersList.push({ id: doc.id, ...doc.data() });
-          });
+          for (const document of snapshot.docs) {
+            let order = { id: document.id, ...document.data() };
+            
+            if (!order.customerName || !order.customerPhone || !order.customerLocation) {
+              if (order.customerId) {
+                try {
+                  const userSnap = await getDoc(doc(db, 'users', order.customerId));
+                  if (userSnap.exists()) {
+                    const ud = userSnap.data();
+                    order.customerName = order.customerName || ud.fullName || ud.name || 'Not available';
+                    order.customerPhone = order.customerPhone || ud.phone || ud.phoneNumber || 'Not available';
+                    order.customerLocation = order.customerLocation || ud.village || ud.villageTown || ud.district || ud.address || 'Not available';
+                  }
+                } catch(e) { console.error('Error fetching customer details:', e); }
+              }
+            }
+            
+            order.productName = order.productName || 'Not available';
+            order.quantity = order.quantity ? `${order.quantity} ${order.unit || ''}`.trim() : 'Not available';
+            const price = order.totalPrice || order.totalAmount;
+            order.totalPriceDisplay = price ? `Rs ${price}` : 'Not available';
+            order.customerName = order.customerName || 'Not available';
+            order.customerPhone = order.customerPhone || 'Not available';
+            order.customerLocation = order.customerLocation || 'Not available';
+
+            ordersList.push(order);
+          }
           setOrders(ordersList);
         });
 
@@ -164,33 +186,57 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer, setAc
       const user = auth.currentUser;
       if (!user) return;
       const token = await user.getIdToken();
-      const order = orders.find(o => o.id === orderId);
       await fetch(`http://localhost:5000/api/farmer/orders/${orderId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ status: newStatus, productId: order.productId, customerId: order.customerId })
+        body: JSON.stringify({ status: newStatus })
       });
     } catch (error) {
       console.error('Error updating order status:', error);
     }
   };
 
-  const handleDeleteProduct = async (productId) => {
+  const handleDeleteClick = (product) => {
+    setProductToDelete(product);
+  };
+
+  const confirmDeleteProduct = async () => {
+    if (!productToDelete || !auth.currentUser) return;
+    if (productToDelete.farmerId !== auth.currentUser.uid) {
+      alert("You are not authorized to delete this product.");
+      return;
+    }
+    
     try {
-      if (!window.confirm('Are you sure you want to delete this product?')) return;
-      const token = await auth.currentUser.getIdToken();
-      await fetch(`http://localhost:5000/api/farmer/products/${productId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      await deleteDoc(doc(db, 'products', productToDelete.id));
+      setProductToDelete(null);
+      alert('Product deleted successfully');
     } catch (error) {
       console.error('Error deleting product:', error);
+      alert('Failed to delete product: ' + error.message);
+      setProductToDelete(null);
     }
+  };
+
+  const handleEditClick = (product) => {
+    if (!product.farmerId) {
+      console.warn("Product missing farmerId. Please recreate product or fix Firestore document.");
+      alert("You cannot edit this product because it is missing ownership data.");
+      return;
+    }
+    setEditProductId(product.id);
+    setFormData({
+      productName: product.productName || product.name || '',
+      quantity: product.quantity || '',
+      unit: product.unit || 'kg',
+      pricePerUnit: product.pricePerUnit || product.price || '',
+      stockStatus: product.stockStatus || 'Full Stock',
+      imageFile: null
+    });
+    setShowModal(true);
   };
 
   const completedSales = orders.filter(o => o.status === 'completed');
@@ -199,43 +245,71 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer, setAc
   const handleAddProduct = async (e) => {
     e.preventDefault();
     console.log("Add product clicked");
-    
+
     if (!auth.currentUser) return;
-    console.log("Current user:", auth.currentUser.uid);
+    const user = auth.currentUser;
+    console.log("Current user:", user.uid);
 
     try {
       const quantityNum = Number(formData.quantity);
       const priceNum = Number(formData.pricePerUnit);
-      let imageUrl = '';
+      let imageUrl = editProductId ? (products.find(p => p.id === editProductId)?.imageUrl || '') : '';
 
       if (formData.imageFile) {
-        const imageRef = ref(storage, `products/${auth.currentUser.uid}/${Date.now()}-${formData.imageFile.name}`);
-        const snapshot = await uploadBytes(imageRef, formData.imageFile);
-        imageUrl = await getDownloadURL(snapshot.ref);
+        try {
+          const imageRef = ref(storage, `products/${user.uid}/${Date.now()}-${formData.imageFile.name}`);
+          const snapshot = await uploadBytes(imageRef, formData.imageFile);
+          imageUrl = await getDownloadURL(snapshot.ref);
+        } catch (imgError) {
+          console.warn('Image upload failed, proceeding without image:', imgError);
+        }
       }
-      
-      const newProduct = {
-        productName: formData.productName,
-        quantity: quantityNum,
-        unit: formData.unit,
-        pricePerUnit: priceNum,
-        totalPrice: quantityNum * priceNum,
-        stockStatus: formData.stockStatus,
-        imageUrl: imageUrl,
-        farmerId: auth.currentUser.uid,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      };
 
-      const docRef = await addDoc(collection(db, 'products'), newProduct);
-      console.log('Product saved:', docRef.id);
+      if (editProductId) {
+        const prod = products.find(p => p.id === editProductId);
+        
+        console.log("Current user UID:", user.uid);
+        console.log("Product farmerId:", prod ? prod.farmerId : 'not found');
+        console.log("Editing product ID:", editProductId);
+
+        if (!prod || prod.farmerId !== user.uid) {
+          alert("You cannot edit this product because you are not the owner.");
+          return;
+        }
+        
+        await updateDoc(doc(db, 'products', editProductId), {
+          productName: formData.productName,
+          quantity: quantityNum,
+          unit: formData.unit,
+          pricePerUnit: priceNum,
+          totalPrice: quantityNum * priceNum,
+          stockStatus: formData.stockStatus,
+          imageUrl: imageUrl,
+          farmerId: user.uid,
+          updatedAt: serverTimestamp()
+        });
+      } else {
+        const newProduct = {
+          productName: formData.productName,
+          quantity: quantityNum,
+          unit: formData.unit,
+          pricePerUnit: priceNum,
+          totalPrice: quantityNum * priceNum,
+          stockStatus: formData.stockStatus,
+          imageUrl: imageUrl,
+          farmerId: user.uid,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        };
+        await addDoc(collection(db, 'products'), newProduct);
+      }
 
       setShowModal(false);
+      setEditProductId(null);
       resetProductForm();
-      alert('Product added successfully');
     } catch (error) {
-      console.error('Add product error:', error);
-      alert('Failed to add product: ' + error.message);
+      console.error('Save product error:', error);
+      alert('Failed to save product: ' + error.message);
     }
   };
 
@@ -244,7 +318,7 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer, setAc
   return (
     <div className="nagro-section-content">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: 600, color: '#111827', margin: 0 }}>Overview</h2>
+        <h2 style={{ fontSize: '24px', fontWeight: 600, color: '#111827', margin: 0 }}>{t('farmer.overview.title') || 'Overview'}</h2>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           {/* Language Selector */}
@@ -262,14 +336,14 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer, setAc
             }}
           >
             <option value="en">English</option>
-            <option value="si">Sinhala</option>
-            <option value="ta">Tamil</option>
+            <option value="si">සිංහල</option>
+            <option value="ta">தமிழ்</option>
           </select>
 
           {/* Active Status */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e', boxShadow: '0 0 0 2px rgba(34, 197, 94, 0.2)' }}></div>
-            <span style={{ fontSize: '14px', color: '#4b5563', fontWeight: 500 }}>Active Farmer</span>
+            <span style={{ fontSize: '14px', color: '#4b5563', fontWeight: 500 }}>{t('farmer.header.activeFarmer') || 'Active Farmer'}</span>
           </div>
 
           {/* Role Switcher */}
@@ -302,13 +376,13 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer, setAc
           )}
 
           {/* Farmer Profile */}
-          <div 
+          <div
             onClick={() => setActiveTab && setActiveTab('settings')}
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '12px', 
-              padding: '8px 16px', 
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '8px 16px',
               borderLeft: '1px solid #e5e7eb',
               cursor: 'pointer',
               borderRadius: '8px',
@@ -350,28 +424,30 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer, setAc
       </div>
 
 
-      {isNewFarmer ? (
-        <div style={{ padding: '40px', backgroundColor: '#f9fafb', borderRadius: '12px', textAlign: 'center', border: '1px dashed #d1d5db' }}>
-          <h3 style={{ fontSize: '18px', color: '#374151', marginBottom: '12px' }}>Welcome to NagroMS!</h3>
-          <p style={{ color: '#6b7280', marginBottom: '24px' }}>It looks like you haven't added any products yet.</p>
+      {/* Products Section */}
+      {products.length === 0 ? (
+        <div style={{ padding: '40px', backgroundColor: '#f9fafb', borderRadius: '12px', textAlign: 'center', border: '1px dashed #d1d5db', marginBottom: '40px' }}>
+          <h3 style={{ fontSize: '18px', color: '#374151', marginBottom: '12px' }}>{t('farmer.overview.welcome') || 'Welcome to NagroMS!'}</h3>
+          <p style={{ color: '#6b7280', marginBottom: '24px' }}>{t('farmer.overview.noProductsText') || "It looks like you haven't added any products yet."}</p>
           <button 
-            onClick={() => setShowModal(true)}
+            onClick={() => { setEditProductId(null); resetProductForm(); setShowModal(true); }}
             style={{ padding: '10px 20px', backgroundColor: '#22c55e', color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 600 }}
           >
-            + Add Your First Product
+            + {t('farmer.overview.addFirstProduct') || 'Add Your First Product'}
           </button>
         </div>
       ) : (
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
+        <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h3 style={{ fontSize: '20px', fontWeight: 600, color: '#1f2937', margin: 0 }}>{t('farmer.overview.myProducts') || 'My Products'}</h3>
             <button 
-              onClick={() => setShowModal(true)}
+              onClick={() => { setEditProductId(null); resetProductForm(); setShowModal(true); }}
               style={{ padding: '8px 16px', backgroundColor: '#22c55e', color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 600 }}
             >
-              + Add Product
+              + {t('farmer.overview.addProduct') || 'Add Product'}
             </button>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '40px' }}>
             {products.map((product) => (
               <div key={product.id} style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
                 {product.imageUrl && (
@@ -381,41 +457,41 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer, setAc
                 <p style={{ fontSize: '24px', fontWeight: 700, color: '#22c55e', margin: '8px 0' }}>
                   Rs {product.pricePerUnit || product.price} <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: 400 }}>/ {product.unit}</span>
                 </p>
-                <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '8px' }}>Available: {product.quantity} {product.unit}</p>
-                <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '8px' }}>Total Price: Rs {product.totalPrice}</p>
-                <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '8px' }}>Status: {product.stockStatus}</p>
+                <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '8px' }}>{t('farmer.overview.available') || 'Available'}: {product.quantity} {product.unit}</p>
+                <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '8px' }}>{t('farmer.overview.totalPrice') || 'Total Price'}: Rs {product.totalPrice}</p>
+                <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '8px' }}>{t('farmer.overview.status') || 'Status'}: {product.stockStatus}</p>
                 <p style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '16px' }}>
-                  Added: {product.createdAt?.toDate ? product.createdAt.toDate().toLocaleDateString() : 'Just now'}
+                  {t('farmer.overview.added') || 'Added'}: {product.createdAt?.toDate ? product.createdAt.toDate().toLocaleDateString() : 'Just now'}
                 </p>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #22c55e', color: '#22c55e', backgroundColor: 'transparent', cursor: 'pointer' }}>Edit</button>
-                  <button onClick={() => handleDeleteProduct(product.id)} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #ef4444', color: '#ef4444', backgroundColor: 'transparent', cursor: 'pointer' }}>Delete</button>
+                  <button onClick={() => handleEditClick(product)} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #22c55e', color: '#22c55e', backgroundColor: 'transparent', cursor: 'pointer' }}>{t('farmer.overview.edit') || 'Edit'}</button>
+                  <button onClick={() => handleDeleteClick(product)} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #ef4444', color: '#ef4444', backgroundColor: 'transparent', cursor: 'pointer' }}>{t('farmer.overview.delete') || 'Delete'}</button>
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </>
       )}
 
       {/* Sales Box */}
       <div style={{ marginTop: '40px', backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937' }}>Sales</h3>
-          <span style={{ fontSize: '16px', fontWeight: 700, color: '#22c55e' }}>Total Revenue: Rs {totalRevenue}</span>
+          <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937' }}>{t('farmer.overview.sales') || 'Sales'}</h3>
+          <span style={{ fontSize: '16px', fontWeight: 700, color: '#22c55e' }}>{t('farmer.overview.totalRevenue') || 'Total Revenue'}: Rs {totalRevenue}</span>
         </div>
-        
+
         {completedSales.length === 0 ? (
-          <p style={{ color: '#6b7280', margin: 0 }}>No sales and income yet.</p>
+          <p style={{ color: '#6b7280', margin: 0 }}>{t('farmer.overview.noSales') || 'No sales and income yet.'}</p>
         ) : (
           <div style={{ overflowX: 'auto', maxHeight: '300px', overflowY: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead style={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
                 <tr style={{ borderBottom: '1px solid #e5e7eb', color: '#4b5563', fontSize: '14px' }}>
-                  <th style={{ padding: '12px 8px', fontWeight: 600 }}>Product Name</th>
-                  <th style={{ padding: '12px 8px', fontWeight: 600 }}>Quantity Sold</th>
-                  <th style={{ padding: '12px 8px', fontWeight: 600 }}>Price</th>
-                  <th style={{ padding: '12px 8px', fontWeight: 600 }}>Buyer Name</th>
-                  <th style={{ padding: '12px 8px', fontWeight: 600 }}>Sold Date</th>
+                  <th style={{ padding: '12px 8px', fontWeight: 600 }}>{t('farmer.overview.productName') || 'Product Name'}</th>
+                  <th style={{ padding: '12px 8px', fontWeight: 600 }}>{t('farmer.overview.quantitySold') || 'Quantity Sold'}</th>
+                  <th style={{ padding: '12px 8px', fontWeight: 600 }}>{t('farmer.overview.price') || 'Price'}</th>
+                  <th style={{ padding: '12px 8px', fontWeight: 600 }}>{t('farmer.overview.buyerName') || 'Buyer Name'}</th>
+                  <th style={{ padding: '12px 8px', fontWeight: 600 }}>{t('farmer.overview.soldDate') || 'Sold Date'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -423,8 +499,8 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer, setAc
                   <tr key={sale.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
                     <td style={{ padding: '12px 8px', color: '#111827', fontWeight: 500 }}>{sale.productName}</td>
                     <td style={{ padding: '12px 8px', color: '#4b5563' }}>{sale.quantity}</td>
-                    <td style={{ padding: '12px 8px', color: '#4b5563' }}>Rs {sale.totalPrice || sale.totalAmount}</td>
-                    <td style={{ padding: '12px 8px', color: '#4b5563' }}>{sale.customerName || sale.buyerName}</td>
+                    <td style={{ padding: '12px 8px', color: '#4b5563' }}>{sale.totalPriceDisplay}</td>
+                    <td style={{ padding: '12px 8px', color: '#4b5563' }}>{sale.customerName}</td>
                     <td style={{ padding: '12px 8px', color: '#4b5563' }}>
                       {sale.createdAt ? new Date(sale.createdAt.toDate ? sale.createdAt.toDate() : sale.createdAt).toLocaleDateString() : 'N/A'}
                     </td>
@@ -438,10 +514,10 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer, setAc
 
       {/* Incoming Orders Box */}
       <div style={{ marginTop: '24px', backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937', marginBottom: '16px' }}>Incoming Orders</h3>
-        
+        <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937', marginBottom: '16px' }}>{t('farmer.overview.incomingOrders') || 'Incoming Orders'}</h3>
+
         {orders.length === 0 ? (
-          <p style={{ color: '#6b7280', margin: 0 }}>No incoming orders yet.</p>
+          <p style={{ color: '#6b7280', margin: 0 }}>{t('farmer.overview.noIncomingOrders') || 'No incoming orders yet.'}</p>
         ) : (
           <div style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '8px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
@@ -449,10 +525,10 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer, setAc
                 <div key={order.id} style={{ padding: '16px', borderRadius: '8px', border: '1px solid #e5e7eb', backgroundColor: '#f9fafb' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <span style={{ fontWeight: 600, color: '#111827' }}>{order.customerName}</span>
-                    <span style={{ 
-                      padding: '2px 8px', 
-                      borderRadius: '9999px', 
-                      fontSize: '12px', 
+                    <span style={{
+                      padding: '2px 8px',
+                      borderRadius: '9999px',
+                      fontSize: '12px',
                       fontWeight: 600,
                       backgroundColor: order.status === 'completed' ? '#dcfce7' : order.status === 'pending' ? '#fef3c7' : order.status === 'declined' ? '#fee2e2' : '#e0e7ff',
                       color: order.status === 'completed' ? '#166534' : order.status === 'pending' ? '#b45309' : order.status === 'declined' ? '#991b1b' : '#3730a3',
@@ -462,22 +538,22 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer, setAc
                     </span>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '16px', fontSize: '14px', color: '#4b5563' }}>
-                    <div><strong>Product:</strong> {order.productName}</div>
-                    <div><strong>Qty:</strong> {order.quantity}</div>
-                    <div><strong>Total:</strong> Rs {order.totalPrice || order.totalAmount}</div>
-                    <div><strong>Phone:</strong> {order.customerPhone}</div>
-                    <div style={{ gridColumn: 'span 2' }}><strong>Location:</strong> {order.customerLocation}</div>
+                    <div><strong>{t('farmer.overview.productName') || 'Product'}:</strong> {order.productName}</div>
+                    <div><strong>{t('farmer.overview.quantity') || 'Qty'}:</strong> {order.quantity}</div>
+                    <div><strong>{t('farmer.overview.totalPrice') || 'Total'}:</strong> {order.totalPriceDisplay}</div>
+                    <div><strong>{t('farmer.settings.phone') || 'Phone'}:</strong> {order.customerPhone}</div>
+                    <div style={{ gridColumn: 'span 2' }}><strong>{t('farmer.overview.location') || 'Location'}:</strong> {order.customerLocation}</div>
                   </div>
-                  
+
                   {order.status === 'pending' && (
                     <div style={{ display: 'flex', gap: '12px' }}>
-                      <button 
+                      <button
                         onClick={() => handleUpdateOrderStatus(order.id, 'accepted')}
                         style={{ flex: 1, padding: '8px', backgroundColor: '#22c55e', color: 'white', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 600 }}
                       >
                         Accept
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleUpdateOrderStatus(order.id, 'declined')}
                         style={{ flex: 1, padding: '8px', backgroundColor: '#ef4444', color: 'white', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 600 }}
                       >
@@ -494,41 +570,66 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer, setAc
 
       {/* Real-time Weather Section */}
       <div style={{ marginTop: '40px', backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937', marginBottom: '16px' }}>Local Weather (Live)</h3>
+        <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937', marginBottom: '16px' }}>{t('farmer.overview.localWeather') || 'Local Weather (Live)'}</h3>
         {weather.loading ? (
-          <p style={{ color: '#6b7280' }}>Fetching weather data...</p>
+          <p style={{ color: '#6b7280' }}>{t('farmer.overview.fetchingWeather') || 'Fetching live weather...'}</p>
         ) : weather.error ? (
           <p style={{ color: '#ef4444', fontWeight: 500 }}>{weather.error}</p>
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <span style={{ fontSize: '40px' }}>{weather.emoji || '🌤️'}</span>
-            <div>
-              <p style={{ fontSize: '24px', fontWeight: 700, color: '#111827' }}>{weather.temp}°C</p>
-              <p style={{ color: '#6b7280' }}>{weather.condition} in {weather.city}</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {weather.fallbackUsed && (
+              <p style={{ color: '#d97706', fontSize: '14px', marginBottom: '0px' }}>
+                {t('farmer.overview.weatherFallback') || 'Showing weather for Colombo'}
+              </p>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <img src={`https://openweathermap.org/img/wn/${weather.icon}@2x.png`} alt={weather.condition} style={{ width: '64px', height: '64px' }} />
+              <div>
+                <p style={{ fontSize: '32px', fontWeight: 700, color: '#111827', margin: 0 }}>{weather.temp}°C</p>
+                <p style={{ color: '#6b7280', fontSize: '16px', margin: 0, textTransform: 'capitalize' }}>
+                  {weather.description} in {weather.city}, {weather.country}
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '16px', borderTop: '1px solid #e5e7eb', paddingTop: '16px' }}>
+              <div>
+                <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>{t('farmer.overview.feelsLike') || 'Feels Like'}</p>
+                <p style={{ fontSize: '16px', fontWeight: 600, color: '#1f2937', margin: 0 }}>{weather.feelsLike}°C</p>
+              </div>
+              <div>
+                <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>{t('farmer.overview.humidity') || 'Humidity'}</p>
+                <p style={{ fontSize: '16px', fontWeight: 600, color: '#1f2937', margin: 0 }}>{weather.humidity}%</p>
+              </div>
+              <div>
+                <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>{t('farmer.overview.windSpeed') || 'Wind Speed'}</p>
+                <p style={{ fontSize: '16px', fontWeight: 600, color: '#1f2937', margin: 0 }}>{weather.windSpeed} m/s</p>
+              </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Add Product Modal */}
+      {/* Add / Edit Product Modal */}
       {showModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '12px', width: '100%', maxWidth: '400px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
-            <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#111827', marginBottom: '24px' }}>Add New Product</h2>
+            <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#111827', marginBottom: '24px' }}>
+              {editProductId ? (t('farmer.overview.editProduct') || 'Edit Product') : (t('farmer.overview.addNewProduct') || 'Add New Product')}
+            </h2>
             
             <form onSubmit={handleAddProduct} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Product Name</label>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>{t('farmer.overview.productName') || 'Product Name'}</label>
                 <input required type="text" value={formData.productName} onChange={(e) => setFormData({...formData, productName: e.target.value})} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db' }} />
               </div>
               
               <div style={{ display: 'flex', gap: '12px' }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Quantity</label>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>{t('farmer.overview.quantity') || 'Quantity'}</label>
                   <input required type="number" min="0" step="any" value={formData.quantity} onChange={(e) => setFormData({...formData, quantity: e.target.value})} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db' }} />
                 </div>
                 <div style={{ width: '100px' }}>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Unit</label>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>{t('farmer.overview.unit') || 'Unit'}</label>
                   <select value={formData.unit} onChange={(e) => setFormData({...formData, unit: e.target.value})} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db' }}>
                     <option value="kg">kg</option>
                     <option value="g">g</option>
@@ -540,41 +641,69 @@ export default function OverviewSection({ isNewFarmer: initialIsNewFarmer, setAc
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Price per unit (Rs.)</label>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>{t('farmer.overview.pricePerUnit') || 'Price per unit (Rs.)'}</label>
                 <input required type="number" min="0" step="any" value={formData.pricePerUnit} onChange={(e) => setFormData({...formData, pricePerUnit: e.target.value})} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db' }} />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Stock Status</label>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>{t('farmer.overview.stockStatus') || 'Stock Status'}</label>
                 <select value={formData.stockStatus} onChange={(e) => setFormData({...formData, stockStatus: e.target.value})} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db' }}>
-                  <option value="Full Stock">Full Stock</option>
-                  <option value="Medium Stock">Medium Stock</option>
-                  <option value="Low Stock">Low Stock</option>
+                  <option value="Full Stock">{t('farmer.overview.fullStock') || 'Full Stock'}</option>
+                  <option value="Medium Stock">{t('farmer.overview.mediumStock') || 'Medium Stock'}</option>
+                  <option value="Low Stock">{t('farmer.overview.lowStock') || 'Low Stock'}</option>
                 </select>
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>Product Image</label>
-                <input type="file" accept="image/*" onChange={(e) => setFormData({...formData, imageFile: e.target.files[0]})} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db' }} />
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>{t('farmer.overview.productImage') || 'Product Image'}</label>
+                <input type="file" id="productImageInput" accept="image/*" onChange={(e) => setFormData({...formData, imageFile: e.target.files[0]})} style={{ display: 'none' }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                  <button type="button" onClick={() => document.getElementById("productImageInput").click()} style={{ padding: '6px 12px', border: '1px solid #d1d5db', borderRadius: '6px', backgroundColor: '#f9fafb', cursor: 'pointer', fontSize: '14px', color: '#374151' }}>
+                    {t("farmer.settings.chooseFile") || 'Choose File'}
+                  </button>
+                  <span style={{ fontSize: '14px', color: '#6b7280' }}>
+                    {formData.imageFile ? formData.imageFile.name : (t("farmer.settings.noFileChosen") || 'No file chosen')}
+                  </span>
+                </div>
               </div>
 
               {formData.quantity && formData.pricePerUnit && !isNaN(formData.quantity) && !isNaN(formData.pricePerUnit) && (
                 <div style={{ padding: '12px', backgroundColor: '#f0fdf4', borderRadius: '6px', border: '1px solid #bbf7d0', marginTop: '8px' }}>
                   <p style={{ margin: 0, fontSize: '14px', color: '#166534', fontWeight: 500 }}>
-                    Total Price = Rs. {Number(formData.quantity) * Number(formData.pricePerUnit)} for {formData.quantity} {formData.unit}
+                    {t('farmer.overview.calculatedPrice') || 'Total Price = Rs.'} {Number(formData.quantity) * Number(formData.pricePerUnit)} for {formData.quantity} {formData.unit}
                   </p>
                 </div>
               )}
 
               <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-                <button type="button" onClick={() => { setShowModal(false); resetProductForm(); }} style={{ flex: 1, padding: '10px', backgroundColor: 'white', color: '#374151', borderRadius: '8px', border: '1px solid #d1d5db', cursor: 'pointer', fontWeight: 500 }}>
-                  Cancel
+                <button type="button" onClick={() => { setShowModal(false); setEditProductId(null); resetProductForm(); }} style={{ flex: 1, padding: '10px', backgroundColor: 'white', color: '#374151', borderRadius: '8px', border: '1px solid #d1d5db', cursor: 'pointer', fontWeight: 500 }}>
+                  {t('farmer.overview.cancel') || 'Cancel'}
                 </button>
                 <button type="submit" style={{ flex: 1, padding: '10px', backgroundColor: '#22c55e', color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
-                  Add Product
+                  {editProductId ? (t('farmer.overview.updateProduct') || 'Update Product') : (t('farmer.overview.submitAddProduct') || 'Add Product')}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {productToDelete && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '12px', width: '100%', maxWidth: '400px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#dc2626', marginBottom: '16px' }}>{t('farmer.overview.confirmDeleteTitle') || 'Delete Product'}</h2>
+            <p style={{ color: '#4b5563', fontSize: '14px', marginBottom: '24px', lineHeight: '1.5' }}>
+              {t('farmer.overview.confirmDeleteMessage') || 'Are you sure you want to delete this product? This action cannot be undone.'}
+            </p>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button onClick={() => setProductToDelete(null)} style={{ flex: 1, padding: '10px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '8px', cursor: 'pointer', fontWeight: 500 }}>
+                {t('farmer.overview.cancel') || 'Cancel'}
+              </button>
+              <button onClick={confirmDeleteProduct} style={{ flex: 1, padding: '10px', backgroundColor: '#dc2626', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
+                {t('farmer.overview.confirmDelete') || 'Confirm Delete'}
+              </button>
+            </div>
           </div>
         </div>
       )}
