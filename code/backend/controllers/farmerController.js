@@ -153,14 +153,17 @@ exports.getOrders = async (req, res) => {
  */
 exports.updateOrderStatus = async (req, res) => {
   try {
-    const { status, productId, customerId } = req.body;
-    await orderModel.updateOrderStatus(req.params.id, status, productId);
+    const { status } = req.body;
+    const orderId = req.params.id;
+    const farmerId = req.user.uid;
+
+    const orderData = await orderModel.updateOrderStatus(orderId, status, farmerId);
     
     // Create notification for customer
-    if (customerId) {
+    if (orderData && orderData.customerId) {
       const notificationModel = require('../models/notificationModel');
       await notificationModel.createNotification({
-        userId: customerId,
+        userId: orderData.customerId,
         title: "Order status updated",
         message: `Your order has been ${status}`,
         type: "order"

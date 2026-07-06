@@ -1,9 +1,12 @@
+import { useLanguage } from '../../../i18n/LanguageContext';
 import React, { useState, useEffect } from 'react';
 import { auth, db, storage } from '../../../utils/firebase';
 import { collection, query, where, onSnapshot, doc, addDoc, deleteDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export default function CommunitySection() {
+  const { t } = useLanguage();
+
   const [experts, setExperts] = useState([]);
   const [posts, setPosts] = useState([]);
   
@@ -109,7 +112,7 @@ export default function CommunitySection() {
       setNewUpdateTitle('');
       setNewUpdateDesc('');
       setUpdateImage(null);
-      alert('Update sent to subscribed customers!');
+      alert(t('farmer.services.farmerUpdates'));
     } catch (err) {
       console.error(err);
     }
@@ -206,7 +209,7 @@ export default function CommunitySection() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ expertId, message: 'I need consultation.' })
       });
-      alert('Consultation request sent!');
+      alert(t('farmer.services.requestSent'));
     } catch (err) {
       console.error(err);
     }
@@ -215,7 +218,7 @@ export default function CommunitySection() {
   return (
     <div className="nagro-section-content" style={{ paddingBottom: '40px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: 600, color: '#111827', margin: 0 }}>Community & Network</h2>
+        <h2 style={{ fontSize: '24px', fontWeight: 600, color: '#111827', margin: 0 }}>{t('farmer.community.title')}</h2>
         
         {/* Followers / Following Stats */}
         <div style={{ display: 'flex', gap: '16px', backgroundColor: 'white', padding: '8px 16px', borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
@@ -226,7 +229,7 @@ export default function CommunitySection() {
             onMouseOut={(e) => e.currentTarget.style.color = 'inherit'}
           >
             <div style={{ fontSize: '18px', fontWeight: 700, color: '#111827' }}>{followers.length}</div>
-            <div style={{ fontSize: '12px', color: '#6b7280', fontWeight: 500 }}>Followers</div>
+            <div style={{ fontSize: '12px', color: '#6b7280', fontWeight: 500 }}>{t('farmer.community.followers')}</div>
           </div>
           <div style={{ width: '1px', backgroundColor: '#e5e7eb' }}></div>
           <div 
@@ -236,7 +239,7 @@ export default function CommunitySection() {
             onMouseOut={(e) => e.currentTarget.style.color = 'inherit'}
           >
             <div style={{ fontSize: '18px', fontWeight: 700, color: '#111827' }}>{following.length}</div>
-            <div style={{ fontSize: '12px', color: '#6b7280', fontWeight: 500 }}>Following</div>
+            <div style={{ fontSize: '12px', color: '#6b7280', fontWeight: 500 }}>{t('farmer.community.following')}</div>
           </div>
         </div>
       </div>
@@ -245,36 +248,44 @@ export default function CommunitySection() {
         
         {/* Farmer Updates */}
         <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937', marginBottom: '16px' }}>📢 Send Update to Customers</h3>
+          <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937', marginBottom: '16px' }}>{t('farmer.services.farmerUpdates')}</h3>
           <form onSubmit={handleCreateUpdate} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <input required type="text" placeholder="Update Title" value={newUpdateTitle} onChange={e => setNewUpdateTitle(e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db' }} />
-            <textarea required placeholder="What's new on the farm?" rows="3" value={newUpdateDesc} onChange={e => setNewUpdateDesc(e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db' }}></textarea>
-            <input type="file" accept="image/*" onChange={e => setUpdateImage(e.target.files[0])} style={{ fontSize: '12px' }} />
-            <button type="submit" style={{ padding: '8px', backgroundColor: '#16a34a', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 600, cursor: 'pointer' }}>Send Update</button>
+            <input required type="text" placeholder={t('farmer.services.updateTitle')} value={newUpdateTitle} onChange={e => setNewUpdateTitle(e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db' }} />
+            <textarea required placeholder={t('farmer.services.updateDescription')} rows="3" value={newUpdateDesc} onChange={e => setNewUpdateDesc(e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db' }}></textarea>
+            <input type="file" id="communityUpdateImageInput" accept="image/*" onChange={e => setUpdateImage(e.target.files[0])} style={{ display: 'none' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button type="button" onClick={() => document.getElementById("communityUpdateImageInput").click()} style={{ padding: '6px 12px', border: '1px solid #d1d5db', borderRadius: '6px', backgroundColor: '#f9fafb', cursor: 'pointer', fontSize: '12px', color: '#374151' }}>
+                {t("farmer.settings.chooseFile") || 'Choose File'}
+              </button>
+              <span style={{ fontSize: '12px', color: '#6b7280' }}>
+                {updateImage ? updateImage.name : (t("farmer.settings.noFileChosen") || 'No file chosen')}
+              </span>
+            </div>
+            <button type="submit" style={{ padding: '8px', backgroundColor: '#16a34a', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 600, cursor: 'pointer' }}>{t('farmer.services.postUpdate')}</button>
           </form>
         </div>
 
         {/* Available Experts & Service Providers */}
         <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937', marginBottom: '16px' }}>👨‍🌾 Experts & Service Providers</h3>
-          {experts.length === 0 ? <p style={{ color: '#6b7280' }}>No professionals available right now.</p> : (
+          <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937', marginBottom: '16px' }}>{t('farmer.services.availableExperts')}</h3>
+          {experts.length === 0 ? <p style={{ color: '#6b7280' }}>{t('farmer.services.noExperts')}</p> : (
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, maxHeight: '300px', overflowY: 'auto' }}>
               {experts.map(expert => (
                 <li key={expert.id} style={{ padding: '12px 0', borderBottom: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <p style={{ fontWeight: 600, color: '#111827', margin: 0 }}>{expert.fullName || expert.name}</p>
                     <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>
-                      {expert.role === 'serviceProvider' ? 'Service Provider' : 'Expert'}
+                      {expert.role === 'serviceProvider' ? t('farmer.common.notAvailable') : t('farmer.services.expertConsultation')}
                     </p>
                   </div>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     {following.some(f => f.followingId === expert.id) ? (
-                      <button onClick={() => handleUnfollow(expert.id)} style={{ padding: '6px 12px', borderRadius: '6px', backgroundColor: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>Unfollow</button>
+                      <button onClick={() => handleUnfollow(expert.id)} style={{ padding: '6px 12px', borderRadius: '6px', backgroundColor: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>{t('farmer.community.unfollow')}</button>
                     ) : (
-                      <button onClick={() => handleFollow(expert.id, expert.fullName || expert.name)} style={{ padding: '6px 12px', borderRadius: '6px', backgroundColor: 'white', color: '#111827', border: '1px solid #d1d5db', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>Follow</button>
+                      <button onClick={() => handleFollow(expert.id, expert.fullName || expert.name)} style={{ padding: '6px 12px', borderRadius: '6px', backgroundColor: 'white', color: '#111827', border: '1px solid #d1d5db', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>{t('farmer.community.follow')}</button>
                     )}
                     <button onClick={() => handleConsult(expert.id)} style={{ padding: '6px 12px', borderRadius: '6px', backgroundColor: expert.role === 'serviceProvider' ? '#e0e7ff' : '#dcfce7', color: expert.role === 'serviceProvider' ? '#4f46e5' : '#16a34a', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>
-                      {expert.role === 'serviceProvider' ? 'Request' : 'Consult'}
+                      {expert.role === 'serviceProvider' ? t('farmer.services.sendRequest') : t('farmer.services.expertConsultation')}
                     </button>
                   </div>
                 </li>
@@ -286,31 +297,31 @@ export default function CommunitySection() {
 
       {/* Community Posts */}
       <div style={{ marginTop: '24px', backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937', marginBottom: '16px' }}>🌍 Community Posts</h3>
+        <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937', marginBottom: '16px' }}>{t('farmer.community.title')}</h3>
         
         <form onSubmit={handleCreatePost} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px', paddingBottom: '24px', borderBottom: '1px solid #e5e7eb' }}>
-          <input required type="text" placeholder="Post Title" value={newPostTitle} onChange={e => setNewPostTitle(e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db' }} />
-          <textarea required placeholder="Share your thoughts with the community..." rows="3" value={newPostDesc} onChange={e => setNewPostDesc(e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db' }}></textarea>
-          <button type="submit" style={{ padding: '8px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 600, cursor: 'pointer', width: 'fit-content' }}>Post to Community</button>
+          <input required type="text" placeholder={t('farmer.community.postTitle')} value={newPostTitle} onChange={e => setNewPostTitle(e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db' }} />
+          <textarea required placeholder={t('farmer.community.postDescription')} rows="3" value={newPostDesc} onChange={e => setNewPostDesc(e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db' }}></textarea>
+          <button type="submit" style={{ padding: '8px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 600, cursor: 'pointer', width: 'fit-content' }}>{t('farmer.community.createPost')}</button>
         </form>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {posts.length === 0 ? <p style={{ color: '#6b7280' }}>No posts yet.</p> : posts.map(post => (
+          {posts.length === 0 ? <p style={{ color: '#6b7280' }}>{t('farmer.community.noPosts')}</p> : posts.map(post => (
             <div key={post.id} style={{ padding: '16px', borderRadius: '8px', border: '1px solid #e5e7eb', backgroundColor: '#f9fafb' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                 <h4 style={{ margin: 0, fontSize: '16px', color: '#111827' }}>{post.title}</h4>
                 {post.farmerId !== auth.currentUser?.uid && (
                   following.some(f => f.followingId === post.farmerId) ? (
-                    <button onClick={() => handleUnfollow(post.farmerId)} style={{ padding: '4px 8px', borderRadius: '4px', backgroundColor: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', cursor: 'pointer', fontSize: '12px' }}>Unfollow</button>
+                    <button onClick={() => handleUnfollow(post.farmerId)} style={{ padding: '4px 8px', borderRadius: '4px', backgroundColor: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', cursor: 'pointer', fontSize: '12px' }}>{t('farmer.community.unfollow')}</button>
                   ) : (
-                    <button onClick={() => handleFollow(post.farmerId, post.authorName || 'User')} style={{ padding: '4px 8px', borderRadius: '4px', backgroundColor: 'white', color: '#111827', border: '1px solid #d1d5db', cursor: 'pointer', fontSize: '12px' }}>Follow</button>
+                    <button onClick={() => handleFollow(post.farmerId, post.authorName || 'User')} style={{ padding: '4px 8px', borderRadius: '4px', backgroundColor: 'white', color: '#111827', border: '1px solid #d1d5db', cursor: 'pointer', fontSize: '12px' }}>{t('farmer.community.follow')}</button>
                   )
                 )}
               </div>
               <p style={{ margin: '0 0 16px 0', color: '#4b5563', fontSize: '14px' }}>{post.description}</p>
               <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
-                <button onClick={() => handleLikePost(post.id)} style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #d1d5db', backgroundColor: 'white', cursor: 'pointer', fontSize: '12px' }}>👍 Like ({post.likesCount || 0})</button>
-                <span style={{ fontSize: '12px', color: '#6b7280', display: 'flex', alignItems: 'center' }}>💬 {post.commentsCount || 0} Comments</span>
+                <button onClick={() => handleLikePost(post.id)} style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #d1d5db', backgroundColor: 'white', cursor: 'pointer', fontSize: '12px' }}>👍 {t('farmer.community.like')} ({post.likesCount || 0})</button>
+                <span style={{ fontSize: '12px', color: '#6b7280', display: 'flex', alignItems: 'center' }}>💬 {post.commentsCount || 0} {t('farmer.community.comment')}</span>
               </div>
               
               <div style={{ paddingLeft: '16px', borderLeft: '2px solid #e5e7eb' }}>
@@ -318,8 +329,8 @@ export default function CommunitySection() {
                   <p key={c.id} style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#374151' }}>{c.text}</p>
                 ))}
                 <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                  <input type="text" placeholder="Write a comment..." value={commentText[post.id] || ''} onChange={e => setCommentText({...commentText, [post.id]: e.target.value})} style={{ flex: 1, padding: '6px', borderRadius: '4px', border: '1px solid #d1d5db', fontSize: '12px' }} />
-                  <button onClick={() => handleAddComment(post.id)} style={{ padding: '6px 12px', backgroundColor: '#e5e7eb', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>Reply</button>
+                  <input type="text" placeholder={t('farmer.community.comment')} value={commentText[post.id] || ''} onChange={e => setCommentText({...commentText, [post.id]: e.target.value})} style={{ flex: 1, padding: '6px', borderRadius: '4px', border: '1px solid #d1d5db', fontSize: '12px' }} />
+                  <button onClick={() => handleAddComment(post.id)} style={{ padding: '6px 12px', backgroundColor: '#e5e7eb', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>{t('farmer.community.comment')}</button>
                 </div>
               </div>
             </div>
@@ -333,24 +344,24 @@ export default function CommunitySection() {
           <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '12px', width: '100%', maxWidth: '350px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#111827', margin: 0 }}>
-                {modalType === 'followers' ? 'Followers' : 'Following'}
+                {modalType === 'followers' ? t('farmer.community.followers') : t('farmer.community.following')}
               </h3>
               <button onClick={() => setShowFollowModal(false)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#6b7280' }}>&times;</button>
             </div>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, maxHeight: '300px', overflowY: 'auto' }}>
               {modalType === 'followers' ? (
-                followers.length === 0 ? <p style={{ color: '#6b7280', fontSize: '14px', textAlign: 'center' }}>No followers yet.</p> :
+                followers.length === 0 ? <p style={{ color: '#6b7280', fontSize: '14px', textAlign: 'center' }}>{t('farmer.community.noPosts')}</p> :
                 followers.map(f => (
                   <li key={f.id} style={{ padding: '12px 0', borderBottom: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontWeight: 500, color: '#111827' }}>{f.followerName}</span>
                   </li>
                 ))
               ) : (
-                following.length === 0 ? <p style={{ color: '#6b7280', fontSize: '14px', textAlign: 'center' }}>Not following anyone.</p> :
+                following.length === 0 ? <p style={{ color: '#6b7280', fontSize: '14px', textAlign: 'center' }}>{t('farmer.community.noPosts')}</p> :
                 following.map(f => (
                   <li key={f.id} style={{ padding: '12px 0', borderBottom: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontWeight: 500, color: '#111827' }}>{f.followingName}</span>
-                    <button onClick={() => handleUnfollow(f.followingId)} style={{ padding: '4px 10px', borderRadius: '6px', backgroundColor: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', cursor: 'pointer', fontSize: '12px', fontWeight: 500 }}>Unfollow</button>
+                    <button onClick={() => handleUnfollow(f.followingId)} style={{ padding: '4px 10px', borderRadius: '6px', backgroundColor: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', cursor: 'pointer', fontSize: '12px', fontWeight: 500 }}>{t('farmer.community.unfollow')}</button>
                   </li>
                 ))
               )}
