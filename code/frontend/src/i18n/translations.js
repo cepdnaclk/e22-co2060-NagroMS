@@ -1,3 +1,4 @@
+import farmerTranslations from './farmerTranslations';
 // ============================================================
 // i18n/translations.js
 // Translation strings for English (en), Sinhala (si) and Tamil (ta).
@@ -137,6 +138,7 @@ const translations = {
         networkFailed: 'Network error. Check your connection.',
       },
     },
+
     districts: {
       Colombo: 'Colombo', Gampaha: 'Gampaha', Kalutara: 'Kalutara', Kandy: 'Kandy',
       Matale: 'Matale', 'Nuwara Eliya': 'Nuwara Eliya', Galle: 'Galle', Matara: 'Matara',
@@ -146,6 +148,7 @@ const translations = {
       Anuradhapura: 'Anuradhapura', Polonnaruwa: 'Polonnaruwa', Badulla: 'Badulla',
       Monaragala: 'Monaragala', Ratnapura: 'Ratnapura', Kegalle: 'Kegalle',
     },
+    ...farmerTranslations.en,
   },
 
   si: {
@@ -279,6 +282,7 @@ const translations = {
         networkFailed: 'ජාල දෝෂයකි. ඔබේ සම්බන්ධතාවය පරීක්ෂා කරන්න.',
       },
     },
+
     districts: {
       Colombo: 'කොළඹ', Gampaha: 'ගම්පහ', Kalutara: 'කළුතර', Kandy: 'මහනුවර',
       Matale: 'මාතලේ', 'Nuwara Eliya': 'නුවරඑළිය', Galle: 'ගාල්ල', Matara: 'මාතර',
@@ -288,6 +292,7 @@ const translations = {
       Anuradhapura: 'අනුරාධපුරය', Polonnaruwa: 'පොළොන්නරුව', Badulla: 'බදුල්ල',
       Monaragala: 'මොනරාගල', Ratnapura: 'රත්නපුර', Kegalle: 'කෑගල්ල',
     },
+    ...farmerTranslations.si,
   },
 
   ta: {
@@ -421,6 +426,7 @@ const translations = {
         networkFailed: 'பிணைய பிழை. உங்கள் இணைப்பைச் சரிபார்க்கவும்.',
       },
     },
+
     districts: {
       Colombo: 'கொழும்பு', Gampaha: 'கம்பஹா', Kalutara: 'களுத்துறை', Kandy: 'கண்டி',
       Matale: 'மாத்தளை', 'Nuwara Eliya': 'நுவரெலியா', Galle: 'காலி', Matara: 'மாத்தறை',
@@ -430,6 +436,7 @@ const translations = {
       Anuradhapura: 'அனுராதபுரம்', Polonnaruwa: 'பொலன்னறுவை', Badulla: 'பதுளை',
       Monaragala: 'மொணராகலை', Ratnapura: 'இரத்தினபுரி', Kegalle: 'கேகாலை',
     },
+    ...farmerTranslations.ta,
   },
 };
 

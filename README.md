@@ -242,10 +242,9 @@ Monisha - Farmer Dashboard + Backend Models
 
 Sathurjika - Authentication System + Landing Page
 
-Nithilaa - Customer Dashboard
+Nithilaa - Customer Dashboard and Service Provider Dashboard
 
-Shathursima - Expert / Service Provider Dashboard
-
+Shathursima - Expert Dashboard
 
 
       
