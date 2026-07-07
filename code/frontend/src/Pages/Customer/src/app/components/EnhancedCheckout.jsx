@@ -12,9 +12,11 @@ import {
 import { saveOrder } from '../services/firestoreService';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { PhoneOTPModel } from './PhoneOTPModel';
+import { useLanguage } from '../../../../../i18n/LanguageContext';
 
 // Enhanced Checkout Section with Payment Receipt Upload
 export function EnhancedCheckoutSection({ uid, cart, profile, getCartTotal, getTotalDeliveryFee, setActiveSection, setCart, PRODUCTS }) {
+  const { t } = useLanguage();
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('cod');
   const [paymentReceipt, setPaymentReceipt] = useState(null);
@@ -191,19 +193,21 @@ export function EnhancedCheckoutSection({ uid, cart, profile, getCartTotal, getT
 
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-purple-600 to-purple-500 rounded-2xl p-8 text-white">
-        <h1 className="text-3xl mb-2">✅ Checkout</h1>
-        <p className="text-purple-100 text-lg">Review your order and confirm delivery details</p>
+        <h1 className="text-3xl mb-2 flex items-center gap-3">
+          <Check className="w-8 h-8 bg-white/20 rounded-full p-1" /> {t('customer.checkout.title') || 'Checkout'}
+        </h1>
+        <p className="text-purple-100 text-lg">{t('customer.checkout.subtitle') || 'Review your order and confirm delivery details'}</p>
       </div>
 
       {/* Delivery Address */}
       <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl text-primary">📍 Delivery Address</h2>
+          <h2 className="text-2xl text-primary">📍 {t('customer.checkout.deliveryAddress') || 'Delivery Address'}</h2>
           <button
             onClick={() => setActiveSection('profile')}
             className="text-primary hover:text-green-700 text-sm font-medium"
           >
-            Edit Address
+            {t('customer.checkout.editAddress') || 'Edit Address'}
           </button>
         </div>
 
@@ -223,12 +227,12 @@ export function EnhancedCheckoutSection({ uid, cart, profile, getCartTotal, getT
           </div>
         ) : (
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-            <p className="text-orange-800 mb-3">⚠️ Please complete your delivery address to proceed</p>
+            <p className="text-orange-800 mb-3">⚠️ {t('customer.checkout.completeAddress') || 'Please complete your delivery address to proceed'}</p>
             <button
               onClick={() => setActiveSection('profile')}
               className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-green-700 transition-colors"
             >
-              Add Address
+              {t('customer.checkout.addAddress') || 'Add Address'}
             </button>
           </div>
         )}
@@ -236,10 +240,10 @@ export function EnhancedCheckoutSection({ uid, cart, profile, getCartTotal, getT
 
       {/* Contact Number */}
       <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
-        <h2 className="text-2xl text-primary mb-4">📞 Contact Number</h2>
+        <h2 className="text-2xl text-primary mb-4">📞 {t('customer.checkout.contactNumber') || 'Contact Number'}</h2>
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">
-            Contact Number for Delivery *
+            {t('customer.checkout.contactNumberLabel') || 'Contact Number for Delivery *'}
           </label>
           <div className="flex gap-3">
             <input
@@ -275,7 +279,7 @@ export function EnhancedCheckoutSection({ uid, cart, profile, getCartTotal, getT
 
       {/* Payment Method Selection */}
       <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
-        <h2 className="text-2xl text-primary mb-6">💳 Payment Method</h2>
+        <h2 className="text-2xl text-primary mb-6">💳 {t('customer.checkout.paymentMethod') || 'Payment Method'}</h2>
 
         <div className="grid md:grid-cols-3 gap-4">
           {/* Cash on Delivery */}
@@ -512,37 +516,35 @@ export function EnhancedCheckoutSection({ uid, cart, profile, getCartTotal, getT
 
       {/* Order Summary */}
       <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
-        <h2 className="text-2xl text-primary mb-6">💰 Payment Summary</h2>
+        <h2 className="text-2xl text-primary mb-4">📋 {t('customer.checkout.orderSummary') || 'Order Summary'}</h2>
         <div className="space-y-3">
-          <div className="flex justify-between text-lg">
-            <span className="text-muted-foreground">Subtotal:</span>
-            <span className="text-foreground font-medium">LKR {getCartTotal().toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between text-lg">
-            <span className="text-muted-foreground">Delivery Fee:</span>
-            <span className={`font-medium ${deliveryFee === 0 ? 'text-green-600' : 'text-foreground'}`}>
-              {deliveryFee === 0 ? 'FREE' : `LKR ${deliveryFee.toLocaleString()}`}
-            </span>
+          <div className="pt-4 mt-4 border-t border-gray-100">
+            <div className="flex justify-between text-muted-foreground mb-2">
+              <span>{t('customer.checkout.subtotal') || 'Subtotal'}</span>
+              <span>LKR {getCartTotal().toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-muted-foreground mb-4">
+              <span>{t('customer.checkout.deliveryFee') || 'Delivery Fee'}</span>
+              <span>LKR {deliveryFee.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-xl font-bold text-foreground">
+              <span>{t('customer.checkout.total') || 'Total'}</span>
+              <span>LKR {totalAmount.toFixed(2)}</span>
+            </div>
           </div>
           {deliveryFee > 0 && (
             <p className="text-xs text-muted-foreground">* Based on distance from farmer location</p>
           )}
-          <div className="border-t-2 border-gray-200 pt-3 mt-3">
-            <div className="flex justify-between text-2xl">
-              <span className="text-foreground font-bold">Total Amount:</span>
-              <span className="text-primary font-bold">LKR {totalAmount.toLocaleString()}</span>
-            </div>
-          </div>
         </div>
 
-        <div className="mt-6 space-y-3">
+        <div className="pt-4 mt-6 space-y-3">
           <button
             onClick={handlePlaceOrder}
-            disabled={!isAddressComplete}
-            className="w-full px-6 py-4 bg-primary text-white rounded-lg hover:bg-green-700 transition-colors text-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            disabled={!isAddressComplete || (paymentMethod === 'bank-transfer' && !paymentReceipt) || !phoneVerified}
+            className="w-full py-4 bg-primary text-white rounded-xl text-lg font-bold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            <Check className="w-5 h-5" />
-            {phoneVerified ? 'Confirm & Place Order' : 'Verify Phone & Place Order'}
+            <Check className="w-6 h-6" />
+            {t('customer.checkout.placeOrder') || 'Place Order'}
           </button>
           <button
             onClick={() => setActiveSection('cart')}
