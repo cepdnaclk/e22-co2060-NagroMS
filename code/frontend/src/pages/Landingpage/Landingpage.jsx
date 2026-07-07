@@ -58,10 +58,10 @@ function FeatureCard({ img, imgAlt, title, description }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={handleMouseLeave}
       style={{
-        background: 'rgba(255,255,255,0.04)',
+        background: '#ffffff',
         border: hovered
           ? '1px solid rgba(34,197,94,0.55)'
-          : '1px solid rgba(34,197,94,0.15)',
+          : '1px solid rgba(0,0,0,0.08)',
         borderRadius: 24,
         overflow: 'hidden',
         cursor: 'pointer',
@@ -72,8 +72,8 @@ function FeatureCard({ img, imgAlt, title, description }) {
           ? 'border-color 0.2s, box-shadow 0.2s'
           : 'transform 0.6s cubic-bezier(.23,1,.32,1), border-color 0.3s, box-shadow 0.3s',
         boxShadow: hovered
-          ? '0 30px 60px rgba(0,0,0,0.5), 0 0 40px rgba(34,197,94,0.2)'
-          : '0 8px 32px rgba(0,0,0,0.3)',
+          ? '0 30px 60px rgba(0,0,0,0.1), 0 0 40px rgba(34,197,94,0.1)'
+          : '0 8px 32px rgba(0,0,0,0.05)',
       }}
     >
       {/* big image */}
@@ -111,7 +111,7 @@ function FeatureCard({ img, imgAlt, title, description }) {
             left: 0,
             right: 0,
             height: 60,
-            background: 'linear-gradient(to top,rgba(3,20,10,0.9),transparent)',
+            background: 'linear-gradient(to top,rgba(255,255,255,1),transparent)',
             pointerEvents: 'none',
           }}
         />
@@ -138,10 +138,10 @@ function FeatureCard({ img, imgAlt, title, description }) {
       </div>
 
       {/* text content */}
-      <div style={{ padding: '22px 24px 26px' }}>
+      <div style={{ padding: '22px 24px 26px', background: '#ffffff', position: 'relative', zIndex: 1 }}>
         <h3
           style={{
-            color: 'white',
+            color: '#111827',
             fontSize: 18,
             fontWeight: 700,
             marginBottom: 10,
@@ -152,7 +152,7 @@ function FeatureCard({ img, imgAlt, title, description }) {
         </h3>
         <p
           style={{
-            color: 'rgba(255,255,255,0.55)',
+            color: '#4b5563',
             fontSize: 14,
             lineHeight: 1.7,
             margin: 0,
@@ -171,13 +171,14 @@ function FeatureCard({ img, imgAlt, title, description }) {
           width: 32,
           height: 32,
           borderRadius: '50%',
-          background: 'rgba(0,0,0,0.45)',
+          background: '#f9fafb',
+          border: '1px solid #d1d5db',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: hovered ? '#4ade80' : 'rgba(255,255,255,0.6)',
+          color: hovered ? '#16a34a' : '#6b7280',
           fontSize: 15,
-          transition: 'transform 0.3s, color 0.3s',
+          transition: 'transform 0.3s, color 0.3s, border-color 0.3s',
           transform: hovered ? 'translate(3px,-3px)' : 'translate(0,0)',
         }}
       >
@@ -195,15 +196,14 @@ function FloatingCard({ style, children }) {
     <div
       style={{
         position: 'absolute',
-        background: 'rgba(255,255,255,0.07)',
+        background: 'rgba(255,255,255,0.85)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
-        border: '1px solid rgba(34,197,94,0.25)',
+        border: '1px solid rgba(0,0,0,0.08)',
         borderRadius: 20,
         padding: '18px 20px',
-        color: 'white',
-        boxShadow:
-          '0 0 40px rgba(34,197,94,0.1), inset 0 1px 0 rgba(255,255,255,0.1)',
+        color: '#111827',
+        boxShadow: '0 12px 40px rgba(0,0,0,0.1)',
         zIndex: 2,
         ...style,
       }}
@@ -334,7 +334,7 @@ function LandingPage({ onNavigate }) {
   const S = {
     page: {
       fontFamily: "'DM Sans', 'Segoe UI', sans-serif",
-      background: 'linear-gradient(160deg,#021a0c 0%,#032e14 45%,#043a18 75%,#021a0c 100%)',
+      background: '#ffffff',
       minHeight: '100vh',
       overflowX: 'hidden',
       position: 'relative',
@@ -363,16 +363,18 @@ function LandingPage({ onNavigate }) {
       pointerEvents: 'none',
     },
     header: {
-      background: 'rgba(2,26,12,0.75)',
+      background: 'rgba(255,255,255,0.9)',
       backdropFilter: 'blur(20px)',
       WebkitBackdropFilter: 'blur(20px)',
-      borderBottom: '1px solid rgba(34,197,94,0.12)',
+      borderBottom: '1px solid rgba(0,0,0,0.08)',
       padding: '16px 48px',
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      position: 'sticky',
+      position: 'fixed',
+      width: '100%',
       top: 0,
+      left: 0,
       zIndex: 100,
     },
     logoMark: {
@@ -388,7 +390,7 @@ function LandingPage({ onNavigate }) {
       marginRight: 10,
     },
     logoText: {
-      color: '#4ade80',
+      color: '#16a34a',
       fontSize: 22,
       fontWeight: 800,
       letterSpacing: 1,
@@ -398,9 +400,9 @@ function LandingPage({ onNavigate }) {
       background: 'none',
       border: 'none',
       cursor: 'pointer',
-      color: hov ? '#4ade80' : 'rgba(255,255,255,0.65)',
+      color: hov ? '#16a34a' : '#4b5563',
       fontSize: 15,
-      fontWeight: 500,
+      fontWeight: 600,
       transition: 'color 0.2s',
       padding: '6px 4px',
     }),
@@ -418,7 +420,7 @@ function LandingPage({ onNavigate }) {
     },
     sectionLabel: {
       textAlign: 'center',
-      color: '#4ade80',
+      color: '#16a34a',
       fontSize: 12,
       fontWeight: 700,
       letterSpacing: 3,
@@ -427,7 +429,7 @@ function LandingPage({ onNavigate }) {
     },
     sectionTitle: {
       textAlign: 'center',
-      color: 'white',
+      color: '#111827',
       fontSize: 38,
       fontWeight: 800,
       marginBottom: 48,
@@ -470,7 +472,6 @@ function LandingPage({ onNavigate }) {
       `}</style>
 
       {/* background decorations */}
-      <div style={S.gridBg} />
       <div style={S.orb(420, 420, -120, -120, undefined, undefined, 'rgba(34,197,94,0.22)', '0s')} />
       <div style={S.orb(300, 300, 180, undefined, 40, undefined, 'rgba(132,204,22,0.18)', '2s')} />
       <div style={S.orb(260, 260, undefined, 180, undefined, 80, 'rgba(21,128,61,0.28)', '1s')} />
@@ -510,7 +511,7 @@ function LandingPage({ onNavigate }) {
         style={{
           maxWidth: 1280,
           margin: '0 auto',
-          padding: '80px 48px',
+          padding: '140px 48px 80px',
           display: 'flex',
           alignItems: 'center',
           gap: 72,
@@ -529,7 +530,7 @@ function LandingPage({ onNavigate }) {
               background: 'rgba(34,197,94,0.1)',
               border: '1px solid rgba(34,197,94,0.3)',
               borderRadius: 24,
-              color: '#4ade80',
+              color: '#16a34a',
               fontSize: 13,
               fontWeight: 700,
               marginBottom: 28,
@@ -544,17 +545,14 @@ function LandingPage({ onNavigate }) {
               fontWeight: 900,
               lineHeight: 1.05,
               marginBottom: 22,
-              color: 'white',
+              color: '#111827',
               letterSpacing: '-1.5px',
             }}
           >
             Empowering{' '}
             <span
               style={{
-                background: 'linear-gradient(135deg,#4ade80,#86efac,#22c55e)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
+                color: '#16a34a',
               }}
             >
               Sri Lankan
@@ -568,7 +566,7 @@ function LandingPage({ onNavigate }) {
           <p
             style={{
               fontSize: 18,
-              color: 'rgba(255,255,255,0.6)',
+              color: '#4b5563',
               lineHeight: 1.75,
               marginBottom: 40,
               maxWidth: 520,
@@ -603,14 +601,13 @@ function LandingPage({ onNavigate }) {
               onClick={() => nav('login')}
               style={{
                 padding: '15px 40px',
-                background: 'rgba(255,255,255,0.06)',
-                color: 'rgba(255,255,255,0.9)',
-                border: '1px solid rgba(255,255,255,0.2)',
+                background: '#f9fafb',
+                color: '#1f2937',
+                border: '1px solid #d1d5db',
                 borderRadius: 32,
                 cursor: 'pointer',
                 fontSize: 17,
                 fontWeight: 700,
-                backdropFilter: 'blur(8px)',
                 transition: 'all 0.2s',
               }}
             >
@@ -635,68 +632,17 @@ function LandingPage({ onNavigate }) {
               transform: 'perspective(1000px) rotateY(-6deg) rotateX(3deg)',
               borderRadius: 28,
               objectFit: 'cover',
-              opacity: 0.55,
-              border: '2px solid rgba(255,255,255,0.08)',
+              opacity: 1,
+              border: '4px solid #ffffff',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.15)',
               zIndex: 0,
             }}
           />
-          {/* dark edge vignette so cards stay readable */}
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              borderRadius: 28,
-              background:
-                'radial-gradient(ellipse at center, transparent 30%, rgba(2,26,12,0.75) 100%)',
-              zIndex: 1,
-              pointerEvents: 'none',
-            }}
-          />
+
         </div>
       </section>
 
-      {/* ── STATS ── */}
-      <section style={{ padding: '60px 48px', position: 'relative' }}>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))',
-            gap: 20,
-            maxWidth: 900,
-            margin: '0 auto',
-          }}
-        >
-          {stats.map((s) => (
-            <div
-              key={s.label}
-              style={{
-                textAlign: 'center',
-                padding: '32px 20px',
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(34,197,94,0.12)',
-                borderRadius: 22,
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 40,
-                  fontWeight: 900,
-                  background: 'linear-gradient(135deg,#4ade80,#86efac)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  letterSpacing: '-1px',
-                }}
-              >
-                {s.num}
-              </div>
-              <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 14, marginTop: 6 }}>
-                {s.label}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+
 
       {/* ── FEATURES ── */}
       <section id="features" style={{ padding: '80px 48px', position: 'relative' }}>
@@ -739,7 +685,7 @@ function LandingPage({ onNavigate }) {
         <p style={S.sectionLabel}>Our Mission</p>
         <h2
           style={{
-            color: 'white',
+            color: '#111827',
             fontSize: 38,
             fontWeight: 800,
             marginBottom: 22,
@@ -750,7 +696,7 @@ function LandingPage({ onNavigate }) {
         </h2>
         <p
           style={{
-            color: 'rgba(255,255,255,0.6)',
+            color: '#4b5563',
             maxWidth: 700,
             margin: '0 auto 36px',
             fontSize: 18,
@@ -802,8 +748,8 @@ function LandingPage({ onNavigate }) {
             <div
               key={c.label}
               style={{
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(34,197,94,0.15)',
+                background: '#f9fafb',
+                border: '1px solid rgba(0,0,0,0.08)',
                 borderRadius: 20,
                 padding: '24px 36px',
                 minWidth: 200,
@@ -811,7 +757,7 @@ function LandingPage({ onNavigate }) {
             >
               <div
                 style={{
-                  color: '#4ade80',
+                  color: '#16a34a',
                   fontSize: 12,
                   fontWeight: 700,
                   letterSpacing: 2,
@@ -821,7 +767,7 @@ function LandingPage({ onNavigate }) {
               >
                 {c.icon} {c.label}
               </div>
-              <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 15 }}>{c.val}</div>
+              <div style={{ color: '#4b5563', fontSize: 15 }}>{c.val}</div>
             </div>
           ))}
         </div>
@@ -830,15 +776,15 @@ function LandingPage({ onNavigate }) {
       {/* ── FOOTER ── */}
       <footer
         style={{
-          background: 'rgba(0,0,0,0.45)',
-          borderTop: '1px solid rgba(34,197,94,0.1)',
+          background: '#f3f4f6',
+          borderTop: '1px solid rgba(0,0,0,0.08)',
           padding: '36px 48px',
           textAlign: 'center',
         }}
       >
         <div
           style={{
-            color: '#4ade80',
+            color: '#16a34a',
             fontSize: 20,
             fontWeight: 800,
             marginBottom: 8,
@@ -846,7 +792,7 @@ function LandingPage({ onNavigate }) {
         >
           🌿 NagroMS
         </div>
-        <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>
+        <div style={{ color: '#6b7280', fontSize: 14 }}>
           © 2026 NagroMS. All rights reserved.
         </div>
       </footer>
