@@ -88,7 +88,7 @@ const DEFAULT_CROP_IMAGE = 'https://images.unsplash.com/photo-1500937386664-56d1
               country: weatherData.country,
               loading: false,
               error: null,
-              fallbackUsed: (!profile.villageTown && !profile.district)
+              fallbackUsed: weatherData.fallbackUsed || (!profile.villageTown && !profile.district)
             });
           } else {
             setWeather(prev => ({ ...prev, loading: false, error: t('farmer.overview.weatherError') || 'Unable to load weather right now.' }));

@@ -22,6 +22,18 @@ const farmerTranslations = {
         community: 'Community', notifications: 'Notifications', settings: 'Settings', logout: 'Logout'
       },
       overview: {
+        addNewProduct: 'Add New Product',
+        productName: 'Product Name',
+        quantity: 'Quantity',
+        unit: 'Unit',
+        pricePerUnit: 'Price Per Unit',
+        stockStatus: 'Stock Status',
+        fullStock: 'Full Stock',
+        lowStock: 'Low Stock',
+        outOfStock: 'Out of Stock',
+        productImage: 'Product Image',
+        cancel: 'Cancel',
+        submitAddProduct: 'Add Product',
         noIncomingOrders: 'No incoming orders yet.',
 
         title: 'Overview',
@@ -166,6 +178,18 @@ const farmerTranslations = {
         community: 'ප්‍රජාව', notifications: 'නිවේදන', settings: 'සැකසුම්', logout: 'ඉවත් වන්න'
       },
       overview: {
+        addNewProduct: 'නව නිෂ්පාදනයක් එක් කරන්න',
+        productName: 'නිෂ්පාදන නම',
+        quantity: 'ප්රමාණය',
+        unit: 'ඒකකය',
+        pricePerUnit: 'ඒකකයක මිල',
+        stockStatus: 'තොග තත්ත්වය',
+        fullStock: 'සම්පූර්ණ තොගය',
+        lowStock: 'අඩු තොගය',
+        outOfStock: 'තොග නැත',
+        productImage: 'නිෂ්පාදන රූපය',
+        cancel: 'අවලංගු කරන්න',
+        submitAddProduct: 'නිෂ්පාදනය එක් කරන්න',
         noIncomingOrders: 'තවම ලැබෙන ඇණවුම් නැත.',
 
 title: 'දළ විශ්ලේෂණය', myProducts: 'මගේ නිෂ්පාදන', addProduct: 'නිෂ්පාදනයක් එක් කරන්න', addFirstProduct: 'ඔබේ පළමු නිෂ්පාදනය එක් කරන්න',
@@ -302,6 +326,18 @@ title: 'සේවාවන්', expertConsultation: 'විශේෂඥ උප�
         community: 'சமூகம்', notifications: 'அறிவிப்புகள்', settings: 'அமைப்புகள்', logout: 'வெளியேறு'
       },
       overview: {
+        addNewProduct: 'புதிய தயாரிப்பைச் சேர்க்கவும்',
+        productName: 'தயாரிப்பு பெயர்',
+        quantity: 'அளவு',
+        unit: 'அலகு',
+        pricePerUnit: 'அலகு விலை',
+        stockStatus: 'கையிருப்பு நிலை',
+        fullStock: 'முழு கையிருப்பு',
+        lowStock: 'குறைந்த கையிருப்பு',
+        outOfStock: 'கையிருப்பு இல்லை',
+        productImage: 'தயாரிப்பு படம்',
+        cancel: 'ரத்து செய்',
+        submitAddProduct: 'தயாரிப்பைச் சேர்க்கவும்',
         noIncomingOrders: 'இன்னும் வரும் ஆர்டர்கள் இல்லை.',
 
 title: 'கண்ணோட்டம்', myProducts: 'எனது தயாரிப்புகள்', addProduct: 'தயாரிப்பைச் சேர்', addFirstProduct: 'உங்கள் முதல் தயாரிப்பைச் சேர்',
