@@ -5,8 +5,7 @@ import {
   Send, 
   Bot, 
   User as UserIcon,
-  Minimize2,
-  Maximize2
+  Minimize2
 } from 'lucide-react';
 
 // Chatbot Component
@@ -145,6 +144,7 @@ export function Chatbot() {
     { text: 'Request product', icon: '📝' }
   ];
 
+  // eslint-disable-next-line no-unused-vars
   const handleQuickAction = (actionText) => {
     setInputMessage(actionText);
     handleSendMessage();
@@ -154,7 +154,7 @@ export function Chatbot() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-full shadow-2xl hover:scale-110 transition-transform flex items-center justify-center"
+        className="fixed bottom-6 left-6 z-50 w-16 h-16 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-full shadow-2xl hover:scale-110 transition-transform flex items-center justify-center"
         aria-label="Open chatbot"
       >
         <MessageCircle className="w-8 h-8" />
@@ -164,7 +164,7 @@ export function Chatbot() {
   }
 
   return (
-    <div className={`fixed ${isMinimized ? 'bottom-6 right-6' : 'bottom-6 right-6'} z-50 transition-all duration-300`}>
+    <div className={`fixed ${isMinimized ? 'bottom-6 left-6' : 'bottom-6 left-6'} z-50 transition-all duration-300`}>
       {/* Minimized State */}
       {isMinimized ? (
         <button

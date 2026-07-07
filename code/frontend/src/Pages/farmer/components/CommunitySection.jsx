@@ -54,8 +54,8 @@ export default function CommunitySection() {
           setFollowing(arr);
         }));
 
-        // Experts and Service Providers
-        const qExp = query(collection(db, 'users'), where('role', 'in', ['expert', 'serviceProvider']), where('available', '==', true));
+        // Experts
+        const qExp = query(collection(db, 'users'), where('roles', 'array-contains', 'expert'));
         unsubs.push(onSnapshot(qExp, (snap) => {
           const arr = [];
           snap.forEach(doc => arr.push({ id: doc.id, ...doc.data() }));
@@ -164,13 +164,14 @@ export default function CommunitySection() {
   };
 
   const handleFollow = async (targetUserId, targetUserName) => {
-    if (!auth.currentUser || !profile) return;
+    if (!auth.currentUser) return;
     try {
+      const followerName = profile?.fullName || profile?.name || profile?.email?.split('@')[0] || auth.currentUser.email?.split('@')[0] || 'Farmer';
       // 1. Create the follow record for the farmer's "Following" count
       await addDoc(collection(db, 'follows'), {
         followerId: auth.currentUser.uid,
         followingId: targetUserId,
-        followerName: profile.fullName || profile.name || profile.email?.split('@')[0] || 'Farmer',
+        followerName: followerName,
         followingName: targetUserName,
         createdAt: new Date()
       });
@@ -203,15 +204,19 @@ export default function CommunitySection() {
   const handleConsult = async (expertId) => {
     if (!auth.currentUser) return;
     try {
-      const token = await auth.currentUser.getIdToken();
-      await fetch('http://localhost:5000/api/farmer/consultations/request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ expertId, message: 'I need consultation.' })
+      const followerName = profile?.fullName || profile?.name || profile?.email?.split('@')[0] || auth.currentUser.email?.split('@')[0] || 'Farmer';
+      await addDoc(collection(db, 'consultations'), {
+        expertId: expertId,
+        farmerId: auth.currentUser.uid,
+        farmerName: followerName,
+        status: 'pending',
+        message: 'I need consultation.',
+        createdAt: new Date()
       });
-      alert(t('farmer.services.requestSent'));
+      alert(t('farmer.services.requestSent') || 'Consultation request sent!');
     } catch (err) {
       console.error(err);
+      alert('Failed to send consultation request.');
     }
   };
 
@@ -275,7 +280,7 @@ export default function CommunitySection() {
                   <div>
                     <p style={{ fontWeight: 600, color: '#111827', margin: 0 }}>{expert.fullName || expert.name}</p>
                     <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>
-                      {expert.role === 'serviceProvider' ? t('farmer.common.notAvailable') : t('farmer.services.expertConsultation')}
+                      {expert.roles?.includes('service-provider') ? t('farmer.common.notAvailable') : t('farmer.services.expertConsultation')}
                     </p>
                   </div>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -284,8 +289,8 @@ export default function CommunitySection() {
                     ) : (
                       <button onClick={() => handleFollow(expert.id, expert.fullName || expert.name)} style={{ padding: '6px 12px', borderRadius: '6px', backgroundColor: 'white', color: '#111827', border: '1px solid #d1d5db', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>{t('farmer.community.follow')}</button>
                     )}
-                    <button onClick={() => handleConsult(expert.id)} style={{ padding: '6px 12px', borderRadius: '6px', backgroundColor: expert.role === 'serviceProvider' ? '#e0e7ff' : '#dcfce7', color: expert.role === 'serviceProvider' ? '#4f46e5' : '#16a34a', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>
-                      {expert.role === 'serviceProvider' ? t('farmer.services.sendRequest') : t('farmer.services.expertConsultation')}
+                    <button onClick={() => handleConsult(expert.id)} style={{ padding: '6px 12px', borderRadius: '6px', backgroundColor: expert.roles?.includes('service-provider') ? '#e0e7ff' : '#dcfce7', color: expert.roles?.includes('service-provider') ? '#4f46e5' : '#16a34a', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>
+                      {expert.roles?.includes('service-provider') ? t('farmer.services.sendRequest') : t('farmer.services.expertConsultation')}
                     </button>
                   </div>
                 </li>

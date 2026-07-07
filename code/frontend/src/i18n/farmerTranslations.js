@@ -142,7 +142,8 @@ const farmerTranslations = {
         deleteAccount: "Delete Account",
         chooseFile: "Choose File",
         noFileChosen: "No file chosen",
-        dobPlaceholder: "MM/DD/YYYY"
+        dobPlaceholder: "MM/DD/YYYY",
+        saving: "Saving..."
       }
     }
   },
@@ -277,7 +278,8 @@ title: 'සේවාවන්', expertConsultation: 'විශේෂඥ උප�
         deleteAccount: "ගිණුම මකන්න",
         chooseFile: "ගොනුව තෝරන්න",
         noFileChosen: "ගොනුවක් තෝරා නැත",
-        dobPlaceholder: "මාසය/දිනය/වසර"
+        dobPlaceholder: "මාසය/දිනය/වසර",
+        saving: "සුරකිමින්..."
       }
     }
   },
@@ -412,7 +414,8 @@ title: 'சேவைகள்', expertConsultation: 'நிபுணர் ஆ�
         deleteAccount: "கணக்கை நீக்கு",
         chooseFile: "கோப்பைத் தேர்ந்தெடுக்கவும்",
         noFileChosen: "கோப்பு தேர்வு செய்யப்படவில்லை",
-        dobPlaceholder: "மாதம்/நாள்/ஆண்டு"
+        dobPlaceholder: "மாதம்/நாள்/ஆண்டு",
+        saving: "சேமிக்கப்படுகிறது..."
       }
     }
   }

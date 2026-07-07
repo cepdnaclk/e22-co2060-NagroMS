@@ -92,7 +92,10 @@ export function NotificationCenter() {
       >
         <Bell className="w-6 h-6 text-gray-600" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
+          <span 
+            className="absolute w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold"
+            style={{ top: '-4px', right: '-4px' }}
+          >
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
