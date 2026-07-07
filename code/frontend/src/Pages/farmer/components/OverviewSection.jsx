@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { auth, db, storage } from '../../../utils/firebase';
-import { doc, onSnapshot, collection, query, where, updateDoc, addDoc, deleteDoc, serverTimestamp, orderBy, getDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { auth, db } from '../../../utils/firebase';
+import { doc, onSnapshot, collection, query, where, updateDoc, addDoc, deleteDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { useLanguage } from '../../../i18n/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,13 +14,28 @@ export default function OverviewSection({ setActiveTab }) {
   const [showModal, setShowModal] = useState(false);
   const [editProductId, setEditProductId] = useState(null);
   const [productToDelete, setProductToDelete] = useState(null);
+const PREDEFINED_CROPS = [
+  { name: 'Rice (Paddy)', image: 'https://images.unsplash.com/photo-1586521995568-39abaa0c2311?auto=format&fit=crop&q=80&w=800' },
+  { name: 'Tomatoes', image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&q=80&w=800' },
+  { name: 'Potatoes', image: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&q=80&w=800' },
+  { name: 'Onions', image: 'https://images.unsplash.com/photo-1620574387735-3624d75b2dbc?auto=format&fit=crop&q=80&w=800' },
+  { name: 'Carrots', image: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?auto=format&fit=crop&q=80&w=800' },
+  { name: 'Cabbage', image: 'https://images.unsplash.com/photo-1529311029279-d2d416b23b49?auto=format&fit=crop&q=80&w=800' },
+  { name: 'Corn', image: 'https://images.unsplash.com/photo-1551754655-cd27e38d2076?auto=format&fit=crop&q=80&w=800' },
+  { name: 'Banana', image: 'https://images.unsplash.com/photo-1571501679680-de32f1e7aad4?auto=format&fit=crop&q=80&w=800' },
+  { name: 'Mango', image: 'https://images.unsplash.com/photo-1553279768-865429fa0078?auto=format&fit=crop&q=80&w=800' },
+  { name: 'Papaya', image: 'https://images.unsplash.com/photo-1615486171447-74070be6a89c?auto=format&fit=crop&q=80&w=800' },
+  { name: 'Pumpkin', image: 'https://images.unsplash.com/photo-1509506489701-afe29e5033fc?auto=format&fit=crop&q=80&w=800' },
+  { name: 'Chili', image: 'https://images.unsplash.com/photo-1596647209377-62f9014fb54c?auto=format&fit=crop&q=80&w=800' },
+];
+const DEFAULT_CROP_IMAGE = 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&q=80&w=800';
+
   const [formData, setFormData] = useState({
     productName: '',
     quantity: '',
     unit: 'kg',
     pricePerUnit: '',
-    stockStatus: 'Full Stock',
-    imageFile: null
+    stockStatus: 'Full Stock'
   });
 
   const resetProductForm = () => {
@@ -30,14 +44,11 @@ export default function OverviewSection({ setActiveTab }) {
       quantity: '',
       unit: 'kg',
       pricePerUnit: '',
-      stockStatus: 'Full Stock',
-      imageFile: null
+      stockStatus: 'Full Stock'
     });
   };
 
   const [orders, setOrders] = useState([]);
-  const [notifications, setNotifications] = useState([]);
-
   // Weather state
   const [weather, setWeather] = useState({
     temp: null,
@@ -94,8 +105,6 @@ export default function OverviewSection({ setActiveTab }) {
     let unsubscribeDoc = null;
     let unsubscribeProducts = null;
     let unsubscribeOrders = null;
-    let unsubscribeNotifs = null;
-
     const unsubscribeAuth = auth.onAuthStateChanged((user) => {
       if (user) {
         const docRef = doc(db, 'users', user.uid);
@@ -156,20 +165,10 @@ export default function OverviewSection({ setActiveTab }) {
           }
           setOrders(ordersList);
         });
-
-        const notifQuery = query(collection(db, 'notifications'), where('userId', '==', user.uid));
-        unsubscribeNotifs = onSnapshot(notifQuery, (snapshot) => {
-          const notifs = [];
-          snapshot.forEach((doc) => {
-            notifs.push({ id: doc.id, ...doc.data() });
-          });
-          setNotifications(notifs);
-        });
       } else {
         setProfile(null);
         setProducts([]);
         setOrders([]);
-        setNotifications([]);
       }
     });
     return () => {
@@ -177,9 +176,8 @@ export default function OverviewSection({ setActiveTab }) {
       if (unsubscribeDoc) unsubscribeDoc();
       if (unsubscribeProducts) unsubscribeProducts();
       if (unsubscribeOrders) unsubscribeOrders();
-      if (unsubscribeNotifs) unsubscribeNotifs();
     };
-  }, []);
+  }, [navigate, t, setActiveTab]);
 
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
     try {
@@ -233,8 +231,7 @@ export default function OverviewSection({ setActiveTab }) {
       quantity: product.quantity || '',
       unit: product.unit || 'kg',
       pricePerUnit: product.pricePerUnit || product.price || '',
-      stockStatus: product.stockStatus || 'Full Stock',
-      imageFile: null
+      stockStatus: product.stockStatus || 'Full Stock'
     });
     setShowModal(true);
   };
@@ -255,14 +252,9 @@ export default function OverviewSection({ setActiveTab }) {
       const priceNum = Number(formData.pricePerUnit);
       let imageUrl = editProductId ? (products.find(p => p.id === editProductId)?.imageUrl || '') : '';
 
-      if (formData.imageFile) {
-        try {
-          const imageRef = ref(storage, `products/${user.uid}/${Date.now()}-${formData.imageFile.name}`);
-          const snapshot = await uploadBytes(imageRef, formData.imageFile);
-          imageUrl = await getDownloadURL(snapshot.ref);
-        } catch (imgError) {
-          console.warn('Image upload failed, proceeding without image:', imgError);
-        }
+      if (!imageUrl) {
+        const matchingCrop = PREDEFINED_CROPS.find(c => c.name.toLowerCase() === formData.productName.toLowerCase());
+        imageUrl = matchingCrop ? matchingCrop.image : DEFAULT_CROP_IMAGE;
       }
 
       if (editProductId) {
@@ -313,7 +305,6 @@ export default function OverviewSection({ setActiveTab }) {
     }
   };
 
-  const isNewFarmer = products.length === 0;
 
   return (
     <div className="nagro-section-content">
@@ -451,7 +442,7 @@ export default function OverviewSection({ setActiveTab }) {
             {products.map((product) => (
               <div key={product.id} style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
                 {product.imageUrl && (
-                  <img src={product.imageUrl} alt={product.productName || product.name} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '8px', marginBottom: '12px' }} />
+                  <img src={product.imageUrl} alt={product.productName || product.name} style={{ width: '100%', height: '250px', objectFit: 'cover', borderRadius: '8px', marginBottom: '12px' }} />
                 )}
                 <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937' }}>{product.productName || product.name}</h3>
                 <p style={{ fontSize: '24px', fontWeight: 700, color: '#22c55e', margin: '8px 0' }}>
@@ -464,8 +455,8 @@ export default function OverviewSection({ setActiveTab }) {
                   {t('farmer.overview.added') || 'Added'}: {product.createdAt?.toDate ? product.createdAt.toDate().toLocaleDateString() : 'Just now'}
                 </p>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button onClick={() => handleEditClick(product)} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #22c55e', color: '#22c55e', backgroundColor: 'transparent', cursor: 'pointer' }}>{t('farmer.overview.edit') || 'Edit'}</button>
-                  <button onClick={() => handleDeleteClick(product)} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #ef4444', color: '#ef4444', backgroundColor: 'transparent', cursor: 'pointer' }}>{t('farmer.overview.delete') || 'Delete'}</button>
+                  <button onClick={() => handleEditClick(product)} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #22c55e', color: '#22c55e', backgroundColor: 'transparent', cursor: 'pointer', fontWeight: 600 }}>{t('farmer.common.edit') || 'Edit'}</button>
+                  <button onClick={() => handleDeleteClick(product)} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #ef4444', color: '#ef4444', backgroundColor: 'transparent', cursor: 'pointer', fontWeight: 600 }}>{t('farmer.common.delete') || 'Delete'}</button>
                 </div>
               </div>
             ))}
@@ -614,22 +605,28 @@ export default function OverviewSection({ setActiveTab }) {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '12px', width: '100%', maxWidth: '400px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
             <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#111827', marginBottom: '24px' }}>
-              {editProductId ? (t('farmer.overview.editProduct') || 'Edit Product') : (t('farmer.overview.addNewProduct') || 'Add New Product')}
+              {editProductId ? (t('farmer.productForm.editProduct') || 'Edit Product') : (t('farmer.productForm.addNewProduct') || 'Add New Product')}
             </h2>
             
             <form onSubmit={handleAddProduct} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>{t('farmer.overview.productName') || 'Product Name'}</label>
-                <input required type="text" value={formData.productName} onChange={(e) => setFormData({...formData, productName: e.target.value})} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db' }} />
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>{t('farmer.productForm.productName') || 'Product Name'}</label>
+                <input required type="text" list="cropOptions" placeholder="Enter product name" value={formData.productName} onChange={(e) => setFormData({...formData, productName: e.target.value})} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db' }} />
+                <datalist id="cropOptions">
+                  {PREDEFINED_CROPS.map((crop, idx) => (
+                    <option key={idx} value={crop.name} />
+                  ))}
+                </datalist>
+                <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', marginBottom: 0 }}>Select a common crop or type your own. A default image will be provided.</p>
               </div>
               
               <div style={{ display: 'flex', gap: '12px' }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>{t('farmer.overview.quantity') || 'Quantity'}</label>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>{t('farmer.productForm.quantity') || 'Quantity'}</label>
                   <input required type="number" min="0" step="any" value={formData.quantity} onChange={(e) => setFormData({...formData, quantity: e.target.value})} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db' }} />
                 </div>
                 <div style={{ width: '100px' }}>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>{t('farmer.overview.unit') || 'Unit'}</label>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>{t('farmer.productForm.unit') || 'Unit'}</label>
                   <select value={formData.unit} onChange={(e) => setFormData({...formData, unit: e.target.value})} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db' }}>
                     <option value="kg">kg</option>
                     <option value="g">g</option>
@@ -641,46 +638,33 @@ export default function OverviewSection({ setActiveTab }) {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>{t('farmer.overview.pricePerUnit') || 'Price per unit (Rs.)'}</label>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>{t('farmer.productForm.pricePerUnit') || 'Price per unit (Rs.)'}</label>
                 <input required type="number" min="0" step="any" value={formData.pricePerUnit} onChange={(e) => setFormData({...formData, pricePerUnit: e.target.value})} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db' }} />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>{t('farmer.overview.stockStatus') || 'Stock Status'}</label>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>{t('farmer.productForm.stockStatus') || 'Stock Status'}</label>
                 <select value={formData.stockStatus} onChange={(e) => setFormData({...formData, stockStatus: e.target.value})} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db' }}>
-                  <option value="Full Stock">{t('farmer.overview.fullStock') || 'Full Stock'}</option>
-                  <option value="Low Stock">{t('farmer.overview.lowStock') || 'Low Stock'}</option>
-                  <option value="Out of Stock">{t('farmer.overview.outOfStock') || 'Out of Stock'}</option>
+                  <option value="Full Stock">{t('farmer.productForm.fullStock') || 'Full Stock'}</option>
+                  <option value="Medium Stock">{t('farmer.productForm.mediumStock') || 'Medium Stock'}</option>
+                  <option value="Low Stock">{t('farmer.productForm.lowStock') || 'Low Stock'}</option>
                 </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>{t('farmer.overview.productImage') || 'Product Image'}</label>
-                <input type="file" id="productImageInput" accept="image/*" onChange={(e) => setFormData({...formData, imageFile: e.target.files[0]})} style={{ display: 'none' }} />
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                  <button type="button" onClick={() => document.getElementById("productImageInput").click()} style={{ padding: '6px 12px', border: '1px solid #d1d5db', borderRadius: '6px', backgroundColor: '#f9fafb', cursor: 'pointer', fontSize: '14px', color: '#374151' }}>
-                    {t("farmer.settings.chooseFile") || 'Choose File'}
-                  </button>
-                  <span style={{ fontSize: '14px', color: '#6b7280' }}>
-                    {formData.imageFile ? formData.imageFile.name : (t("farmer.settings.noFileChosen") || 'No file chosen')}
-                  </span>
-                </div>
               </div>
 
               {formData.quantity && formData.pricePerUnit && !isNaN(formData.quantity) && !isNaN(formData.pricePerUnit) && (
                 <div style={{ padding: '12px', backgroundColor: '#f0fdf4', borderRadius: '6px', border: '1px solid #bbf7d0', marginTop: '8px' }}>
                   <p style={{ margin: 0, fontSize: '14px', color: '#166534', fontWeight: 500 }}>
-                    {t('farmer.overview.calculatedPrice') || 'Total Price = Rs.'} {Number(formData.quantity) * Number(formData.pricePerUnit)} for {formData.quantity} {formData.unit}
+                    {t('farmer.productForm.calculatedPrice') || 'Total Price = Rs.'} {Number(formData.quantity) * Number(formData.pricePerUnit)} for {formData.quantity} {formData.unit}
                   </p>
                 </div>
               )}
 
               <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
                 <button type="button" onClick={() => { setShowModal(false); setEditProductId(null); resetProductForm(); }} style={{ flex: 1, padding: '10px', backgroundColor: 'white', color: '#374151', borderRadius: '8px', border: '1px solid #d1d5db', cursor: 'pointer', fontWeight: 500 }}>
-                  {t('farmer.overview.cancel') || 'Cancel'}
+                  {t('farmer.productForm.cancel') || 'Cancel'}
                 </button>
                 <button type="submit" style={{ flex: 1, padding: '10px', backgroundColor: '#22c55e', color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
-                  {editProductId ? (t('farmer.overview.updateProduct') || 'Update Product') : (t('farmer.overview.submitAddProduct') || 'Add Product')}
+                  {editProductId ? (t('farmer.productForm.updateProduct') || 'Update Product') : (t('farmer.productForm.addProduct') || 'Add Product')}
                 </button>
               </div>
             </form>
@@ -692,16 +676,16 @@ export default function OverviewSection({ setActiveTab }) {
       {productToDelete && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '12px', width: '100%', maxWidth: '400px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
-            <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#dc2626', marginBottom: '16px' }}>{t('farmer.overview.confirmDeleteTitle') || 'Delete Product'}</h2>
+            <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#dc2626', marginBottom: '16px' }}>{t('farmer.productForm.deleteProduct') || 'Delete Product'}</h2>
             <p style={{ color: '#4b5563', fontSize: '14px', marginBottom: '24px', lineHeight: '1.5' }}>
-              {t('farmer.overview.confirmDeleteMessage') || 'Are you sure you want to delete this product? This action cannot be undone.'}
+              {t('farmer.productForm.confirmDeleteMessage') || 'Are you sure you want to delete this product? This action cannot be undone.'}
             </p>
             <div style={{ display: 'flex', gap: '12px' }}>
               <button onClick={() => setProductToDelete(null)} style={{ flex: 1, padding: '10px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '8px', cursor: 'pointer', fontWeight: 500 }}>
-                {t('farmer.overview.cancel') || 'Cancel'}
+                {t('farmer.common.cancel') || 'Cancel'}
               </button>
               <button onClick={confirmDeleteProduct} style={{ flex: 1, padding: '10px', backgroundColor: '#dc2626', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
-                {t('farmer.overview.confirmDelete') || 'Confirm Delete'}
+                {t('farmer.productForm.confirmDelete') || 'Confirm Delete'}
               </button>
             </div>
           </div>

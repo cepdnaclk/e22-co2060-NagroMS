@@ -3,7 +3,7 @@ import { getAuth } from 'firebase/auth';
 import { Users, UserPlus, UserCheck, MapPin, Search } from 'lucide-react';
 import { getAllNetworkUsers, subscribeToConnections, toggleConnection } from '../../services/networkService';
 
-export default function CommunityNetwork({ currentUserRole }) {
+export default function CommunityNetwork({ currentUserRole, products = [] }) {
   const [users, setUsers] = useState([]);
   const [connections, setConnections] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +24,7 @@ export default function CommunityNetwork({ currentUserRole }) {
 
       // Determine default tab based on role
       if (currentUserRole === 'farmer') setActiveTab('customer');
-      else if (currentUserRole === 'customer') setActiveTab('farmer');
+      else if (currentUserRole === 'customer') setActiveTab('feed');
       else if (currentUserRole === 'expert') setActiveTab('farmer');
       else setActiveTab('farmer');
 
@@ -60,8 +60,15 @@ export default function CommunityNetwork({ currentUserRole }) {
     );
   };
 
+  const getConnectedFarmerIds = () => {
+    return connections
+      .filter(c => c.requesterId === currentUserId || c.targetId === currentUserId)
+      .map(c => c.requesterId === currentUserId ? c.targetId : c.requesterId);
+  };
+
   // Available tabs based on role
   const tabs = [
+    ...(currentUserRole === 'customer' ? [{ id: 'feed', label: 'My Feed', icon: '🌟' }] : []),
     { id: 'farmer', label: 'Farmers', icon: '🌾' },
     { id: 'customer', label: 'Customers', icon: '🛒' },
     { id: 'expert', label: 'Experts', icon: '🧑‍🏫' },
@@ -154,7 +161,37 @@ export default function CommunityNetwork({ currentUserRole }) {
 
       {/* Grid */}
       <div style={{ padding: '32px', flex: 1, overflowY: 'auto', background: '#fcfcfc' }}>
-        {filteredUsers.length === 0 ? (
+        {activeTab === 'feed' ? (
+          (() => {
+            const connectedFarmerIds = getConnectedFarmerIds();
+            const feedProducts = products.filter(p => p.farmerId && connectedFarmerIds.includes(p.farmerId));
+
+            if (feedProducts.length === 0) {
+              return (
+                <div style={{ textAlign: 'center', padding: '60px 20px', color: '#888' }}>
+                  <p style={{ fontSize: '18px', margin: 0 }}>No updates from followed farmers.</p>
+                  <p style={{ fontSize: '14px', marginTop: '8px' }}>Connect with farmers to see their latest products here.</p>
+                </div>
+              );
+            }
+
+            return (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+                {feedProducts.map(product => (
+                  <div key={product.id} style={{ background: '#fff', borderRadius: '12px', padding: '16px', border: '1px solid #eaeaea', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+                    <div style={{ width: '100%', height: '160px', overflow: 'hidden', borderRadius: '8px', marginBottom: '12px', background: '#f5f5f5' }}>
+                      <img src={product.image || 'https://via.placeholder.com/300'} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                    <h4 style={{ margin: '0 0 4px 0', color: '#333' }}>{product.name}</h4>
+                    <p style={{ color: '#1a7f37', fontWeight: 'bold', margin: '0 0 8px 0' }}>Rs {product.price}</p>
+                    <p style={{ fontSize: '12px', color: '#777', margin: 0 }}>Farmer: {product.farmer}</p>
+                    <p style={{ fontSize: '12px', color: '#777', margin: '4px 0 0 0' }}>Location: {product.location}</p>
+                  </div>
+                ))}
+              </div>
+            );
+          })()
+        ) : filteredUsers.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 20px', color: '#888' }}>
             <Users size={48} style={{ opacity: 0.2, marginBottom: '16px' }} />
             <p style={{ fontSize: '18px', margin: 0 }}>No {activeTab}s found.</p>
@@ -232,9 +269,9 @@ export default function CommunityNetwork({ currentUserRole }) {
                     {actionLoading === user.id ? (
                        <span style={{ display: 'inline-block', width: '16px', height: '16px', border: '2px solid', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
                     ) : connected ? (
-                      <><UserCheck size={18} /> Connected</>
+                      <><UserCheck size={18} /> {currentUserRole === 'customer' ? 'Following' : 'Connected'}</>
                     ) : (
-                      <><UserPlus size={18} /> Connect</>
+                      <><UserPlus size={18} /> {currentUserRole === 'customer' ? 'Follow' : 'Connect'}</>
                     )}
                   </button>
                 </div>
