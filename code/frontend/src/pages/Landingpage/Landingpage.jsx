@@ -61,7 +61,7 @@ function FeatureCard({ img, imgAlt, title, description }) {
         background: 'rgba(255,255,255,0.04)',
         border: hovered
           ? '1px solid rgba(34,197,94,0.55)'
-          : '1px solid rgba(34,197,94,0.15)',
+          : '1px solid rgba(44, 195, 91, 0.68)',
         borderRadius: 24,
         overflow: 'hidden',
         cursor: 'pointer',
@@ -681,10 +681,7 @@ function LandingPage({ onNavigate }) {
                 style={{
                   fontSize: 40,
                   fontWeight: 900,
-                  background: 'linear-gradient(135deg,#4ade80,#86efac)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
+                  color: '#16a34a',
                   letterSpacing: '-1px',
                 }}
               >
