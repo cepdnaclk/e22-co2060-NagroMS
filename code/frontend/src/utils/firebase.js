@@ -84,6 +84,8 @@ export async function registerWithEmail(formData) {
   localStorage.setItem('nagroms_token', idToken);
   localStorage.setItem('userRoles', JSON.stringify(data.user.roles));
   localStorage.setItem('userEmail', emailForAuth);
+  if (data.user.fullName) localStorage.setItem('userName', data.user.fullName);
+  if (data.user.businessName) localStorage.setItem('businessName', data.user.businessName);
   return data;
 }
 
@@ -104,6 +106,8 @@ export async function loginWithEmail(email, password) {
   localStorage.setItem('nagroms_token', idToken);
   localStorage.setItem('userRoles', JSON.stringify(data.user.roles));
   localStorage.setItem('userEmail', email);
+  if (data.user.fullName) localStorage.setItem('userName', data.user.fullName);
+  if (data.user.businessName) localStorage.setItem('businessName', data.user.businessName);
 
   return data;
 }
@@ -158,6 +162,9 @@ export async function logout() {
   localStorage.removeItem('nagroms_uid');
   localStorage.removeItem('userRoles');
   localStorage.removeItem('userEmail');
+  localStorage.removeItem('userName');
+  localStorage.removeItem('businessName');
+  localStorage.removeItem('serviceProviderType');
 }
 
 export default app;
