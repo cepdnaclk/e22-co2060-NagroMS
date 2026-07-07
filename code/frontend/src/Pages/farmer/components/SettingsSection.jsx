@@ -7,7 +7,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 
 export default function SettingsSection() {
-  const { t } = useLanguage();
+  const { t, setLang } = useLanguage();
 
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -49,6 +49,9 @@ export default function SettingsSection() {
               notifications: { ...prev.notifications, ...(data.notifications || {}) },
               paymentDetails: { ...prev.paymentDetails, ...(data.paymentDetails || {}) }
             }));
+            if (data.languagePreference) {
+              setLang(data.languagePreference);
+            }
           }
         });
       }
@@ -69,6 +72,9 @@ export default function SettingsSection() {
       setFormData(prev => ({ ...prev, paymentDetails: { ...prev.paymentDetails, [key]: value } }));
     } else {
       setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+      if (name === 'languagePreference') {
+        setLang(value);
+      }
     }
   };
 
@@ -254,7 +260,7 @@ export default function SettingsSection() {
             <div>
               <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>{t('farmer.settings.langPref') || 'Language Preference'}</label>
               <select name="languagePreference" value={formData.languagePreference} onChange={handleChange} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db', outline: 'none' }}>
-                <option value="en">English</option>
+                <option value="en">{t('farmer.header.languageEnglish') || 'English'}</option>
                 <option value="si">සිංහල</option>
                 <option value="ta">தமிழ்</option>
               </select>
