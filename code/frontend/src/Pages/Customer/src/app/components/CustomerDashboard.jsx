@@ -426,10 +426,10 @@ export function CustomerDashboard({ onNavigate }) {
     return cart.reduce((sum, item) => {
       const product = products.find(p => p.id === item.id);
       if (!product) return sum;
-      let price = product.price;
+      let price = Number(product.price || 0);
       if (product.availableUnits && item.unit) {
         const unitInfo = product.availableUnits.find(u => u.unit === item.unit);
-        if (unitInfo) price = unitInfo.price;
+        if (unitInfo) price = Number(unitInfo.price || 0);
       }
       return sum + price * item.quantity;
     }, 0);
@@ -849,10 +849,10 @@ function CartSection({ cart, updateQuantity, removeFromCart, getCartTotal, getTo
             const product = products.find(p => p.id === item.id);
             if (!product) return null;
             const itemDeliveryFee = calculateDeliveryFee(customerDistrict, product.district);
-            let itemPrice = product.price;
+            let itemPrice = Number(product.price || 0);
             if (product.availableUnits && item.unit) {
               const unitInfo = product.availableUnits.find(u => u.unit === item.unit);
-              if (unitInfo) itemPrice = unitInfo.price;
+              if (unitInfo) itemPrice = Number(unitInfo.price || 0);
             }
             const itemUnit = item.unit || product.unit;
 
@@ -1079,9 +1079,9 @@ function ProductCard({ product, onAddToCart, onMessageFarmer, inCart, cart, onUp
 
   const getCurrentPrice = () => {
     const currentUnit = inCart ? selectedUnit : tempUnit;
-    if (!product.availableUnits) return product.price.toFixed(2);
+    if (!product.availableUnits) return Number(product.price || 0).toFixed(2);
     const unitInfo = product.availableUnits.find(u => u.unit === currentUnit);
-    return unitInfo ? unitInfo.price.toFixed(2) : product.price.toFixed(2);
+    return unitInfo ? Number(unitInfo.price || 0).toFixed(2) : Number(product.price || 0).toFixed(2);
   };
 
   const handleAddToCart = () => {
@@ -1146,7 +1146,7 @@ function ProductCard({ product, onAddToCart, onMessageFarmer, inCart, cart, onUp
             <select value={currentUnit} onChange={(e) => handleUnitChange(e.target.value)} className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary">
               {product.availableUnits.map(unitOption => (
                 <option key={unitOption.unit} value={unitOption.unit}>
-                  {unitOption.label} - LKR {unitOption.price.toFixed(2)}
+                  {unitOption.label} - LKR {Number(unitOption.price || 0).toFixed(2)}
                 </option>
               ))}
             </select>

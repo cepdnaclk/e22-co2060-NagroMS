@@ -7,10 +7,14 @@ const farmerTranslations = {
         languageSinhala: 'Sinhala',
         languageTamil: 'Tamil'
       },
+
       common: {
         loading: 'Loading...', error: 'An error occurred.', save: 'Save', cancel: 'Cancel', delete: 'Delete',
         edit: 'Edit', update: 'Update', add: 'Add', submit: 'Submit', confirm: 'Confirm', yes: 'Yes', no: 'No',
         search: 'Search', status: 'Status', date: 'Date', amount: 'Amount', description: 'Description', title: 'Title',
+        chooseFile: "Choose File",
+        noFileChosen: "No file chosen",
+        dobPlaceholder: "MM/DD/YYYY",
         name: 'Name', phone: 'Phone', email: 'Email', location: 'Location', notAvailable: 'Not available'
       },
       sidebar: {
@@ -31,7 +35,11 @@ const farmerTranslations = {
         cancel: 'Cancel',
         submitAddProduct: 'Add Product',
         noIncomingOrders: 'No incoming orders yet.',
+
         title: 'Overview',
+        chooseFile: "ගොනුව තෝරන්න",
+        noFileChosen: "ගොනුවක් තෝරා නැත",
+        dobPlaceholder: "මාසය/දිනය/වසර",
         myProducts: 'My Products', addProduct: 'Add Product', addFirstProduct: 'Add Your First Product',
         welcome: 'Welcome to NagroMS!', noProductsText: "It looks like you haven't added any products yet.",
         available: 'Available', totalPrice: 'Total Price', status: 'Status', added: 'Added', editProduct: 'Edit Product',
@@ -52,6 +60,9 @@ const farmerTranslations = {
       },
       management: {
         title: 'Management',
+        chooseFile: "கோப்பைத் தேர்ந்தெடுக்கவும்",
+        noFileChosen: "கோப்பு தேர்வு செய்யப்படவில்லை",
+        dobPlaceholder: "மாதம்/நாள்/ஆண்டு",
         totalExpenses: 'Total Expenses', totalIncome: 'Total Income', profitSummary: 'Profit Summary',
         addExpense: 'Add Expense', addIncome: 'Add Income', lastWeek: 'Last Week', lastMonth: 'Last Month', lastThreeMonths: 'Last 3 Months',
         noExpenses: 'No expenses yet.', noIncome: 'No income yet.', noProfitData: 'No profit data yet.', expenseTitle: 'Expense Title',
@@ -61,6 +72,7 @@ const farmerTranslations = {
         thursday: 'Thursday', friday: 'Friday', saturday: 'Saturday', sunday: 'Sunday'
       },
       services: {
+
         transportTitle: 'Transport Service',
         transportDesc: 'Request transport support to deliver your products to customers or markets.',
         reqTransport: 'Request Transport',
@@ -178,6 +190,7 @@ const farmerTranslations = {
         cancel: 'අවලංගු කරන්න',
         submitAddProduct: 'නිෂ්පාදනය එක් කරන්න',
         noIncomingOrders: 'තවම ලැබෙන ඇණවුම් නැත.',
+
 title: 'දළ විශ්ලේෂණය', myProducts: 'මගේ නිෂ්පාදන', addProduct: 'නිෂ්පාදනයක් එක් කරන්න', addFirstProduct: 'ඔබේ පළමු නිෂ්පාදනය එක් කරන්න',
         welcome: 'NagroMS වෙත සාදරයෙන් පිළිගනිමු!', noProductsText: "ඔබ තවමත් නිෂ්පාදන කිසිවක් එක් කර නොමැත.",
         available: 'පවතින', totalPrice: 'මුළු මුදල', status: 'තත්ත්වය', added: 'එක් කරන ලදි', editProduct: 'නිෂ්පාදනය සංස්කරණය',
@@ -206,7 +219,8 @@ title: 'දළ විශ්ලේෂණය', myProducts: 'මගේ නිෂ්
         thursday: 'බ්‍රහස්පතින්දා', friday: 'සිකුරාදා', saturday: 'සෙනසුරාදා', sunday: 'ඉරිදා'
       },
       services: {
-        transportTitle: 'ප්රවාහන සේවාව',
+        
+transportTitle: 'ප්රවාහන සේවාව',
         transportDesc: 'ඔබගේ නිෂ්පාදන පාරිභෝගිකයින්ට හෝ වෙළඳපොළට බෙදා හැරීමට ප්රවාහන සහාය ඉල්ලන්න.',
         reqTransport: 'ප්රවාහනය ඉල්ලන්න',
         bankTitle: 'බැංකු විස්තර',
@@ -323,6 +337,7 @@ title: 'සේවාවන්', expertConsultation: 'විශේෂඥ උප�
         cancel: 'ரத்து செய்',
         submitAddProduct: 'தயாரிப்பைச் சேர்க்கவும்',
         noIncomingOrders: 'இன்னும் வரும் ஆர்டர்கள் இல்லை.',
+
 title: 'கண்ணோட்டம்', myProducts: 'எனது தயாரிப்புகள்', addProduct: 'தயாரிப்பைச் சேர்', addFirstProduct: 'உங்கள் முதல் தயாரிப்பைச் சேர்',
         welcome: 'NagroMS க்கு வரவேற்கிறோம்!', noProductsText: "நீங்கள் இன்னும் எந்த தயாரிப்புகளையும் சேர்க்கவில்லை.",
         available: 'கையிருப்பு', totalPrice: 'மொத்த விலை', status: 'நிலை', added: 'சேர்க்கப்பட்டது', editProduct: 'திருத்து',
@@ -351,7 +366,8 @@ title: 'கண்ணோட்டம்', myProducts: 'எனது தயார�
         thursday: 'வியாழன்', friday: 'வெள்ளி', saturday: 'சனி', sunday: 'ஞாயிறு'
       },
       services: {
-        transportTitle: 'போக்குவரத்து சேவை',
+        
+transportTitle: 'போக்குவரத்து சேவை',
         transportDesc: 'உங்கள் தயாரிப்புகளை வாடிக்கையாளர்கள் அல்லது சந்தைகளுக்கு கொண்டு செல்ல போக்குவரத்து உதவியை கோருங்கள்.',
         reqTransport: 'போக்குவரத்து கோருங்கள்',
         bankTitle: 'வங்கி விவரங்கள்',
