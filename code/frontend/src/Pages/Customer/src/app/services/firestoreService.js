@@ -1,6 +1,6 @@
 import {
   doc, getDoc, setDoc, updateDoc,
-  collection, addDoc, getDocs, query, where, orderBy
+  collection, addDoc, getDocs, query, where, orderBy, onSnapshot
 } from 'firebase/firestore';
 import { db } from '../../../../../utils/firebase.js';
 
@@ -51,14 +51,116 @@ export const saveCustomerProfile = async (uid, profileData) => {
 export const fetchProducts = async () => {
   try {
     const querySnapshot = await getDocs(collection(db, 'products'));
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    const productsList = [];
+
+    for (const docSnap of querySnapshot.docs) {
+      const data = docSnap.data();
+      let farmerName = 'Unknown Farmer';
+      let location = 'Unknown Location';
+      let farmerPhone = 'N/A';
+
+      if (data.farmerId) {
+        try {
+          const userSnap = await getDoc(doc(db, 'users', data.farmerId));
+          if (userSnap.exists()) {
+            const ud = userSnap.data();
+            farmerName = ud.fullName || ud.name || ud.businessName || 'Unknown Farmer';
+            location = ud.villageTown || ud.district || ud.village || ud.addressLine1 || 'Unknown Location';
+            farmerPhone = ud.phone || ud.phoneNumber || 'N/A';
+          }
+        } catch (e) {
+          console.warn('Could not fetch farmer details', e);
+        }
+      }
+
+      productsList.push({
+        id: docSnap.id,
+        ...data,
+        name: data.productName || data.name || 'Unnamed Product',
+        image: data.imageUrl || data.image || '',
+        price: data.pricePerUnit || data.price || 0,
+        available: `${data.quantity || 0} ${data.unit || 'kg'}`,
+        farmer: farmerName,
+        location: location,
+        district: location,
+        farmerPhone: farmerPhone,
+        category: 'general',
+        rating: 5.0,
+        availableUnits: [
+          { unit: data.unit || 'kg', price: data.pricePerUnit || data.price || 0, label: data.unit || 'kg' }
+        ]
+      });
+    }
+
+    return productsList;
   } catch (error) {
     console.error('Error fetching products:', error);
     return [];
   }
+};
+
+export const subscribeToProducts = (callback) => {
+  const q = query(collection(db, 'products'));
+  const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+    try {
+      const productsList = [];
+      const promises = querySnapshot.docs.map(async (docSnap) => {
+        const data = docSnap.data();
+        let farmerName = 'Unknown Farmer';
+        let location = 'Unknown Location';
+        let farmerPhone = 'N/A';
+
+        if (data.farmerId) {
+          try {
+            const userSnap = await getDoc(doc(db, 'users', data.farmerId));
+            if (userSnap.exists()) {
+              const ud = userSnap.data();
+              farmerName = ud.fullName || ud.name || ud.businessName || 'Unknown Farmer';
+              location = ud.villageTown || ud.district || ud.village || ud.addressLine1 || 'Unknown Location';
+              farmerPhone = ud.phone || ud.phoneNumber || 'N/A';
+            }
+          } catch (e) {
+            console.warn('Could not fetch farmer details', e);
+          }
+        }
+
+        const n = (data.productName || data.name || '').toLowerCase();
+        let inferredCategory = 'general';
+        if (n.includes('tomato') || n.includes('carrot') || n.includes('onion') || n.includes('cabbage') || n.includes('chili') || n.includes('potato') || n.includes('bean') || n.includes('pumpkin')) inferredCategory = 'vegetables';
+        else if (n.includes('mango') || n.includes('banana') || n.includes('papaya') || n.includes('apple') || n.includes('orange') || n.includes('fruit')) inferredCategory = 'fruits';
+        else if (n.includes('rice') || n.includes('corn') || n.includes('wheat') || n.includes('grain')) inferredCategory = 'grains';
+
+        return {
+          id: docSnap.id,
+          ...data,
+          name: data.productName || data.name || 'Unnamed Product',
+          image: data.imageUrl || data.image || '',
+          price: data.pricePerUnit || data.price || 0,
+          available: `${data.quantity || 0} ${data.unit || 'kg'}`,
+          farmer: farmerName,
+          location: location,
+          district: location,
+          farmerPhone: farmerPhone,
+          category: inferredCategory,
+          rating: 5.0,
+          availableUnits: [
+            { unit: data.unit || 'kg', price: data.pricePerUnit || data.price || 0, label: data.unit || 'kg' }
+          ]
+        };
+      });
+
+      const resolvedProducts = await Promise.all(promises);
+      callback(resolvedProducts);
+    } catch (error) {
+      console.error('Error processing real-time products:', error);
+      callback([]);
+    }
+  }, (error) => {
+    console.error('Snapshot listener error:', error);
+    callback([]);
+  });
+
+  return unsubscribe;
 };
 
 // ─── ORDERS ──────────────────────────────────────────────────
@@ -95,6 +197,32 @@ export const loadCustomerOrders = async (uid) => {
     console.error('Error loading orders:', error);
     return [];
   }
+};
+
+export const subscribeToCustomerOrders = (uid, callback) => {
+  const q = query(
+    collection(db, 'orders'),
+    where('customerId', '==', uid),
+    orderBy('createdAt', 'desc')
+  );
+  
+  const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    try {
+      const orders = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      callback(orders);
+    } catch (error) {
+      console.error('Error processing real-time orders:', error);
+      callback([]);
+    }
+  }, (error) => {
+    console.error('Orders snapshot listener error:', error);
+    callback([]);
+  });
+
+  return unsubscribe;
 };
 
 // ─── CART ─────────────────────────────────────────────────────

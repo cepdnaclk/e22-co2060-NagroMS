@@ -16,173 +16,40 @@ import {
   X,
   Home,
   UserCircle,
-  ShoppingBag,
   Trash2,
   Plus,
   Minus,
   Check,
   FileText,
-  Calendar,
-  Download,
   MessageCircle,
   Send,
-  Bot,
   ChevronDown,
-  PlusCircle,
-  Bell
+  PlusCircle
 } 
 from 'lucide-react';
 
 import { auth } from '../../../../../utils/firebase.js';
 import { onAuthStateChanged } from 'firebase/auth';
 import { 
-  loadCustomerProfile, 
+  loadCustomerProfile,
   saveCustomerProfile,
-  fetchProducts,
-  saveOrder,
+  saveCart, 
+  loadCart, 
+  subscribeToProducts,
   loadCustomerOrders,
-  saveCart,
-  loadCart
+  subscribeToCustomerOrders
 } from '../services/firestoreService';
 
+import { useLanguage } from '../../../../../i18n/LanguageContext';
+
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import { RoleSwitcher } from '../../../../../components/RoleSwitcher';
-import { Chatbot } from './Chatbot';
+// RoleSwitcher import removed as it is no longer used
 import { NotificationCenter } from './NotificationCenter';
 import { EnhancedCheckoutSection } from './EnhancedCheckout';
 import { EnhancedOrdersSection } from './EnhancedOrders';
 import CommunityNetwork from '../../../../../components/Network/CommunityNetwork';
 
-// ÔöÇÔöÇÔöÇ FALLBACK PRODUCTS (shown if Firestore has no products yet) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
-const FALLBACK_PRODUCTS = [
-  {
-    id: 1,
-    name: 'Fresh Tomatoes',
-    farmer: 'Sunil Farm',
-    location: 'Kandy',
-    district: 'Kandy',
-    price: 150,
-    unit: 'kg',
-    rating: 4.8,
-    image: 'https://images.unsplash.com/photo-1560433802-62c9db426a4d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcmVzaCUyMHRvbWF0b2VzJTIwdmVnZXRhYmxlfGVufDF8fHx8MTc2OTUwOTA3Nnww&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'vegetables',
-    available: '50 kg',
-    farmerPhone: '+94 77 234 5678',
-    availableUnits: [
-      { unit: 'kg', price: 150, label: 'Kilogram' },
-      { unit: 'g', price: 0.15, label: 'Gram' }
-    ]
-  },
-  {
-    id: 2,
-    name: 'Organic Rice',
-    farmer: 'Perera Agriculture',
-    location: 'Anuradhapura',
-    district: 'Anuradhapura',
-    price: 180,
-    unit: 'kg',
-    rating: 4.9,
-    image: 'https://images.unsplash.com/photo-1763537351442-f377a4878d9a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyaWNlJTIwZ3JhaW4lMjBoYXJ2ZXN0fGVufDF8fHx8MTc2OTUwOTA3N3ww&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'grains',
-    available: '200 kg',
-    farmerPhone: '+94 77 345 6789',
-    availableUnits: [
-      { unit: 'kg', price: 180, label: 'Kilogram' },
-      { unit: 'g', price: 0.18, label: 'Gram' }
-    ]
-  },
-  {
-    id: 3,
-    name: 'Fresh Carrots',
-    farmer: 'Silva Farm',
-    location: 'Nuwara Eliya',
-    district: 'Nuwara Eliya',
-    price: 120,
-    unit: 'kg',
-    rating: 4.7,
-    image: 'https://images.unsplash.com/photo-1717959159782-98c42b1d4f37?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcmVzaCUyMGNhcnJvdHMlMjB2ZWdldGFibGVzfGVufDF8fHx8MTc2OTUwMjAwNnww&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'vegetables',
-    available: '40 kg',
-    farmerPhone: '+94 77 456 7890',
-    availableUnits: [
-      { unit: 'kg', price: 120, label: 'Kilogram' },
-      { unit: 'g', price: 0.12, label: 'Gram' }
-    ]
-  },
-  {
-    id: 4,
-    name: 'Green Beans',
-    farmer: 'Fernando Organic',
-    location: 'Matale',
-    district: 'Matale',
-    price: 120,
-    unit: 'kg',
-    rating: 4.6,
-    image: 'https://images.unsplash.com/photo-1574963835594-61eede2070dc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxncmVlbiUyMGJlYW5zJTIwdmVnZXRhYmxlfGVufDF8fHx8MTc2OTUwMjYxMnww&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'vegetables',
-    available: '30 kg',
-    farmerPhone: '+94 77 567 8901',
-    availableUnits: [
-      { unit: 'kg', price: 120, label: 'Kilogram' },
-      { unit: 'g', price: 0.12, label: 'Gram' }
-    ]
-  },
-  {
-    id: 5,
-    name: 'Fresh Bananas',
-    farmer: 'Rathnayake Farm',
-    location: 'Kegalle',
-    district: 'Kegalle',
-    price: 100,
-    unit: 'kg',
-    rating: 4.8,
-    image: 'https://images.unsplash.com/photo-1643188626775-05290d1b6acb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcmVzaCUyMGJhbmFuYXMlMjB0cm9waWNhbCUyMGZydWl0fGVufDF8fHx8MTc2OTUwOTA3OHww&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'fruits',
-    available: '80 kg',
-    farmerPhone: '+94 77 678 9012',
-    availableUnits: [
-      { unit: 'bunch', price: 100, label: 'Bunch' },
-      { unit: 'kg', price: 100, label: 'Kilogram' },
-      { unit: 'g', price: 0.10, label: 'Gram' }
-    ]
-  },
-  {
-    id: 6,
-    name: 'Papaya',
-    farmer: 'Wijesinghe Gardens',
-    location: 'Gampaha',
-    district: 'Gampaha',
-    price: 90,
-    unit: 'kg',
-    rating: 4.5,
-    image: 'https://images.unsplash.com/photo-1651821322744-73ee50bf4046?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwYXBheWElMjB0cm9waWNhbCUyMGZydWl0fGVufDF8fHx8MTc2OTUwMjc5N3ww&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'fruits',
-    available: '60 kg',
-    farmerPhone: '+94 77 789 0123',
-    availableUnits: [
-      { unit: 'unit', price: 90, label: 'Each' },
-      { unit: 'kg', price: 90, label: 'Kilogram' },
-      { unit: 'g', price: 0.09, label: 'Gram' }
-    ]
-  },
-  {
-    id: 7,
-    name: 'Fresh Coconuts',
-    farmer: 'De Silva Estate',
-    location: 'Colombo',
-    district: 'Colombo',
-    price: 80,
-    unit: 'unit',
-    rating: 4.7,
-    image: 'https://images.unsplash.com/photo-1589823635451-0c3e1760dc19?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb2NvbnV0JTIwZnJlc2h8ZW58MXx8fHwxNzY5NTAyNzk3fDA&ixlib=rb-4.1.0&q=80&w=1080',
-    category: 'fruits',
-    available: '100 units',
-    farmerPhone: '+94 77 890 1234',
-    availableUnits: [
-      { unit: 'unit', price: 80, label: 'Each' }
-    ]
-  }
-];
+
 
 // Delivery fee calculation based on district distance
 const DISTRICT_DELIVERY_FEES = {
@@ -260,7 +127,8 @@ export function CustomerDashboard({ onNavigate }) {
   const [cart, setCart] = useState([]);
 
   const [activeSection, setActiveSection] = useState('browse');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { lang, setLang, t } = useLanguage();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [showRequestProductModal, setShowRequestProductModal] = useState(false);
   const [showMessageFarmerModal, setShowMessageFarmerModal] = useState(false);
   const [selectedFarmer, setSelectedFarmer] = useState(null);
@@ -268,7 +136,7 @@ export function CustomerDashboard({ onNavigate }) {
   // ÔöÇÔöÇ FIREBASE STATE ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
   const [uid, setUid] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [products, setProducts] = useState(FALLBACK_PRODUCTS);
+  const [products, setProducts] = useState([]);
   const [firestoreOrders, setFirestoreOrders] = useState([]);
 
   // ÔöÇÔöÇ PROFILE: default values, overwritten by Firestore ÔöÇÔöÇ
@@ -285,32 +153,56 @@ export function CustomerDashboard({ onNavigate }) {
 
   // ÔöÇÔöÇ LOAD DATA FROM FIREBASE ON LOGIN ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        setUid(user.uid);
-
-        // Load profile from Firestore
-        const firestoreProfile = await loadCustomerProfile(user.uid);
-        if (firestoreProfile) setProfile(firestoreProfile);
-
-        // Load cart from Firestore
-        const savedCart = await loadCart(user.uid);
-        if (savedCart && savedCart.length > 0) setCart(savedCart);
-
-        // Load products from Firestore (fallback to FALLBACK_PRODUCTS if empty)
-        const firestoreProducts = await fetchProducts();
-        if (firestoreProducts && firestoreProducts.length > 0) {
-          setProducts(firestoreProducts);
-        }
-
-        // Load orders from Firestore
-        const orders = await loadCustomerOrders(user.uid);
-        if (orders && orders.length > 0) setFirestoreOrders(orders);
+    console.log("CustomerDashboard useEffect mounted, calling onAuthStateChanged...");
+    
+    // Safety timeout: force loading to false after 3 seconds no matter what
+    const timeoutId = setTimeout(() => {
+      if (loading) {
+        console.warn("Safety timeout triggered: Forcing loading to false.");
+        setLoading(false);
       }
-      setLoading(false);
+    }, 3000);
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log("onAuthStateChanged fired! User:", user ? user.uid : "null");
+      try {
+        if (user) {
+          setUid(user.uid);
+
+          console.log("Loading profile...");
+          const firestoreProfile = await loadCustomerProfile(user.uid);
+          if (firestoreProfile) setProfile(firestoreProfile);
+
+          console.log("Loading cart...");
+          const savedCart = await loadCart(user.uid);
+          if (savedCart && savedCart.length > 0) setCart(savedCart);
+
+          console.log("Subscribing to products...");
+          const unsubProducts = subscribeToProducts((realtimeProducts) => {
+            if (realtimeProducts) setProducts(realtimeProducts);
+          });
+          // Attach unsubProducts to window or global to clean up later if necessary
+          // But since the dashboard mounts once per user, this is fine.
+
+          console.log("Subscribing to orders...");
+          const unsubOrders = subscribeToCustomerOrders(user.uid, (realtimeOrders) => {
+            if (realtimeOrders) setFirestoreOrders(realtimeOrders);
+          });
+          
+          console.log("Finished loading data!");
+        }
+      } catch (err) {
+        console.error("Error during data loading:", err);
+      } finally {
+        setLoading(false);
+      }
     });
 
-    return () => unsubscribe();
+    return () => {
+      clearTimeout(timeoutId);
+      unsubscribe();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ÔöÇÔöÇ AUTO-SAVE CART TO FIRESTORE WHEN IT CHANGES ÔöÇÔöÇ
@@ -367,8 +259,8 @@ export function CustomerDashboard({ onNavigate }) {
     );
   }
 
-  // Use Firestore orders if available, otherwise fallback to mock
-  const ordersToShow = firestoreOrders.length > 0 ? firestoreOrders : PAST_ORDERS;
+  // Use Firestore orders (realtime)
+  const ordersToShow = firestoreOrders;
 
   const uniqueLocations = ['all', ...new Set(products.map(p => p.location))];
 
@@ -379,6 +271,8 @@ export function CustomerDashboard({ onNavigate }) {
     const matchesLocation = selectedLocation === 'all' || product.location === selectedLocation;
     return matchesSearch && matchesCategory && matchesLocation;
   });
+
+  console.log("CustomerDashboard Render - Products loaded:", products.length, "Filtered:", filteredProducts.length);
 
   const addToCart = (productId) => {
     const product = products.find(p => p.id === productId);
@@ -514,68 +408,134 @@ export function CustomerDashboard({ onNavigate }) {
       case 'orders':
         return <EnhancedOrdersSection pastOrders={ordersToShow} uid={uid} />;
       case 'community':
-        return <CommunityNetwork currentUserRole="customer" />;
+        return <CommunityNetwork currentUserRole="customer" products={products} />;
       default:
         return null;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      {/* Header - Always Visible */}
-      <header className="sticky top-0 z-50 bg-white border-b border-green-200 shadow-sm">
-        <div className="px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="bg-primary rounded-lg p-1.5">
-                <Sprout className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-primary font-semibold text-xl">NagroMS</span>
+    <div className="farmer-dashboard-container" style={{ display: 'flex', height: '100vh', backgroundColor: '#f3f4f6', overflow: 'hidden', position: 'relative' }}>
+      
+      {/* Mobile Sidebar Overlay */}
+      {!isSidebarOpen && (
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          style={{ position: 'absolute', top: '16px', left: '16px', zIndex: 50, background: '#115e59', color: 'white', border: 'none', borderRadius: '8px', padding: '8px', cursor: 'pointer' }}
+        >
+          <Menu size={24} />
+        </button>
+      )}
+
+      {/* Sidebar */}
+      <div 
+        className="farmer-sidebar" 
+        style={{ 
+          width: '260px', 
+          backgroundColor: '#115e59', 
+          color: 'white', 
+          display: 'flex', 
+          flexDirection: 'column',
+          transition: 'transform 0.3s ease',
+          transform: isSidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+          position: isSidebarOpen ? 'relative' : 'absolute',
+          height: '100%',
+          zIndex: 40
+        }}
+      >
+        <div style={{ padding: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ backgroundColor: 'white', color: '#115e59', padding: '8px', borderRadius: '50%' }}>
+              <Sprout size={24} />
             </div>
+            <h1 style={{ fontSize: '20px', fontWeight: 700, margin: 0 }}>NagroMS</h1>
           </div>
-          <div className="flex items-center gap-2">
-            <NotificationCenter />
-            <RoleSwitcher currentRole="customer" onNavigate={onNavigate} />
-            <button
-              onClick={() => onNavigate('landing')}
-              className="hidden sm:flex items-center gap-2 text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="text-sm font-medium">Logout</span>
-            </button>
-          </div>
+          <button onClick={() => setIsSidebarOpen(false)} style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer' }}>
+            <X size={24} />
+          </button>
         </div>
 
-        {/* Top Navigation Bar */}
-        <nav className="glass-nav overflow-x-auto shadow-sm border-t border-green-50 flex justify-center">
-          <div className="flex items-center gap-2 px-4 py-1 min-w-max">
-            <NavButton icon={<Home className="w-5 h-5" />} label="Browse" active={activeSection === 'browse'} onClick={() => setActiveSection('browse')} />
-            <NavButton icon={<UserCircle className="w-5 h-5" />} label="Profile" active={activeSection === 'profile'} onClick={() => setActiveSection('profile')} />
-            <NavButton icon={<ShoppingCart className="w-5 h-5" />} label="Cart" active={activeSection === 'cart'} onClick={() => setActiveSection('cart')} badge={getCartItemsCount() > 0 ? getCartItemsCount() : null} />
-            <NavButton icon={<FileText className="w-5 h-5" />} label="Orders" active={activeSection === 'orders'} onClick={() => setActiveSection('orders')} />
-            <NavButton icon={<User className="w-5 h-5" />} label="Community" active={activeSection === 'community'} onClick={() => setActiveSection('community')} />
-            <div className="sm:hidden ml-2 border-l border-green-200 pl-2">
-              <NavButton icon={<LogOut className="w-5 h-5" />} label="Logout" active={false} onClick={() => onNavigate('landing')} />
-            </div>
-          </div>
+        <nav style={{ flex: 1, padding: '24px 12px', display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto' }}>
+          <SidebarButton icon={<Home size={20} />} label={t('customer.sidebar.browse') || "Browse Products"} active={activeSection === 'browse'} onClick={() => setActiveSection('browse')} />
+          <SidebarButton icon={<ShoppingCart size={20} />} label={t('customer.sidebar.cart') || "My Cart"} active={activeSection === 'cart'} onClick={() => setActiveSection('cart')} badge={getCartItemsCount()} />
+          <SidebarButton icon={<FileText size={20} />} label={t('customer.sidebar.orders') || "Order History"} active={activeSection === 'orders'} onClick={() => setActiveSection('orders')} />
+          <SidebarButton icon={<UserCircle size={20} />} label={t('customer.sidebar.profile') || "My Profile"} active={activeSection === 'profile'} onClick={() => setActiveSection('profile')} />
+          <SidebarButton icon={<User size={20} />} label={t('customer.sidebar.community') || "Community"} active={activeSection === 'community'} onClick={() => setActiveSection('community')} />
         </nav>
-      </header>
 
-
-
-      {/* Sidebar removed, replaced by bottom navigation */}
-
-      {/* Main Content */}
-      <main className="min-h-screen transition-all duration-300">
-        <div className="p-4 lg:p-8">
-          {renderContent()}
+        <div style={{ padding: '12px' }}>
+          <SidebarButton
+            icon={<LogOut size={20} />}
+            label={t('customer.sidebar.logout') || "Logout"}
+            active={false}
+            onClick={() => onNavigate('landing')}
+          />
         </div>
-      </main>
+      </div>
 
+      {/* Main Content Area */}
+      <div className="farmer-main-content" style={{ flex: 1, overflowY: 'auto', padding: '32px', paddingTop: !isSidebarOpen ? '64px' : '32px', transition: 'padding 0.3s' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative' }}>
+          
+          {/* Top Header Matching Farmer Dashboard */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <h2 style={{ fontSize: '24px', fontWeight: 600, color: '#111827', margin: 0, textTransform: 'capitalize' }}>
+              {activeSection === 'browse' ? (t('customer.browse.title') || 'Marketplace') : (t(`customer.sidebar.${activeSection}`) || activeSection)}
+            </h2>
 
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+              {/* Language Selector */}
+              <select
+                value={lang}
+                onChange={(e) => setLang(e.target.value)}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid #d1d5db',
+                  backgroundColor: 'white',
+                  color: '#374151',
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}
+              >
+                <option value="en">English</option>
+                <option value="si">සිංහල</option>
+                <option value="ta">தமிழ்</option>
+              </select>
 
-      <Chatbot />
+              {/* Active Status */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e', boxShadow: '0 0 0 2px rgba(34, 197, 94, 0.2)' }}></div>
+                <span style={{ fontSize: '14px', color: '#4b5563', fontWeight: 500 }}>{t('customer.header.activeCustomer') || "Active Customer"}</span>
+              </div>
+
+              {/* Role Switcher Removed as per user request */}
+              
+              <button 
+                onClick={() => setActiveSection('cart')} 
+                className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+                title="View Cart"
+              >
+                <ShoppingCart className="w-6 h-6 text-gray-600" />
+                {getCartItemsCount() > 0 && (
+                  <span 
+                    className="absolute w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold"
+                    style={{ top: '-4px', right: '-4px' }}
+                  >
+                    {getCartItemsCount()}
+                  </span>
+                )}
+              </button>
+
+              <NotificationCenter />
+            </div>
+          </div>
+
+          <div style={{ paddingTop: '16px' }}>
+             {renderContent()}
+          </div>
+        </div>
+      </div>
 
       {showRequestProductModal && (
         <RequestProductModal onClose={() => setShowRequestProductModal(false)} />
@@ -594,96 +554,118 @@ export function CustomerDashboard({ onNavigate }) {
   );
 }
 
-// ÔöÇÔöÇÔöÇ NAV BUTTON ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
-function NavButton({ icon, label, active, onClick, badge }) {
+// ─── SIDEBAR BUTTON ──────────────────────────────────────────────────────────
+function SidebarButton({ icon, label, active, onClick, badge }) {
   return (
     <button
       onClick={onClick}
-      className={`relative flex flex-col items-center justify-center min-w-[72px] px-2 py-2 rounded-xl transition-all ${
-        active
-          ? 'text-primary bg-green-50 shadow-inner'
-          : 'text-gray-400 hover:text-primary hover:bg-gray-50'
-      }`}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        width: '100%',
+        padding: '12px 16px',
+        border: 'none',
+        borderRadius: '8px',
+        backgroundColor: active ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
+        color: active ? 'white' : 'rgba(255, 255, 255, 0.7)',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+        fontWeight: active ? 600 : 400,
+        textAlign: 'left'
+      }}
+      onMouseOver={(e) => {
+        if (!active) {
+          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+          e.currentTarget.style.color = 'white';
+        }
+      }}
+      onMouseOut={(e) => {
+        if (!active) {
+          e.currentTarget.style.backgroundColor = 'transparent';
+          e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)';
+        }
+      }}
     >
-      <span className="mb-1">{icon}</span>
-      <span className="text-[10px] font-semibold leading-none whitespace-nowrap tracking-wide">{label}</span>
-      {badge && (
-        <span className="absolute top-1 right-2 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold shadow-sm">
-          {badge > 9 ? '9+' : badge}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {icon}
+        </div>
+        <span style={{ fontSize: '15px' }}>{label}</span>
+      </div>
+      {badge > 0 && (
+        <span className="bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
+          {badge}
         </span>
       )}
     </button>
   );
 }
 
+
+
 // ÔöÇÔöÇÔöÇ BROWSE PRODUCTS ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 function BrowseProducts({ searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, selectedLocation, setSelectedLocation, uniqueLocations, filteredProducts, cart, addToCart, updateQuantity, changeUnit, removeFromCart, onMessageFarmer, onRequestProduct }) {
+  const { t } = useLanguage();
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-green-600 to-green-500 rounded-2xl p-8" style={{color: '#ffffff'}}>
-        <h1 className="text-3xl mb-2" style={{color: '#ffffff'}}>Browse Products</h1>
-        <p className="text-lg" style={{color: '#ffffff', opacity: 0.95}}>Fresh products directly from local farmers</p>
+      <div style={{ padding: '24px', backgroundColor: '#f0fdf4', borderRadius: '12px', border: '1px solid #dcfce7', marginBottom: '24px' }}>
+        <h3 style={{ fontSize: '20px', fontWeight: 600, color: '#166534', margin: '0 0 8px 0' }}>{t('customer.browse.title') || "Browse Products"}</h3>
+        <p style={{ color: '#15803d', margin: 0 }}>{t('customer.browse.subtitle') || "Fresh products directly from local farmers"}</p>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search for products or farmers..."
-            className="w-full pl-10 pr-4 py-3 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
-          />
-        </div>
-      </div>
+      <div className="mb-6">
+        <div className="w-full bg-white rounded-2xl shadow-sm border border-green-100 p-6 flex flex-col justify-center">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2 border-r pr-4 border-gray-200">
+              <Filter className="w-5 h-5 text-muted-foreground" />
+              <h3 className="text-lg font-medium text-foreground m-0">{t('customer.browse.filters') || "Filters"}</h3>
+            </div>
+            
+            <div className="flex flex-1 items-center gap-4 w-full">
+              {/* Category */}
+              <div className="flex-1 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                <CategoryButton label={t('customer.categories.all') || "All"} active={selectedCategory === 'all'} onClick={() => setSelectedCategory('all')} />
+                <CategoryButton label={t('customer.categories.vegetables') || "Vegetables"} active={selectedCategory === 'vegetables'} onClick={() => setSelectedCategory('vegetables')} />
+                <CategoryButton label={t('customer.categories.fruits') || "Fruits"} active={selectedCategory === 'fruits'} onClick={() => setSelectedCategory('fruits')} />
+                <CategoryButton label={t('customer.categories.grains') || "Grains"} active={selectedCategory === 'grains'} onClick={() => setSelectedCategory('grains')} />
+              </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Filter className="w-5 h-5 text-muted-foreground" />
-          <h3 className="text-lg text-foreground">Filters</h3>
-        </div>
-        <div className="mb-4">
-          <p className="text-sm text-muted-foreground mb-3">Category</p>
-          <div className="flex flex-wrap gap-3">
-            <CategoryButton label="All Products" active={selectedCategory === 'all'} onClick={() => setSelectedCategory('all')} />
-            <CategoryButton label="Vegetables" active={selectedCategory === 'vegetables'} onClick={() => setSelectedCategory('vegetables')} />
-            <CategoryButton label="Fruits" active={selectedCategory === 'fruits'} onClick={() => setSelectedCategory('fruits')} />
-            <CategoryButton label="Grains" active={selectedCategory === 'grains'} onClick={() => setSelectedCategory('grains')} />
+              {/* Search integrated into Filters */}
+              <div className="relative w-64 shrink-0 hidden md:block">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={t('customer.browse.searchPlaceholder') || "Search products..."}
+                  className="w-full pl-9 pr-4 py-2 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-600 text-sm text-foreground"
+                />
+              </div>
+
+              {/* Location */}
+              <div className="relative w-48 shrink-0">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <select
+                  value={selectedLocation}
+                  onChange={(e) => setSelectedLocation(e.target.value)}
+                  className="w-full pl-9 pr-8 py-2 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-600 text-sm text-foreground appearance-none cursor-pointer"
+                >
+                  {uniqueLocations.map(location => (
+                    <option key={location} value={location}>
+                      {location === 'all' ? (t('customer.browse.allLocations') || 'All Locations') : location}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+              </div>
+            </div>
           </div>
         </div>
-        <div>
-          <p className="text-sm text-muted-foreground mb-3">Location</p>
-          <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <select
-              value={selectedLocation}
-              onChange={(e) => setSelectedLocation(e.target.value)}
-              className="w-full pl-10 pr-10 py-3 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary text-foreground appearance-none cursor-pointer"
-            >
-              {uniqueLocations.map(location => (
-                <option key={location} value={location}>
-                  {location === 'all' ? 'All Locations' : location}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
-          </div>
-        </div>
       </div>
-
-      <button
-        onClick={onRequestProduct}
-        className="request-product-btn w-full bg-white rounded-2xl shadow-sm border-2 border-dashed border-green-300 p-6 hover:border-primary hover:bg-green-50 transition-all"
-      >
-        <div className="flex items-center justify-center gap-3">
-          <PlusCircle className="w-6 h-6" />
-          <span className="text-lg font-medium">Can't find what you're looking for? Request a Product</span>
-        </div>
-      </button>
 
       <div>
-        <h3 className="text-2xl text-primary mb-4">Available Products ({filteredProducts.length})</h3>
+        <h3 className="text-2xl text-primary mb-4">{t('customer.browse.availableProducts') || "Available Products"} ({filteredProducts.length})</h3>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProducts.map(product => (
             <ProductCard
@@ -700,19 +682,23 @@ function BrowseProducts({ searchQuery, setSearchQuery, selectedCategory, setSele
           ))}
         </div>
         {filteredProducts.length === 0 && (
-          <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-green-100">
+          <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-green-100 mb-6">
             <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl text-foreground mb-2">No products found</h3>
-            <p className="text-muted-foreground mb-4">Try adjusting your search or filters</p>
-            <button
-              onClick={onRequestProduct}
-              className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              Request a Product
-            </button>
+            <h3 className="text-xl text-foreground mb-2">{t('customer.browse.noProducts') || "No products found"}</h3>
+            <p className="text-muted-foreground mb-4">{t('customer.browse.noProductsDesc') || "There are currently no products available. Farmers have not added any yet!"}</p>
           </div>
         )}
       </div>
+
+      <button
+        onClick={onRequestProduct}
+        className="request-product-btn w-full bg-white rounded-2xl shadow-sm border-2 border-dashed border-green-300 p-6 hover:border-primary hover:bg-green-50 transition-all"
+      >
+        <div className="flex items-center justify-center gap-3">
+          <PlusCircle className="w-6 h-6" />
+          <span className="text-lg font-medium">Can't find what you're looking for? Request a Product</span>
+        </div>
+      </button>
     </div>
   );
 }
