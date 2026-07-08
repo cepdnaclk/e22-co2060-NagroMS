@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { getAuth } from 'firebase/auth';
+﻿import React, { useState, useEffect } from 'react';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { Users, UserPlus, UserCheck, MapPin, Search } from 'lucide-react';
 import { getAllNetworkUsers, subscribeToConnections, toggleConnection } from '../../services/networkService';
 
-export default function CommunityNetwork({ currentUserRole, products = [] }) {
+export default function CommunityNetwork({ currentUserRole, products = [], currentUserId }) {
   const [users, setUsers] = useState([]);
   const [connections, setConnections] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,10 +11,9 @@ export default function CommunityNetwork({ currentUserRole, products = [] }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [actionLoading, setActionLoading] = useState(null);
 
-  const auth = getAuth();
-  const currentUserId = auth.currentUser?.uid;
-
   useEffect(() => {
+    if (!currentUserId) return;
+
     const fetchData = async () => {
       setLoading(true);
       const allUsers = await getAllNetworkUsers();
@@ -33,21 +32,28 @@ export default function CommunityNetwork({ currentUserRole, products = [] }) {
 
     fetchData();
 
-    if (currentUserId) {
-      const unsub = subscribeToConnections(currentUserId, (conns) => {
-        setConnections(conns);
-      });
-      return () => unsub();
-    }
+    const unsub = subscribeToConnections(currentUserId, (conns) => {
+      setConnections(conns);
+    });
+    return () => unsub();
   }, [currentUserId, currentUserRole]);
 
-  const handleConnect = async (targetId) => {
+  const handleConnect = async (targetId, currentlyConnected) => {
     setActionLoading(targetId);
     try {
-      await toggleConnection(currentUserId, targetId);
+      const newStatus = await toggleConnection(currentUserId, targetId, currentlyConnected);
+      
+      // Update local state instantly based on the result
+      setConnections(prev => {
+        if (newStatus.status === 'disconnected') {
+          return prev.filter(c => !(c.requesterId === currentUserId && c.targetId === targetId) && !(c.targetId === currentUserId && c.requesterId === targetId));
+        } else {
+          return [...prev, { requesterId: currentUserId, targetId, status: 'connected' }];
+        }
+      });
     } catch (err) {
       console.error(err);
-      alert('Failed to update connection.');
+      alert('Failed to update connection. Error: ' + (err.message || err.code || err));
     } finally {
       setActionLoading(null);
     }
@@ -68,14 +74,17 @@ export default function CommunityNetwork({ currentUserRole, products = [] }) {
 
   // Available tabs based on role
   const tabs = [
-    ...(currentUserRole === 'customer' ? [{ id: 'feed', label: 'My Feed', icon: '🌟' }] : []),
-    { id: 'farmer', label: 'Farmers', icon: '🌾' },
-    { id: 'customer', label: 'Customers', icon: '🛒' },
-    { id: 'expert', label: 'Experts', icon: '🧑‍🏫' },
+    ...(currentUserRole === 'customer' ? [
+      { id: 'feed', label: 'My Feed', icon: '≡ƒîƒ' },
+      { id: 'following', label: 'Following', icon: 'Γ£à' }
+    ] : []),
+    { id: 'farmer', label: 'Farmers', icon: '≡ƒî╛' },
+    { id: 'customer', label: 'Customers', icon: '≡ƒ¢Æ' },
+    { id: 'expert', label: 'Experts', icon: '≡ƒºæΓÇì≡ƒÅ½' },
   ].filter(tab => tab.id !== currentUserRole);
 
   const filteredUsers = users.filter(u => {
-    const matchRole = u.role === activeTab;
+    const matchRole = activeTab === 'following' ? u.role === 'farmer' && isConnected(u.id) : u.role === activeTab;
     const matchSearch = (u.fullName || u.contactPersonName || u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
                         (u.district || u.location || '').toLowerCase().includes(searchTerm.toLowerCase());
     return matchRole && matchSearch;
@@ -247,7 +256,7 @@ export default function CommunityNetwork({ currentUserRole, products = [] }) {
                   </div>
 
                   <button 
-                    onClick={() => handleConnect(user.id)}
+                    onClick={() => handleConnect(user.id, connected)}
                     disabled={actionLoading === user.id}
                     style={{
                       width: '100%',

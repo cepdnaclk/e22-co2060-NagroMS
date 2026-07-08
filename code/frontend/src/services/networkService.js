@@ -1,4 +1,4 @@
-import { 
+﻿import { 
   collection, 
   getDocs, 
   addDoc, 
@@ -35,64 +35,54 @@ export const getAllNetworkUsers = async () => {
  */
 export const subscribeToConnections = (userId, callback) => {
   if (!userId) return () => {};
-  const q1 = query(collection(db, 'connections'), where('requesterId', '==', userId));
-  const q2 = query(collection(db, 'connections'), where('targetId', '==', userId));
+  
+  let isCancelled = false;
 
-  let connectionsMap = new Map();
+  const fetchConnections = async () => {
+    try {
+      const token = localStorage.getItem('nagroms_token');
+      if (!token) throw new Error('Not authenticated');
 
-  const handleUpdate = () => {
-    callback(Array.from(connectionsMap.values()));
+      const res = await fetch(`${BACKEND}/api/network/connections`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to fetch connections');
+      const data = await res.json();
+      if (!isCancelled) callback(data.connections || []);
+    } catch (error) {
+      console.error('Error fetching connections via backend:', error);
+      if (!isCancelled) callback([]);
+    }
   };
 
-  const unsub1 = onSnapshot(q1, (snap) => {
-    snap.docs.forEach(doc => {
-      connectionsMap.set(doc.id, { id: doc.id, ...doc.data() });
-    });
-    handleUpdate();
-  });
+  fetchConnections();
 
-  const unsub2 = onSnapshot(q2, (snap) => {
-    snap.docs.forEach(doc => {
-      connectionsMap.set(doc.id, { id: doc.id, ...doc.data() });
-    });
-    handleUpdate();
-  });
-
+  // Return a dummy unsubscribe function since it's no longer a real-time listener
   return () => {
-    unsub1();
-    unsub2();
+    isCancelled = true;
   };
 };
 
-/**
- * Connect two users.
- */
-export const toggleConnection = async (requesterId, targetId) => {
+const BACKEND = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+
+export const toggleConnection = async (requesterId, targetId, currentlyConnected) => {
   try {
-    // Check if connection already exists
-    const q1 = query(collection(db, 'connections'), where('requesterId', '==', requesterId), where('targetId', '==', targetId));
-    const q2 = query(collection(db, 'connections'), where('requesterId', '==', targetId), where('targetId', '==', requesterId));
+    const token = localStorage.getItem('nagroms_token');
+    if (!token) throw new Error('Not authenticated');
 
-    const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
-
-    if (!snap1.empty) {
-      await deleteDoc(doc(db, 'connections', snap1.docs[0].id));
-      return { status: 'disconnected' };
-    }
-    if (!snap2.empty) {
-      await deleteDoc(doc(db, 'connections', snap2.docs[0].id));
-      return { status: 'disconnected' };
-    }
-
-    // Create new connection
-    await addDoc(collection(db, 'connections'), {
-      requesterId,
-      targetId,
-      status: 'connected',
-      createdAt: serverTimestamp()
+    const res = await fetch(`${BACKEND}/api/network/toggle`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ targetId, currentlyConnected })
     });
     
-    return { status: 'connected' };
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to toggle connection');
+    
+    return data;
   } catch (error) {
     console.error('Error toggling connection:', error);
     throw error;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import {
   LayoutDashboard,
   Wallet,
@@ -9,7 +9,8 @@ import {
   Leaf,
   Bell,
   Menu,
-  X
+  X,
+  FileText
 } from 'lucide-react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import OverviewSection from './components/OverviewSection';
@@ -19,6 +20,7 @@ import ChatbotSection from './components/ChatbotSection';
 import CommunitySection from './components/CommunitySection';
 import SettingsSection from './components/SettingsSection';
 import NotificationsSection from './components/NotificationsSection';
+import RequestsSection from './components/RequestsSection';
 import './farmerDashboard.css';
 
 export function FarmerDashboard() {
@@ -42,6 +44,8 @@ export function FarmerDashboard() {
         return <NotificationsSection />;
       case 'settings':
         return <SettingsSection />;
+      case 'requests':
+        return <RequestsSection />;
       default:
         return <OverviewSection setActiveTab={setActiveTab} />;
     }
@@ -124,6 +128,12 @@ export function FarmerDashboard() {
             label={t('farmer.sidebar.notifications') || 'Notifications'}
             isActive={activeTab === 'notifications'}
             onClick={() => setActiveTab('notifications')}
+          />
+          <SidebarItem
+            icon={<FileText size={20} />}
+            label={t('farmer.sidebar.requests') || 'Product Requests'}
+            isActive={activeTab === 'requests'}
+            onClick={() => setActiveTab('requests')}
           />
         </nav>
 
