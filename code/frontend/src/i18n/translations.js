@@ -68,6 +68,7 @@ const translations = {
         title: 'Select Your Role',
         subtitle: 'Choose one or more roles. You can always update later.',
         continue: 'Continue',
+        language: 'Language',
       },
       roles: {
         farmer: { title: 'Farmer', desc: 'Sell produce, manage crops, and access farming tools' },
@@ -137,6 +138,53 @@ const translations = {
         weakPassword: 'Password is too weak. Use at least 6 characters.',
         networkFailed: 'Network error. Check your connection.',
       },
+    },
+    customer: {
+      sidebar: {
+        browse: 'Browse Products',
+        cart: 'My Cart',
+        orders: 'Order History',
+        profile: 'My Profile',
+        community: 'Community',
+        checkout: 'Checkout',
+        logout: 'Logout'
+      },
+      checkout: {
+        title: 'Checkout',
+        subtitle: 'Review your order and confirm delivery details',
+        deliveryAddress: 'Delivery Address',
+        editAddress: 'Edit Address',
+        completeAddress: 'Please complete your delivery address to proceed',
+        addAddress: 'Add Address',
+        contactNumber: 'Contact Number',
+        contactNumberLabel: 'Contact Number for Delivery *',
+        paymentMethod: 'Payment Method',
+        orderSummary: 'Order Summary',
+        subtotal: 'Subtotal',
+        deliveryFee: 'Delivery Fee',
+        total: 'Total',
+        placeOrder: 'Place Order'
+      },
+      header: {
+        activeCustomer: 'Active Customer'
+      },
+      browse: {
+        title: 'Marketplace',
+        subtitle: 'Fresh products directly from local farmers',
+        filters: 'Filters',
+        searchPlaceholder: 'Search products...',
+        allLocations: 'All Locations',
+        availableProducts: 'Available Products',
+        noProducts: 'No products found',
+        noProductsDesc: 'There are currently no products available. Farmers have not added any yet!',
+        requestProduct: "Can't find what you're looking for? Request a Product"
+      },
+      categories: {
+        all: 'All',
+        vegetables: 'Vegetables',
+        fruits: 'Fruits',
+        grains: 'Grains'
+      }
     },
 
     districts: {
@@ -212,6 +260,7 @@ const translations = {
         title: 'ඔබේ භූමිකාව තෝරන්න',
         subtitle: 'එක් හෝ වැඩි භූමිකා තෝරන්න. ඔබට පසුව අප්ඩේට් කළ හැක.',
         continue: 'ඉදිරියට',
+        language: 'භාෂාව',
       },
       roles: {
         farmer: { title: 'ගොවියා', desc: 'අස්වැන්න විකුණන්න, බෝග කළමනාකරණය කරන්න, ගොවිතැන් මෙවලම් වෙත ප්‍රවේශ වන්න' },
@@ -281,6 +330,53 @@ const translations = {
         weakPassword: 'මුරපදය දුර්වලයි. අවම වශයෙන් අක්ෂර 6ක් භාවිත කරන්න.',
         networkFailed: 'ජාල දෝෂයකි. ඔබේ සම්බන්ධතාවය පරීක්ෂා කරන්න.',
       },
+    },
+    customer: {
+      sidebar: {
+        browse: 'නිෂ්පාදන බලන්න',
+        cart: 'මගේ කරත්තය',
+        orders: 'ඇණවුම් ඉතිහාසය',
+        profile: 'මගේ පැතිකඩ',
+        community: 'ප්‍රජාව',
+        checkout: 'ගෙවීම් පිටුව',
+        logout: 'ඉවත් වන්න'
+      },
+      checkout: {
+        title: 'ගෙවීම් පිටුව',
+        subtitle: 'ඔබේ ඇණවුම සමාලෝචනය කර බෙදාහැරීමේ තොරතුරු තහවුරු කරන්න',
+        deliveryAddress: 'බෙදාහැරීමේ ලිපිනය',
+        editAddress: 'ලිපිනය සංස්කරණය කරන්න',
+        completeAddress: 'ඉදිරියට යාමට කරුණාකර ඔබගේ බෙදාහැරීමේ ලිපිනය සම්පූර්ණ කරන්න',
+        addAddress: 'ලිපිනය එක් කරන්න',
+        contactNumber: 'සම්බන්ධතා අංකය',
+        contactNumberLabel: 'බෙදාහැරීම සඳහා සම්බන්ධතා අංකය *',
+        paymentMethod: 'ගෙවීමේ ක්‍රමය',
+        orderSummary: 'ඇණවුම් සාරාංශය',
+        subtotal: 'අනු එකතුව',
+        deliveryFee: 'බෙදාහැරීමේ ගාස්තුව',
+        total: 'මුළු එකතුව',
+        placeOrder: 'ඇණවුම් කරන්න'
+      },
+      header: {
+        activeCustomer: 'සක්‍රිය පාරිභෝගිකයා'
+      },
+      browse: {
+        title: 'වෙළඳපොළ',
+        subtitle: 'දේශීය ගොවීන්ගෙන් නැවුම් නිෂ්පාදන',
+        filters: 'පෙරහන්',
+        searchPlaceholder: 'නිෂ්පාදන සොයන්න...',
+        allLocations: 'සියලුම ස්ථාන',
+        availableProducts: 'ලබා ගත හැකි නිෂ්පාදන',
+        noProducts: 'කිසිදු නිෂ්පාදනයක් හමු නොවීය',
+        noProductsDesc: 'දැනට කිසිදු නිෂ්පාදනයක් නොමැත. ගොවීන් තවමත් කිසිවක් එකතු කර නොමැත!',
+        requestProduct: "ඔබ සොයන දේ සොයාගත නොහැකිද? නිෂ්පාදනයක් ඉල්ලන්න"
+      },
+      categories: {
+        all: 'සියල්ල',
+        vegetables: 'එළවළු',
+        fruits: 'පළතුරු',
+        grains: 'ධාන්‍ය'
+      }
     },
 
     districts: {
@@ -425,6 +521,53 @@ const translations = {
         weakPassword: 'கடவுச்சொல் பலவீனமானது. குறைந்தது 6 எழுத்துகளைப் பயன்படுத்தவும்.',
         networkFailed: 'பிணைய பிழை. உங்கள் இணைப்பைச் சரிபார்க்கவும்.',
       },
+    },
+    customer: {
+      sidebar: {
+        browse: 'பொருட்களை உலாவுக',
+        cart: 'என் வண்டி',
+        orders: 'ஆர்டர் வரலாறு',
+        profile: 'என் சுயவிவரம்',
+        community: 'சமூகம்',
+        checkout: 'வெளியேறுதல்',
+        logout: 'வெளியேறு'
+      },
+      checkout: {
+        title: 'வெளியேறுதல்',
+        subtitle: 'உங்கள் ஆர்டரை மதிப்பாய்வு செய்து விநியோக விவரங்களை உறுதிப்படுத்தவும்',
+        deliveryAddress: 'விநியோக முகவரி',
+        editAddress: 'முகவரியைத் திருத்து',
+        completeAddress: 'தொடர உங்கள் விநியோக முகவரியை பூர்த்தி செய்யவும்',
+        addAddress: 'முகவரியைச் சேர்',
+        contactNumber: 'தொடர்பு எண்',
+        contactNumberLabel: 'விநியோகத்திற்கான தொடர்பு எண் *',
+        paymentMethod: 'கட்டணம் செலுத்தும் முறை',
+        orderSummary: 'ஆர்டர் சுருக்கம்',
+        subtotal: 'துணை மொத்தம்',
+        deliveryFee: 'விநியோக கட்டணம்',
+        total: 'மொத்தம்',
+        placeOrder: 'ஆர்டர் செய்'
+      },
+      header: {
+        activeCustomer: 'செயலில் உள்ள வாடிக்கையாளர்'
+      },
+      browse: {
+        title: 'சந்தை',
+        subtitle: 'உள்ளூர் விவசாயிகளிடமிருந்து நேரடியாக புதிய தயாரிப்புகள்',
+        filters: 'வடிப்பான்கள்',
+        searchPlaceholder: 'தயாரிப்புகளைத் தேடுக...',
+        allLocations: 'அனைத்து இடங்களும்',
+        availableProducts: 'கிடைக்கும் பொருட்கள்',
+        noProducts: 'பொருட்கள் எதுவும் கிடைக்கவில்லை',
+        noProductsDesc: 'தற்போது தயாரிப்புகள் எதுவும் கிடைக்கவில்லை. விவசாயிகள் இன்னும் எதையும் சேர்க்கவில்லை!',
+        requestProduct: "நீங்கள் தேடுவதை கண்டுபிடிக்க முடியவில்லையா? ஒரு பொருளைக் கோருங்கள்"
+      },
+      categories: {
+        all: 'அனைத்தும்',
+        vegetables: 'காய்கறிகள்',
+        fruits: 'பழங்கள்',
+        grains: 'தானியங்கள்'
+      }
     },
 
     districts: {

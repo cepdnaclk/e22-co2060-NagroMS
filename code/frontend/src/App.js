@@ -14,9 +14,13 @@ import Consultations from './Pages/expert/Consultations.jsx';
 import QAForum from './Pages/expert/QAForum.jsx';
 import KnowledgeBase from './Pages/expert/Knowledgebase.jsx';
 import MyFarmers from './Pages/expert/MyFarmers.jsx';
+import ConnectionRequests from './Pages/expert/ConnectionRequests.jsx';
 import Settings from './Pages/expert/Settings.jsx';
 // Farmer dashboard
 import { FarmerDashboard } from './Pages/farmer/farmerDashboard.jsx';
+
+// Service provider dashboard
+import ServiceProviderDashboard from './Pages/serviceprovider/src/components/ServiceProviderDashboard.jsx';
 
 // Customer dashboard
 import { CustomerDashboard } from './Pages/Customer/src/app/components/CustomerDashboard.jsx';
@@ -53,6 +57,7 @@ export default function App() {
         {/* Expert Dashboard Routes */}
         <Route path="/expert-dashboard" element={<ExpertLayout />}>
           <Route index element={<ExpertDashboard />} />
+          <Route path="connections" element={<ConnectionRequests />} />
           <Route path="consultations" element={<Consultations />} />
           <Route path="qa" element={<QAForum />} />
           <Route path="knowledge" element={<KnowledgeBase />} />
@@ -61,14 +66,14 @@ export default function App() {
         </Route>
 
         {/* Farmer Dashboard Route */}
-        <Route path="/farmer-dashboard" element={<FarmerDashboard onNavigate={() => { }} />} />
+        <Route path="/farmer-dashboard" element={<FarmerDashboard onNavigate={(path) => { if (path === 'landing') window.location.href = '/login'; }} />} />
 
         {/* Placeholder Routes for other roles */}
         {/* Customer Dashboard Route */}
         <Route path="/customer-dashboard" element={<CustomerDashboard onNavigate={(path) => { if (path === 'landing') window.location.href = '/'; }} />} />
 
-        {/* Placeholder Routes for other roles */}
-        <Route path="/service-provider-dashboard" element={<PlaceholderDashboard role="service-provider" />} />
+        {/* Service Provider Dashboard Route */}
+        <Route path="/service-provider-dashboard" element={<ServiceProviderDashboard onNavigate={(path) => { if (path === 'landing') window.location.href = '/login'; }} />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

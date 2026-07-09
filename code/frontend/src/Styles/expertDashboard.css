@@ -320,6 +320,7 @@
 .exp-badge.confirmed { background: #e8f5e9; color: var(--exp-green); }
 .exp-badge.pending   { background: #fff8e1; color: var(--exp-gold); }
 .exp-badge.declined  { background: #fce4ec; color: var(--exp-red); }
+.exp-badge.accepted  { background: #e8f5e9; color: var(--exp-green); }
 .exp-badge.rescheduled { background: #e3f2fd; color: var(--exp-blue); }
 
 .exp-action-row {

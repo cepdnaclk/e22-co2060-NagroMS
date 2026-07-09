@@ -46,6 +46,7 @@ export function EnhancedOrdersSection({ pastOrders, uid }) {
         id: doc.id,
         ...doc.data()
       }));
+      liveOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       // Use live orders if available, otherwise fallback to pastOrders
       setOrders(liveOrders.length > 0 ? liveOrders : pastOrders);
     });
@@ -144,9 +145,11 @@ export function EnhancedOrdersSection({ pastOrders, uid }) {
   return (
     <div className="space-y-6">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl p-8 text-white">
-        <h1 className="text-3xl mb-2">📦 My Orders</h1>
-        <p className="text-blue-100 text-lg">Track and manage your orders in real-time</p>
+      <div className="rounded-2xl p-8 text-white" style={{ background: 'var(--theme-orders-gradient)' }}>
+        <h1 className="text-3xl mb-2 flex items-center gap-3" style={{ color: '#ffffff', margin: 0 }}>
+          <Package className="w-8 h-8" /> My Orders
+        </h1>
+        <p className="text-lg" style={{ color: 'rgba(255, 255, 255, 0.9)', margin: 0 }}>Track and manage your orders in real-time</p>
       </div>
 
       {/* Orders List */}

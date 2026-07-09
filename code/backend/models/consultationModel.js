@@ -1,6 +1,6 @@
 const { db } = require('../config/firebase');
 
-const COLLECTION = 'consultationRequests';
+const COLLECTION = 'consultations';
 
 async function createConsultationRequest(data) {
   const docRef = db.collection(COLLECTION).doc();
