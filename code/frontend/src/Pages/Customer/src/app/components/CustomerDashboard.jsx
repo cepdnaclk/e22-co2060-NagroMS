@@ -1583,20 +1583,31 @@ function CustomerSettingsSection({ uid }) {
         </div>
 
         {/* Account Deactivation Card */}
-        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8 md:col-span-2 shadow-sm">
+        <div className="bg-white rounded-2xl shadow-lg border border-red-100 p-6 md:col-span-2">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl text-primary font-bold">
+              🚨 Account Deactivation
+            </h2>
+          </div>
+
           <div className="flex items-start gap-4">
-            <div className="p-3 bg-red-50 text-red-600 rounded-xl border border-red-100">
-              <AlertCircle className="w-6 h-6" />
+            <div className="flex-shrink-0 p-3 bg-red-50 rounded-xl border border-red-100">
+              <AlertCircle className="w-6 h-6 text-red-600" />
             </div>
+
             <div className="flex-1">
-              <h2 className="text-xl text-gray-900 font-bold mb-1">Account Deactivation</h2>
-              <p className="text-sm text-gray-600 mb-4">Deleting your account is permanent and irreversible. All your order history, connections, and requests will be removed from our database.</p>
+              <p className="text-sm text-muted-foreground mb-5">
+                Deleting your account is <span className="font-semibold text-red-600">permanent</span> and cannot be undone.
+                All your order history, connections, requests, and personal data will be
+                permanently removed from our database.
+              </p>
+
               <button
                 type="button"
                 onClick={() => setShowDeleteModal(true)}
-                className="px-6 py-2.5 border border-red-200 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all font-bold text-sm shadow-sm bg-white"
+                className="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
               >
-                Delete Account...
+                Delete Account
               </button>
             </div>
           </div>
