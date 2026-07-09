@@ -1,4 +1,4 @@
-﻿import farmerTranslations from './farmerTranslations';
+import farmerTranslations from './farmerTranslations';
 // ============================================================
 // i18n/translations.js
 // Translation strings for English (en), Sinhala (si) and Tamil (ta).
@@ -148,6 +148,7 @@ const translations = {
         community: 'Community',
         checkout: 'Checkout',
         requests: 'Product Requests',
+        settings: 'Settings',
         logout: 'Logout'
       },
       checkout: {
@@ -371,12 +372,12 @@ const translations = {
         availableProducts: 'α╢╜α╢╢α╖Å α╢£α╢¡ α╖äα╖Éα╢Üα╖Æ α╢▒α╖Æα╖éα╖èα╢┤α╖Åα╢»α╢▒',
         noProducts: 'α╢Üα╖Æα╖âα╖Æα╢»α╖ö α╢▒α╖Æα╖éα╖èα╢┤α╖Åα╢»α╢▒α╢║α╢Üα╖è α╖äα╢╕α╖ö α╢▒α╖£α╖Çα╖ôα╢║',
         noProductsDesc: 'α╢»α╖Éα╢▒α╢º α╢Üα╖Æα╖âα╖Æα╢»α╖ö α╢▒α╖Æα╖éα╖èα╢┤α╖Åα╢»α╢▒α╢║α╢Üα╖è α╢▒α╖£α╢╕α╖Éα╢¡. α╢£α╖£α╖Çα╖ôα╢▒α╖è α╢¡α╖Çα╢╕α╢¡α╖è α╢Üα╖Æα╖âα╖Æα╖Çα╢Üα╖è α╢æα╢Üα╢¡α╖ö α╢Üα╢╗ α╢▒α╖£α╢╕α╖Éα╢¡!',
-        requestProduct: "α╢öα╢╢ α╖âα╖£α╢║α╢▒ α╢»α╖Ü α╖âα╖£α╢║α╖Åα╢£α╢¡ α╢▒α╖£α╖äα╖Éα╢Üα╖Æα╢»? α╢▒α╖Æα╖éα╖èα╢┤α╖Åα╢»α╢▒α╢║α╢Üα╖è α╢ëα╢╜α╖èα╢╜α╢▒α╖èα╢▒"
+        requestProduct: "α╢öα╢╢ α╖âα╖£α╢║α╢▒ α╢»α╖Ü α╖âα╖£α╢║α╖Åα╢£α╢¡ α╢▒α╖£α╖äα╖Éα╢Üα╖Æα╢»? α╢▒α╖Æα╖éα╖èα╢┤α╖Åα╢»α╢▒α╖║α╢Üα╖è α╢ëα╢╜α╖èα╢╜α╢▒α╖èα╢▒"
       },
       categories: {
         all: 'α╖âα╖Æα╢║α╢╜α╖èα╢╜',
         vegetables: 'α╢æα╖àα╖Çα╖àα╖ö',
-        fruits: 'α╢┤α╖àα╢¡α╖öα╢╗α╖ö',
+        fruits: 'α╢┤α╖àα╖¡α╖öα╢╗α╖ö',
         grains: 'α╢░α╖Åα╢▒α╖èΓÇìα╢║'
       }
     },
@@ -533,6 +534,7 @@ const translations = {
         community: 'α«Üα««α»éα«òα««α»ì',
         checkout: 'α«╡α»åα«│α«┐α«»α»çα«▒α»üα«ñα«▓α»ì',
         requests: 'α«ñα«»α«╛α«░α«┐α«¬α»ìα«¬α»ü α«òα»ïα«░α«┐α«òα»ìα«òα»êα«òα«│α»ì',
+        settings: 'அமைப்புகள்',
         logout: 'α«╡α»åα«│α«┐α«»α»çα«▒α»ü'
       },
       checkout: {

@@ -183,8 +183,19 @@ export const saveOrder = async (uid, orderData) => {
     const data = await res.json();
     return data.orderId;
   } catch (error) {
-    console.error('Error saving order via backend:', error);
-    return null;
+    console.warn('Error saving order via backend, attempting fallback direct firestore write:', error);
+    try {
+      const docRef = await addDoc(collection(db, 'orders'), {
+        ...orderData,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+      return docRef.id;
+    } catch (fsError) {
+      console.error('Direct Firestore order save fallback also failed:', fsError);
+      return null;
+    }
   }
 };
 
@@ -208,8 +219,7 @@ export const loadCustomerOrders = async (uid) => {
 export const subscribeToCustomerOrders = (uid, callback) => {
   const q = query(
     collection(db, 'orders'),
-    where('customerId', '==', uid),
-    orderBy('createdAt', 'desc')
+    where('customerId', '==', uid)
   );
   
   const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -218,6 +228,7 @@ export const subscribeToCustomerOrders = (uid, callback) => {
         id: doc.id,
         ...doc.data()
       }));
+      orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       callback(orders);
     } catch (error) {
       console.error('Error processing real-time orders:', error);
