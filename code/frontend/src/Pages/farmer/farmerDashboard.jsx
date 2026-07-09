@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   LayoutDashboard,
   Wallet,
@@ -8,8 +8,6 @@ import {
   Settings,
   Leaf,
   Bell,
-  Menu,
-  X,
   FileText
 } from 'lucide-react';
 import { useLanguage } from '../../i18n/LanguageContext';
@@ -20,13 +18,12 @@ import ChatbotSection from './components/ChatbotSection';
 import CommunitySection from './components/CommunitySection';
 import SettingsSection from './components/SettingsSection';
 import NotificationsSection from './components/NotificationsSection';
-import RequestsSection from './components/RequestsSection';
+import RequestsSection from './components/RequestSection';
 import './farmerDashboard.css';
 
 export function FarmerDashboard() {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('overview');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -42,105 +39,76 @@ export function FarmerDashboard() {
         return <CommunitySection />;
       case 'notifications':
         return <NotificationsSection />;
-      case 'settings':
-        return <SettingsSection />;
       case 'requests':
         return <RequestsSection />;
+      case 'settings':
+        return <SettingsSection />;
       default:
         return <OverviewSection setActiveTab={setActiveTab} />;
     }
   };
 
   return (
-    <div className="farmer-dashboard-container" style={{ display: 'flex', height: '100vh', backgroundColor: '#f3f4f6', overflow: 'hidden', position: 'relative' }}>
-
-      {/* Mobile Sidebar Overlay */}
-      {!isSidebarOpen && (
-        <button
-          onClick={() => setIsSidebarOpen(true)}
-          style={{ position: 'absolute', top: '16px', left: '16px', zIndex: 50, background: '#115e59', color: 'white', border: 'none', borderRadius: '8px', padding: '8px', cursor: 'pointer' }}
-        >
-          <Menu size={24} />
-        </button>
-      )}
+    <div className="farmer-dashboard-container" style={{ display: 'flex', height: '100vh', backgroundColor: '#f3f4f6' }}>
 
       {/* Sidebar */}
-      <div 
-        className="farmer-sidebar" 
-        style={{ 
-          width: '260px', 
-          backgroundColor: '#115e59', 
-          color: 'white', 
-          display: 'flex', 
-          flexDirection: 'column',
-          transition: 'transform 0.3s ease',
-          transform: isSidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
-          position: isSidebarOpen ? 'relative' : 'absolute',
-          height: '100%',
-          zIndex: 40
-        }}
-      >
-        <div style={{ padding: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ backgroundColor: 'white', color: '#115e59', padding: '8px', borderRadius: '50%' }}>
-              <Leaf size={24} />
-            </div>
-            <h1 style={{ fontSize: '20px', fontWeight: 700, margin: 0 }}>NagroMS</h1>
+      <div className="farmer-sidebar" style={{ width: '260px', backgroundColor: '#115e59', color: 'white', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+          <div style={{ backgroundColor: 'white', color: '#115e59', padding: '8px', borderRadius: '50%' }}>
+            <Leaf size={24} />
           </div>
-          <button onClick={() => setIsSidebarOpen(false)} style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer' }}>
-            <X size={24} />
-          </button>
+          <h1 style={{ fontSize: '20px', fontWeight: 700, margin: 0 }}>NagroMS</h1>
         </div>
 
-        <nav style={{ flex: 1, padding: '24px 12px', display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto' }}>
+        <nav style={{ flex: 1, padding: '24px 12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <SidebarItem
             icon={<LayoutDashboard size={20} />}
-            label={t('farmer.sidebar.overview') || 'Overview'}
+            label={t('farmer.sidebar.overview')}
             isActive={activeTab === 'overview'}
             onClick={() => setActiveTab('overview')}
           />
           <SidebarItem
             icon={<Wallet size={20} />}
-            label={t('farmer.sidebar.management') || 'Management'}
+            label={t('farmer.sidebar.management')}
             isActive={activeTab === 'management'}
             onClick={() => setActiveTab('management')}
           />
           <SidebarItem
             icon={<Truck size={20} />}
-            label={t('farmer.sidebar.services') || 'Services'}
+            label={t('farmer.sidebar.services')}
             isActive={activeTab === 'services'}
             onClick={() => setActiveTab('services')}
           />
           <SidebarItem
             icon={<MessageSquare size={20} />}
-            label={t('farmer.sidebar.chatbot') || 'Chatbot'}
+            label={t('farmer.sidebar.chatbot')}
             isActive={activeTab === 'chatbot'}
             onClick={() => setActiveTab('chatbot')}
           />
           <SidebarItem
             icon={<Users size={20} />}
-            label={t('farmer.sidebar.community') || 'Community'}
+            label={t('farmer.sidebar.community')}
             isActive={activeTab === 'community'}
             onClick={() => setActiveTab('community')}
           />
           <SidebarItem
-            icon={<Bell size={20} />}
-            label={t('farmer.sidebar.notifications') || 'Notifications'}
-            isActive={activeTab === 'notifications'}
-            onClick={() => setActiveTab('notifications')}
-          />
-          <SidebarItem
             icon={<FileText size={20} />}
-            label={t('farmer.sidebar.requests') || 'Product Requests'}
+            label={t('farmer.sidebar.requests') || 'Requests'}
             isActive={activeTab === 'requests'}
             onClick={() => setActiveTab('requests')}
+          />
+          <SidebarItem
+            icon={<Bell size={20} />}
+            label={t('farmer.sidebar.notifications')}
+            isActive={activeTab === 'notifications'}
+            onClick={() => setActiveTab('notifications')}
           />
         </nav>
 
         <div style={{ padding: '12px' }}>
           <SidebarItem
             icon={<Settings size={20} />}
-            label={t('farmer.sidebar.settings') || 'Settings'}
+            label={t('farmer.sidebar.settings')}
             isActive={activeTab === 'settings'}
             onClick={() => setActiveTab('settings')}
           />
@@ -148,7 +116,7 @@ export function FarmerDashboard() {
       </div>
 
       {/* Main Content Area */}
-      <div className="farmer-main-content" style={{ flex: 1, overflowY: 'auto', padding: '32px', paddingTop: !isSidebarOpen ? '64px' : '32px', transition: 'padding 0.3s' }}>
+      <div className="farmer-main-content" style={{ flex: 1, overflowY: 'auto', padding: '32px' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           {renderContent()}
         </div>
