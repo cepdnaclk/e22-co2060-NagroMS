@@ -129,12 +129,12 @@ export default function ServicesSection() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
                       <div style={{ fontSize: '40px' }}>{category.emoji}</div>
                       <div>
-                        <h3 style={{ fontSize: '20px', fontWeight: 600, color: category.color, margin: 0 }}>{category.title}</h3>
-                        <p style={{ color: '#6b7280', fontSize: '14px', margin: '4px 0 0 0' }}>{category.desc}</p>
+                        <h3 style={{ fontSize: '20px', fontWeight: 600, color: category.color, margin: 0 }}>{t(`farmer.services.categories.${category.id}.title`) || category.title}</h3>
+                        <p style={{ color: '#6b7280', fontSize: '14px', margin: '4px 0 0 0' }}>{t(`farmer.services.categories.${category.id}.desc`) || category.desc}</p>
                       </div>
                     </div>
                     <div style={{ marginTop: 'auto', paddingTop: '12px', color: categoryProviders.length > 0 ? category.color : '#9ca3af', fontSize: '14px', fontWeight: 500 }}>
-                      {categoryProviders.length} {categoryProviders.length === 1 ? 'provider' : 'providers'} available &rarr;
+                      {categoryProviders.length} {categoryProviders.length === 1 ? (t('farmer.services.providerAvailable') || 'provider available') : (t('farmer.services.providersAvailable') || 'providers available')} &rarr;
                     </div>
                   </div>
                 );
@@ -159,14 +159,14 @@ export default function ServicesSection() {
                   padding: 0
                 }}
               >
-                &larr; Back to Categories
+                &larr; {t('farmer.services.backToCategories') || 'Back to Categories'}
               </button>
 
               <div style={{ backgroundColor: selectedCategory.bg, padding: '24px', borderRadius: '16px', border: `1px solid ${selectedCategory.color}40`, marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <div style={{ fontSize: '48px' }}>{selectedCategory.emoji}</div>
                 <div>
-                  <h3 style={{ fontSize: '24px', fontWeight: 700, color: selectedCategory.color, margin: 0 }}>{selectedCategory.title}</h3>
-                  <p style={{ color: '#4b5563', fontSize: '16px', margin: '4px 0 0 0' }}>{selectedCategory.desc}</p>
+                  <h3 style={{ fontSize: '24px', fontWeight: 700, color: selectedCategory.color, margin: 0 }}>{t(`farmer.services.categories.${selectedCategory.id}.title`) || selectedCategory.title}</h3>
+                  <p style={{ color: '#4b5563', fontSize: '16px', margin: '4px 0 0 0' }}>{t(`farmer.services.categories.${selectedCategory.id}.desc`) || selectedCategory.desc}</p>
                 </div>
               </div>
 
@@ -180,7 +180,7 @@ export default function ServicesSection() {
                 if (categoryProviders.length === 0) {
                   return (
                     <div style={{ padding: '40px', textAlign: 'center', backgroundColor: '#f9fafb', borderRadius: '12px', border: '1px dashed #d1d5db' }}>
-                      <p style={{ color: '#6b7280', fontSize: '16px', margin: 0 }}>No service providers are currently listed in this category.</p>
+                      <p style={{ color: '#6b7280', fontSize: '16px', margin: 0 }}>{t('farmer.services.noProviders') || 'No service providers are currently listed in this category.'}</p>
                     </div>
                   );
                 }

@@ -19,7 +19,7 @@ const farmerTranslations = {
       },
       sidebar: {
         overview: 'Overview', management: 'Management', services: 'Services', chatbot: 'AI Assistant',
-        community: 'Community', notifications: 'Notifications', settings: 'Settings', logout: 'Logout'
+        community: 'Community', notifications: 'Notifications', settings: 'Settings', logout: 'Logout', requests: 'Requests'
       },
       overview: {
         addNewProduct: 'Add New Product',
@@ -82,7 +82,18 @@ const farmerTranslations = {
         title: 'Services', expertConsultation: 'Expert Consultation', availableExperts: 'Available Experts', viewProfile: 'View Profile',
         sendRequest: 'Send Request', consultationMessage: 'Consultation Message', requestSent: 'Request Sent', noExperts: 'No experts available.',
         farmerUpdates: 'Farmer Updates', postUpdate: 'Post Update', updateTitle: 'Update Title', updateDescription: 'Update Description',
-        noUpdates: 'No updates yet.'
+        noUpdates: 'No updates yet.',
+        categories: {
+          equipment: { title: 'Equipment Rental', desc: 'Machinery & tools for farmers' },
+          delivery: { title: 'Delivery & Export', desc: 'Transport & logistics services' },
+          storage: { title: 'Storage Facilities', desc: 'Warehouses, cold rooms & silos' },
+          packaging: { title: 'Packaging Services', desc: 'Packing, labelling & sealing' },
+          financial: { title: 'Financial Services', desc: 'Loans & credit for farmers' }
+        },
+        providersAvailable: 'providers available',
+        providerAvailable: 'provider available',
+        backToCategories: 'Back to Categories',
+        noProviders: 'No service providers are currently listed in this category.'
       },
       chatbot: {
         title: 'AI Chatbot', assistantName: 'NagroMS Assistant', subtitle: 'Ask me anything about farming.',
@@ -157,6 +168,28 @@ const farmerTranslations = {
         dobPlaceholder: "MM/DD/YYYY",
         saving: "Saving..."
       },
+      requests: {
+        title: 'Incoming Product Requests',
+        subtitle: 'Respond to requests from customers looking for products you can supply',
+        activeRequests: 'Active Customer Requests',
+        noRequests: 'No product requests are currently targeted at you.',
+        requestedBy: 'Requested by',
+        on: 'on',
+        yourResponse: 'Your response',
+        pendingResponse: 'Pending Response',
+        quantityNeeded: 'Quantity Needed',
+        description: 'Description',
+        noDescription: 'No description provided.',
+        acceptRequest: 'Accept Request',
+        decline: 'Decline',
+        yourMessage: 'Your message',
+        acceptPrompt: 'Write a message to the customer about availability, pricing, or delivery details.',
+        declinePrompt: 'Provide a reason to the customer for declining this request.',
+        typeMessage: 'Type your message here...',
+        cancel: 'Cancel',
+        submit: 'Submit',
+        submitting: 'Submitting...'
+      },
       crops: {
         rice: 'Rice (Paddy)', tomatoes: 'Tomatoes', potatoes: 'Potatoes', onions: 'Onions', carrots: 'Carrots',
         cabbage: 'Cabbage', corn: 'Corn', banana: 'Banana', mango: 'Mango', papaya: 'Papaya', pumpkin: 'Pumpkin', chili: 'Chili'
@@ -179,7 +212,7 @@ const farmerTranslations = {
       },
       sidebar: {
         overview: 'දළ විශ්ලේෂණය', management: 'කළමනාකරණය', services: 'සේවාවන්', chatbot: 'කෘත්‍රිම බුද්ධි සහායක',
-        community: 'ප්‍රජාව', notifications: 'නිවේදන', settings: 'සැකසුම්', logout: 'ඉවත් වන්න'
+        community: 'ප්‍රජාව', notifications: 'නිවේදන', settings: 'සැකසුම්', logout: 'ඉවත් වන්න', requests: 'ඉල්ලීම්'
       },
       overview: {
         addNewProduct: 'නව නිෂ්පාදනයක් එක් කරන්න',
@@ -234,7 +267,18 @@ const farmerTranslations = {
         title: 'සේවාවන්', expertConsultation: 'විශේෂඥ උපදේශන', availableExperts: 'පවතින විශේෂඥයින්', viewProfile: 'පැතිකඩ බලන්න',
         sendRequest: 'ඉල්ලීමක් යවන්න', consultationMessage: 'උපදේශන පණිවිඩය', requestSent: 'ඉල්ලීම යවන ලදි', noExperts: 'විශේෂඥයින් නොමැත.',
         farmerUpdates: 'ගොවි යාවත්කාලීන කිරීම්', postUpdate: 'යාවත්කාලීනයක් පළ කරන්න', updateTitle: 'යාවත්කාලීන ශීර්ෂය', updateDescription: 'විස්තරය',
-        noUpdates: 'තවමත් යාවත්කාලීන කිරීම් නොමැත.'
+        noUpdates: 'තවමත් යාවත්කාලීන කිරීම් නොමැත.',
+        categories: {
+          equipment: { title: 'උපකරණ කුලියට දීම', desc: 'ගොවීන් සඳහා යන්ත්‍රෝපකරණ සහ මෙවලම්' },
+          delivery: { title: 'බෙදා හැරීම සහ අපනයනය', desc: 'ප්‍රවාහන සහ සැපයුම් සේවා' },
+          storage: { title: 'ගබඩා පහසුකම්', desc: 'ගබඩා, ශීත කාමර සහ සයිලෝස්' },
+          packaging: { title: 'ඇසුරුම් සේවා', desc: 'ඇසුරුම් කිරීම, ලේබල් කිරීම සහ මුද්‍රා තැබීම' },
+          financial: { title: 'මූල්‍ය සේවා', desc: 'ගොවීන් සඳහා ණය සහ ණය පහසුකම්' }
+        },
+        providersAvailable: 'සපයන්නන් සිටී',
+        providerAvailable: 'සපයන්නෙක් සිටී',
+        backToCategories: 'කාණ්ඩ වෙත ආපසු යන්න',
+        noProviders: 'මෙම කාණ්ඩය යටතේ සේවා සපයන්නන් දැනට නොමැත.'
       },
       chatbot: {
         title: 'කෘත්‍රිම බුද්ධි සහායක', assistantName: 'NagroMS සහායක', subtitle: 'කෘෂිකර්මාන්තය පිළිබඳ ඕනෑම දෙයක් අසන්න.',
@@ -309,6 +353,28 @@ const farmerTranslations = {
         dobPlaceholder: "මාසය/දිනය/වසර",
         saving: "සුරකිමින්..."
       },
+      requests: {
+        title: 'ලැබෙන නිෂ්පාදන ඉල්ලීම්',
+        subtitle: 'ඔබට සැපයිය හැකි නිෂ්පාදන සොයන පාරිභෝගිකයින්ගේ ඉල්ලීම් වලට ප්‍රතිචාර දක්වන්න',
+        activeRequests: 'සක්‍රීය පාරිභෝගික ඉල්ලීම්',
+        noRequests: 'දැනට ඔබට කිසිදු නිෂ්පාදන ඉල්ලීමක් ලැබී නොමැත.',
+        requestedBy: 'ඉල්ලුම් කළේ',
+        on: 'දිනය',
+        yourResponse: 'ඔබේ ප්‍රතිචාරය',
+        pendingResponse: 'ප්‍රතිචාරයක් අපේක්ෂිතයි',
+        quantityNeeded: 'අවශ්‍ය ප්‍රමාණය',
+        description: 'විස්තරය',
+        noDescription: 'විස්තරයක් ලබා දී නොමැත.',
+        acceptRequest: 'ඉල්ලීම පිළිගන්න',
+        decline: 'ප්‍රතික්ෂේප කරන්න',
+        yourMessage: 'ඔබේ පණිවිඩය',
+        acceptPrompt: 'ලබා ගත හැකි වීම, මිල ගණන් හෝ බෙදා හැරීමේ විස්තර ගැන පාරිභෝගිකයාට පණිවිඩයක් ලියන්න.',
+        declinePrompt: 'මෙම ඉල්ලීම ප්‍රතික්ෂේප කිරීම සඳහා පාරිභෝගිකයාට හේතුවක් ලබා දෙන්න.',
+        typeMessage: 'ඔබේ පණිවිඩය මෙහි ලියන්න...',
+        cancel: 'අවලංගු කරන්න',
+        submit: 'ඉදිරිපත් කරන්න',
+        submitting: 'ඉදිරිපත් කරමින්...'
+      },
       crops: {
         rice: 'වී', tomatoes: 'තක්කාලි', potatoes: 'අර්තාපල්', onions: 'ලූනු', carrots: 'කැරට්',
         cabbage: 'ගෝවා', corn: 'බඩඉරිඟු', banana: 'කෙසෙල්', mango: 'අඹ', papaya: 'ගස්ලබු', pumpkin: 'වට්ටක්කා', chili: 'මිරිස්'
@@ -331,7 +397,7 @@ const farmerTranslations = {
       },
       sidebar: {
         overview: 'கண்ணோட்டம்', management: 'மேலாண்மை', services: 'சேவைகள்', chatbot: 'செயற்கை நுண்ணறிவு உதவியாளர்',
-        community: 'சமூகம்', notifications: 'அறிவிப்புகள்', settings: 'அமைப்புகள்', logout: 'வெளியேறு'
+        community: 'சமூகம்', notifications: 'அறிவிப்புகள்', settings: 'அமைப்புகள்', logout: 'வெளியேறு', requests: 'கோரிக்கைகள்'
       },
       overview: {
         addNewProduct: 'புதிய தயாரிப்பைச் சேர்க்கவும்',
@@ -386,7 +452,18 @@ const farmerTranslations = {
         title: 'சேவைகள்', expertConsultation: 'நிபுணர் ஆலோசனை', availableExperts: 'கிடைக்கக்கூடிய நிபுணர்கள்', viewProfile: 'சுயவிவரத்தைக் காண்',
         sendRequest: 'கோரிக்கையை அனுப்பு', consultationMessage: 'ஆலோசனை செய்தி', requestSent: 'கோரிக்கை அனுப்பப்பட்டது', noExperts: 'நிபுணர்கள் இல்லை.',
         farmerUpdates: 'விவசாயி புதுப்பிப்புகள்', postUpdate: 'புதுப்பிப்பை இடுகையிடு', updateTitle: 'தலைப்பு', updateDescription: 'விளக்கம்',
-        noUpdates: 'புதுப்பிப்புகள் இல்லை.'
+        noUpdates: 'புதுப்பிப்புகள் இல்லை.',
+        categories: {
+          equipment: { title: 'உபகரணங்கள் வாடகைக்கு', desc: 'விவசாயிகளுக்கான இயந்திரங்கள் மற்றும் கருவிகள்' },
+          delivery: { title: 'விநியோகம் மற்றும் ஏற்றுமதி', desc: 'போக்குவரத்து மற்றும் தளவாட சேவைகள்' },
+          storage: { title: 'சேமிப்பு வசதிகள்', desc: 'கிடங்குகள், குளிர்பதன அறைகள் மற்றும் சேமிப்புத் தொட்டிகள்' },
+          packaging: { title: 'பேக்கேஜிங் சேவைகள்', desc: 'பேக்கிங், லேபிளிங் மற்றும் சீல் செய்தல்' },
+          financial: { title: 'நிதி சேவைகள்', desc: 'விவசாயிகளுக்கான கடன்கள் மற்றும் கடன் வசதிகள்' }
+        },
+        providersAvailable: 'வழங்குநர்கள் உள்ளனர்',
+        providerAvailable: 'வழங்குநர் உள்ளார்',
+        backToCategories: 'வகைகளுக்கு திரும்பு',
+        noProviders: 'தற்போது இந்த வகையின் கீழ் சேவை வழங்குநர்கள் யாரும் பட்டியலிடப்படவில்லை.'
       },
       chatbot: {
         title: 'AI உதவியாளர்', assistantName: 'NagroMS உதவியாளர்', subtitle: 'விவசாயம் பற்றி ஏதேனும் கேளுங்கள்.',
@@ -460,6 +537,28 @@ const farmerTranslations = {
         noFileChosen: "கோப்பு தேர்வு செய்யப்படவில்லை",
         dobPlaceholder: "மாதம்/நாள்/ஆண்டு",
         saving: "சேமிக்கப்படுகிறது..."
+      },
+      requests: {
+        title: 'உள்வரும் தயாரிப்பு கோரிக்கைகள்',
+        subtitle: 'நீங்கள் வழங்கக்கூடிய தயாரிப்புகளைத் தேடும் வாடிக்கையாளர்களின் கோரிக்கைகளுக்கு பதிலளிக்கவும்',
+        activeRequests: 'செயலில் உள்ள வாடிக்கையாளர் கோரிக்கைகள்',
+        noRequests: 'தற்போது உங்களுக்கு எந்த தயாரிப்பு கோரிக்கைகளும் இல்லை.',
+        requestedBy: 'கோரியவர்',
+        on: 'தேதி',
+        yourResponse: 'உங்கள் பதில்',
+        pendingResponse: 'பதில் நிலுவையில் உள்ளது',
+        quantityNeeded: 'தேவையான அளவு',
+        description: 'விளக்கம்',
+        noDescription: 'விளக்கம் எதுவும் வழங்கப்படவில்லை.',
+        acceptRequest: 'கோரிக்கையை ஏற்றுக்கொள்',
+        decline: 'நிராகரி',
+        yourMessage: 'உங்கள் செய்தி',
+        acceptPrompt: 'கிடைக்கும் தன்மை, விலை அல்லது விநியோக விவரங்கள் குறித்து வாடிக்கையாளருக்கு ஒரு செய்தியை எழுதவும்.',
+        declinePrompt: 'இந்த கோரிக்கையை நிராகரிப்பதற்கான காரணத்தை வாடிக்கையாளருக்கு வழங்கவும்.',
+        typeMessage: 'உங்கள் செய்தியை இங்கே தட்டச்சு செய்யவும்...',
+        cancel: 'ரத்து செய்',
+        submit: 'சமர்ப்பி',
+        submitting: 'சமர்ப்பிக்கப்படுகிறது...'
       },
       crops: {
         rice: 'நெல்', tomatoes: 'தக்காளி', potatoes: 'உருளைக்கிழங்கு', onions: 'வெங்காயம்', carrots: 'கேரட்',
