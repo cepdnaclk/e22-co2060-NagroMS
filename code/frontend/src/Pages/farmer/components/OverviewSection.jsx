@@ -14,19 +14,49 @@ export default function OverviewSection({ setActiveTab }) {
   const [showModal, setShowModal] = useState(false);
   const [editProductId, setEditProductId] = useState(null);
   const [productToDelete, setProductToDelete] = useState(null);
+
+  const getProductNameTranslation = (name) => {
+    if (!name) return '';
+    const cropMap = {
+      'rice (paddy)': 'rice', 'වී': 'rice', 'நெல்': 'rice', 'நெல் (பச்சரிசி)': 'rice',
+      'tomatoes': 'tomatoes', 'තක්කාලි': 'tomatoes', 'தக்காளி': 'tomatoes',
+      'potatoes': 'potatoes', 'අර්තාපල්': 'potatoes', 'உருளைக்கிழங்கு': 'potatoes',
+      'onions': 'onions', 'ලූනු': 'onions', 'வெங்காயம்': 'onions',
+      'carrots': 'carrots', 'කැරට්': 'carrots', 'கேரட்': 'carrots',
+      'cabbage': 'cabbage', 'ගෝවා': 'cabbage', 'முட்டைக்கோஸ்': 'cabbage',
+      'corn': 'corn', 'බඩඉරිඟු': 'corn', 'சோளம்': 'corn',
+      'banana': 'banana', 'කෙසෙල්': 'banana', 'வாழைப்பழம்': 'banana',
+      'mango': 'mango', 'අඹ': 'mango', 'மாம்பழம்': 'mango',
+      'papaya': 'papaya', 'ගස්ලබු': 'papaya', 'பப்பாளி': 'papaya',
+      'pumpkin': 'pumpkin', 'වට්ටක්කා': 'pumpkin', 'பூசணிக்காய்': 'pumpkin',
+      'chili': 'chili', 'මිරිස්': 'chili', 'மிளகாய்': 'chili'
+    };
+    const key = cropMap[name.toLowerCase()];
+    if (key) {
+      return t(`farmer.crops.${key}`) || name;
+    }
+    return name;
+  };
+
+  const getStockStatusTranslation = (status) => {
+    if (status === 'Full Stock') return t('farmer.productForm.fullStock') || 'Full Stock';
+    if (status === 'Medium Stock') return t('farmer.productForm.mediumStock') || 'Medium Stock';
+    if (status === 'Low Stock') return t('farmer.productForm.lowStock') || 'Low Stock';
+    return status;
+  };
 const PREDEFINED_CROPS = [
-  { name: 'Rice (Paddy)', image: 'https://images.unsplash.com/photo-1586521995568-39abaa0c2311?auto=format&fit=crop&q=80&w=800' },
-  { name: 'Tomatoes', image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&q=80&w=800' },
-  { name: 'Potatoes', image: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&q=80&w=800' },
-  { name: 'Onions', image: 'https://images.unsplash.com/photo-1620574387735-3624d75b2dbc?auto=format&fit=crop&q=80&w=800' },
-  { name: 'Carrots', image: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?auto=format&fit=crop&q=80&w=800' },
-  { name: 'Cabbage', image: 'https://images.unsplash.com/photo-1529311029279-d2d416b23b49?auto=format&fit=crop&q=80&w=800' },
-  { name: 'Corn', image: 'https://images.unsplash.com/photo-1551754655-cd27e38d2076?auto=format&fit=crop&q=80&w=800' },
-  { name: 'Banana', image: 'https://images.unsplash.com/photo-1571501679680-de32f1e7aad4?auto=format&fit=crop&q=80&w=800' },
-  { name: 'Mango', image: 'https://images.unsplash.com/photo-1553279768-865429fa0078?auto=format&fit=crop&q=80&w=800' },
-  { name: 'Papaya', image: 'https://images.unsplash.com/photo-1615486171447-74070be6a89c?auto=format&fit=crop&q=80&w=800' },
-  { name: 'Pumpkin', image: 'https://images.unsplash.com/photo-1509506489701-afe29e5033fc?auto=format&fit=crop&q=80&w=800' },
-  { name: 'Chili', image: 'https://images.unsplash.com/photo-1596647209377-62f9014fb54c?auto=format&fit=crop&q=80&w=800' },
+  { name: t('farmer.crops.rice') || 'Rice (Paddy)', image: 'https://images.unsplash.com/photo-1586521995568-39abaa0c2311?auto=format&fit=crop&q=80&w=800' },
+  { name: t('farmer.crops.tomatoes') || 'Tomatoes', image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&q=80&w=800' },
+  { name: t('farmer.crops.potatoes') || 'Potatoes', image: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&q=80&w=800' },
+  { name: t('farmer.crops.onions') || 'Onions', image: 'https://images.unsplash.com/photo-1620574387735-3624d75b2dbc?auto=format&fit=crop&q=80&w=800' },
+  { name: t('farmer.crops.carrots') || 'Carrots', image: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?auto=format&fit=crop&q=80&w=800' },
+  { name: t('farmer.crops.cabbage') || 'Cabbage', image: 'https://images.unsplash.com/photo-1529311029279-d2d416b23b49?auto=format&fit=crop&q=80&w=800' },
+  { name: t('farmer.crops.corn') || 'Corn', image: 'https://images.unsplash.com/photo-1551754655-cd27e38d2076?auto=format&fit=crop&q=80&w=800' },
+  { name: t('farmer.crops.banana') || 'Banana', image: 'https://images.unsplash.com/photo-1571501679680-de32f1e7aad4?auto=format&fit=crop&q=80&w=800' },
+  { name: t('farmer.crops.mango') || 'Mango', image: 'https://images.unsplash.com/photo-1553279768-865429fa0078?auto=format&fit=crop&q=80&w=800' },
+  { name: t('farmer.crops.papaya') || 'Papaya', image: 'https://images.unsplash.com/photo-1615486171447-74070be6a89c?auto=format&fit=crop&q=80&w=800' },
+  { name: t('farmer.crops.pumpkin') || 'Pumpkin', image: 'https://images.unsplash.com/photo-1509506489701-afe29e5033fc?auto=format&fit=crop&q=80&w=800' },
+  { name: t('farmer.crops.chili') || 'Chili', image: 'https://images.unsplash.com/photo-1596647209377-62f9014fb54c?auto=format&fit=crop&q=80&w=800' },
 ];
 const DEFAULT_CROP_IMAGE = 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&q=80&w=800';
 
@@ -444,13 +474,13 @@ const DEFAULT_CROP_IMAGE = 'https://images.unsplash.com/photo-1500937386664-56d1
                 {product.imageUrl && (
                   <img src={product.imageUrl} alt={product.productName || product.name} style={{ width: '100%', height: '250px', objectFit: 'cover', borderRadius: '8px', marginBottom: '12px' }} />
                 )}
-                <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937' }}>{product.productName || product.name}</h3>
+                <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937' }}>{getProductNameTranslation(product.productName || product.name)}</h3>
                 <p style={{ fontSize: '24px', fontWeight: 700, color: '#22c55e', margin: '8px 0' }}>
                   Rs {product.pricePerUnit || product.price} <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: 400 }}>/ {product.unit}</span>
                 </p>
                 <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '8px' }}>{t('farmer.overview.available') || 'Available'}: {product.quantity} {product.unit}</p>
                 <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '8px' }}>{t('farmer.overview.totalPrice') || 'Total Price'}: Rs {product.totalPrice}</p>
-                <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '8px' }}>{t('farmer.overview.status') || 'Status'}: {product.stockStatus}</p>
+                <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '8px' }}>{t('farmer.overview.status') || 'Status'}: {getStockStatusTranslation(product.stockStatus)}</p>
                 <p style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '16px' }}>
                   {t('farmer.overview.added') || 'Added'}: {product.createdAt?.toDate ? product.createdAt.toDate().toLocaleDateString() : 'Just now'}
                 </p>

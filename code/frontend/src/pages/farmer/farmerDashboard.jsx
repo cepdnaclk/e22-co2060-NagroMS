@@ -7,7 +7,8 @@ import {
   Users,
   Settings,
   Leaf,
-  Bell
+  Bell,
+  FileText
 } from 'lucide-react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import OverviewSection from './components/OverviewSection';
@@ -17,6 +18,7 @@ import ChatbotSection from './components/ChatbotSection';
 import CommunitySection from './components/CommunitySection';
 import SettingsSection from './components/SettingsSection';
 import NotificationsSection from './components/NotificationsSection';
+import RequestsSection from './components/RequestSection';
 import './farmerDashboard.css';
 
 export function FarmerDashboard() {
@@ -37,6 +39,8 @@ export function FarmerDashboard() {
         return <CommunitySection />;
       case 'notifications':
         return <NotificationsSection />;
+      case 'requests':
+        return <RequestsSection />;
       case 'settings':
         return <SettingsSection />;
       default:
@@ -86,6 +90,12 @@ export function FarmerDashboard() {
             label={t('farmer.sidebar.community')}
             isActive={activeTab === 'community'}
             onClick={() => setActiveTab('community')}
+          />
+          <SidebarItem
+            icon={<FileText size={20} />}
+            label={t('farmer.sidebar.requests') || 'Requests'}
+            isActive={activeTab === 'requests'}
+            onClick={() => setActiveTab('requests')}
           />
           <SidebarItem
             icon={<Bell size={20} />}

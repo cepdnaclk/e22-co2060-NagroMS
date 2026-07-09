@@ -1,4 +1,4 @@
-﻿const farmerTranslations = {
+const farmerTranslations = {
   en: {
     farmer: {
       header: {
@@ -156,6 +156,10 @@
         noFileChosen: "No file chosen",
         dobPlaceholder: "MM/DD/YYYY",
         saving: "Saving..."
+      },
+      crops: {
+        rice: 'Rice (Paddy)', tomatoes: 'Tomatoes', potatoes: 'Potatoes', onions: 'Onions', carrots: 'Carrots',
+        cabbage: 'Cabbage', corn: 'Corn', banana: 'Banana', mango: 'Mango', papaya: 'Papaya', pumpkin: 'Pumpkin', chili: 'Chili'
       }
     }
   },
@@ -304,6 +308,10 @@
         noFileChosen: "ගොනුවක් තෝරා නැත",
         dobPlaceholder: "මාසය/දිනය/වසර",
         saving: "සුරකිමින්..."
+      },
+      crops: {
+        rice: 'වී', tomatoes: 'තක්කාලි', potatoes: 'අර්තාපල්', onions: 'ලූනු', carrots: 'කැරට්',
+        cabbage: 'ගෝවා', corn: 'බඩඉරිඟු', banana: 'කෙසෙල්', mango: 'අඹ', papaya: 'ගස්ලබු', pumpkin: 'වට්ටක්කා', chili: 'මිරිස්'
       }
     }
   },
@@ -452,6 +460,10 @@
         noFileChosen: "கோப்பு தேர்வு செய்யப்படவில்லை",
         dobPlaceholder: "மாதம்/நாள்/ஆண்டு",
         saving: "சேமிக்கப்படுகிறது..."
+      },
+      crops: {
+        rice: 'நெல்', tomatoes: 'தக்காளி', potatoes: 'உருளைக்கிழங்கு', onions: 'வெங்காயம்', carrots: 'கேரட்',
+        cabbage: 'முட்டைக்கோஸ்', corn: 'சோளம்', banana: 'வாழைப்பழம்', mango: 'மாம்பழம்', papaya: 'பப்பாளி', pumpkin: 'பூசணிக்காய்', chili: 'மிளகாய்'
       }
     }
   }
