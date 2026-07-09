@@ -31,6 +31,7 @@ export function SignUpPage() {
     fullName: '', nic: '', district: '', phone: '', email: '',
     password: '', confirmPassword: '',
     businessName: '', businessRegistrationNumber: '', contactPersonName: '',
+    serviceCategory: '',
   });
 
   const handleChange = (e) => {
@@ -308,6 +309,26 @@ export function SignUpPage() {
                         </div>
                       </div>
                     </div>
+
+                    {/* Service Provider Category Dropdown */}
+                    {formData.roles.includes('service-provider') && (
+                      <div className="nagro-field">
+                        <label className="nagro-label">Service Category *</label>
+                        <div className="nagro-input-wrap nagro-select-wrap">
+                          <span className="nagro-input-icon"><Wrench className="w-4 h-4"/></span>
+                          <select name="serviceCategory" value={formData.serviceCategory} onChange={handleChange}
+                            className="nagro-input nagro-select" required>
+                            <option value="">Select Service Category</option>
+                            <option value="financial">Financial</option>
+                            <option value="delivery">Delivery</option>
+                            <option value="packaging">Packaging</option>
+                            <option value="warehouse">Warehouse</option>
+                            <option value="equipment">Equipment Rental</option>
+                          </select>
+                          <span className="nagro-select-arrow"><ArrowRight className="w-4 h-4"/></span>
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
 
