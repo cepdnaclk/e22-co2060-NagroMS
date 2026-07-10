@@ -22,7 +22,9 @@ app.use(helmet());
 
 // ── CORS ─────────────────────────────────────────────────────
 app.use(cors({
-  origin: process.env.FRONTEND_URL || ['http://localhost:3000', 'http://localhost:3001'],
+  origin: function(origin, callback) {
+    callback(null, true); // Allow all origins to prevent CORS errors on deployed frontends
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
