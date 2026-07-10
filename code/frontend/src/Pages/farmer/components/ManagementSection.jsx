@@ -89,7 +89,7 @@ export default function ManagementSection() {
     if (!auth.currentUser) return;
     try {
       const token = await auth.currentUser.getIdToken();
-      await fetch('http://localhost:5000/api/farmer/expenses', {
+      await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/farmer/expenses`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -112,7 +112,7 @@ export default function ManagementSection() {
     if (!auth.currentUser) return;
     try {
       const token = await auth.currentUser.getIdToken();
-      await fetch('http://localhost:5000/api/farmer/income', {
+      await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/farmer/income`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
