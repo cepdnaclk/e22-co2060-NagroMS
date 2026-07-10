@@ -104,7 +104,7 @@ export default function CommunitySection() {
         }
       }
 
-      await fetch('http://localhost:5000/api/farmer/updates', {
+      await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/farmer/updates`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ title: newUpdateTitle, description: newUpdateDesc, imageUrl })
@@ -123,7 +123,7 @@ export default function CommunitySection() {
     if (!auth.currentUser) return;
     try {
       const token = await auth.currentUser.getIdToken();
-      await fetch('http://localhost:5000/api/farmer/community/posts', {
+      await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/farmer/community/posts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ title: newPostTitle, description: newPostDesc })
@@ -139,7 +139,7 @@ export default function CommunitySection() {
     if (!auth.currentUser || !commentText[postId]) return;
     try {
       const token = await auth.currentUser.getIdToken();
-      await fetch(`http://localhost:5000/api/farmer/community/posts/${postId}/comments`, {
+      await fetch(`${process.env.REACT_APP_API_URL || `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}`}/farmer/community/posts/${postId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ text: commentText[postId] })
@@ -154,7 +154,7 @@ export default function CommunitySection() {
     if (!auth.currentUser) return;
     try {
       const token = await auth.currentUser.getIdToken();
-      await fetch(`http://localhost:5000/api/farmer/community/posts/${postId}/like`, {
+      await fetch(`${process.env.REACT_APP_API_URL || `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}`}/farmer/community/posts/${postId}/like`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
