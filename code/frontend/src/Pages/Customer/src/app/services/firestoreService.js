@@ -4,7 +4,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../../../../utils/firebase.js';
 
-// ─── CUSTOMER PROFILE ────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ CUSTOMER PROFILE ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 export const loadCustomerProfile = async (uid) => {
   try {
@@ -46,7 +46,7 @@ export const saveCustomerProfile = async (uid, profileData) => {
   }
 };
 
-// ─── PRODUCTS ────────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ PRODUCTS ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 export const fetchProducts = async () => {
   try {
@@ -163,36 +163,53 @@ export const subscribeToProducts = (callback) => {
   return unsubscribe;
 };
 
-// ─── ORDERS ──────────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ ORDERS ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 export const saveOrder = async (uid, orderData) => {
   try {
-    const docRef = await addDoc(collection(db, 'orders'), {
-      ...orderData,
-      customerId: uid,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+    const token = localStorage.getItem('nagroms_token');
+    const BACKEND = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+    
+    const res = await fetch(`${BACKEND}/api/network/orders/save`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(orderData)
     });
-    return docRef.id;
+    
+    if (!res.ok) throw new Error('Failed to save order');
+    const data = await res.json();
+    return data.orderId;
   } catch (error) {
-    console.error('Error saving order:', error);
-    return null;
+    console.warn('Error saving order via backend, attempting fallback direct firestore write:', error);
+    try {
+      const docRef = await addDoc(collection(db, 'orders'), {
+        ...orderData,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+      return docRef.id;
+    } catch (fsError) {
+      console.error('Direct Firestore order save fallback also failed:', fsError);
+      return null;
+    }
   }
 };
 
 export const loadCustomerOrders = async (uid) => {
   try {
-    const q = query(
-      collection(db, 'orders'),
-      where('customerId', '==', uid),
-      orderBy('createdAt', 'desc')
-    );
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    const token = localStorage.getItem('nagroms_token');
+    const BACKEND = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+    
+    const res = await fetch(`${BACKEND}/api/network/orders/customer`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error('Failed to fetch orders');
+    const data = await res.json();
+    return data.orders || [];
   } catch (error) {
     console.error('Error loading orders:', error);
     return [];
@@ -202,8 +219,7 @@ export const loadCustomerOrders = async (uid) => {
 export const subscribeToCustomerOrders = (uid, callback) => {
   const q = query(
     collection(db, 'orders'),
-    where('customerId', '==', uid),
-    orderBy('createdAt', 'desc')
+    where('customerId', '==', uid)
   );
   
   const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -212,6 +228,7 @@ export const subscribeToCustomerOrders = (uid, callback) => {
         id: doc.id,
         ...doc.data()
       }));
+      orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       callback(orders);
     } catch (error) {
       console.error('Error processing real-time orders:', error);
@@ -225,7 +242,7 @@ export const subscribeToCustomerOrders = (uid, callback) => {
   return unsubscribe;
 };
 
-// ─── CART ─────────────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ CART ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 export const saveCart = async (uid, cart) => {
   try {
@@ -254,3 +271,149 @@ export const loadCart = async (uid) => {
     return [];
   }
 };
+
+// ΓöÇΓöÇΓöÇ FOLLOWED FARMERS ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+export const loadFollowedFarmers = async (uid) => {
+  try {
+    const token = localStorage.getItem('nagroms_token');
+    const BACKEND = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+    
+    const res = await fetch(`${BACKEND}/api/network/connections`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error('Failed to fetch connections');
+    const data = await res.json();
+    const connections = data.connections || [];
+
+    const connectedUserIds = new Set();
+    connections.forEach(conn => {
+      if (conn.status === 'connected') {
+        if (conn.requesterId === uid) connectedUserIds.add(conn.targetId);
+        if (conn.targetId === uid) connectedUserIds.add(conn.requesterId);
+      }
+    });
+
+    if (connectedUserIds.size === 0) return [];
+
+    const farmers = [];
+    for (const farmerId of connectedUserIds) {
+      const userRef = doc(db, 'users', farmerId);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        if (userData.role === 'farmer') {
+          farmers.push({
+            id: farmerId,
+            name: userData.fullName || userData.businessName || userData.contactPersonName || 'Unknown Farmer',
+            district: userData.district || '',
+            village: userData.villageTown || userData.village || ''
+          });
+        }
+      }
+    }
+    return farmers;
+  } catch (error) {
+    console.error('Error loading followed farmers:', error);
+    return [];
+  }
+};
+
+// ΓöÇΓöÇΓöÇ PRODUCT REQUESTS ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+export const createProductRequest = async (requestData) => {
+  try {
+    const token = localStorage.getItem('nagroms_token');
+    const BACKEND = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+    
+    const res = await fetch(`${BACKEND}/api/network/product-requests/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(requestData)
+    });
+    
+    if (!res.ok) throw new Error('Failed to create product request');
+    const data = await res.json();
+    return data.requestId;
+  } catch (error) {
+    console.error('Error creating product request:', error);
+    return null;
+  }
+};
+
+export const subscribeToCustomerRequests = (uid, callback) => {
+  if (!uid) return () => {};
+  let isCancelled = false;
+  
+  const fetchRequests = async () => {
+    try {
+      const token = localStorage.getItem('nagroms_token');
+      const BACKEND = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+      const res = await fetch(`${BACKEND}/api/network/product-requests/customer`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to fetch requests');
+      const data = await res.json();
+      if (!isCancelled) callback(data.requests || []);
+    } catch (error) {
+      console.error('Customer requests backend fetch error:', error);
+      if (!isCancelled) callback([]);
+    }
+  };
+
+  fetchRequests();
+  
+  return () => { isCancelled = true; };
+};
+
+export const subscribeToFarmerRequests = (farmerId, callback) => {
+  if (!farmerId) return () => {};
+  let isCancelled = false;
+  
+  const fetchRequests = async () => {
+    try {
+      const token = localStorage.getItem('nagroms_token');
+      const BACKEND = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+      const res = await fetch(`${BACKEND}/api/network/product-requests`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to fetch requests');
+      const data = await res.json();
+      if (!isCancelled) callback(data.requests || []);
+    } catch (error) {
+      console.error('Farmer requests backend fetch error:', error);
+      if (!isCancelled) callback([]);
+    }
+  };
+
+  fetchRequests();
+  
+  // Return dummy unsubscribe since it's not real-time anymore
+  return () => { isCancelled = true; };
+};
+
+export const respondToProductRequest = async (requestId, farmerId, farmerName, status, message = '') => {
+  try {
+    const token = localStorage.getItem('nagroms_token');
+    const BACKEND = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+    
+    const res = await fetch(`${BACKEND}/api/network/product-requests/respond`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ requestId, farmerName, status, message })
+    });
+    
+    if (!res.ok) throw new Error('Failed to respond');
+    return true;
+  } catch (error) {
+    console.error('Error responding to product request:', error);
+    return false;
+  }
+};
+

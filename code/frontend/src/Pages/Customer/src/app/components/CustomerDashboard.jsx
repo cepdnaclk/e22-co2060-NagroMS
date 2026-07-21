@@ -24,20 +24,26 @@ import {
   MessageCircle,
   Send,
   ChevronDown,
-  PlusCircle
+  PlusCircle,
+  Settings,
+  AlertCircle
 } 
 from 'lucide-react';
 
-import { auth } from '../../../../../utils/firebase.js';
-import { onAuthStateChanged } from 'firebase/auth';
+import { auth, db } from '../../../../../utils/firebase.js';
+import { onAuthStateChanged, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import '../../styles/index.css';
 import { 
   loadCustomerProfile,
   saveCustomerProfile,
   saveCart, 
-  loadCart, 
+  loadCart,
   subscribeToProducts,
-  loadCustomerOrders,
-  subscribeToCustomerOrders
+  subscribeToCustomerOrders,
+  loadFollowedFarmers,
+  createProductRequest,
+  subscribeToCustomerRequests
 } from '../services/firestoreService';
 
 import { useLanguage } from '../../../../../i18n/LanguageContext';
@@ -71,60 +77,16 @@ function calculateDeliveryFee(customerDistrict, farmerDistrict) {
   return DISTRICT_DELIVERY_FEES[key1] || DISTRICT_DELIVERY_FEES[key2] || 200;
 }
 
-// Mock past orders - will be replaced by Firestore orders
-const PAST_ORDERS = [
-  {
-    id: 'ORD-001',
-    date: '2026-03-01',
-    status: 'Delivered',
-    paymentMethod: 'Cash on Delivery',
-    items: [
-      { productId: 1, name: 'Fresh Tomatoes', quantity: 5, price: 150, unit: 'kg' },
-      { productId: 5, name: 'Fresh Bananas', quantity: 3, price: 100, unit: 'kg' }
-    ],
-    deliveryAddress: '123 Main Street, Colombo, Western Province, 00100',
-    total: 1050,
-    deliveryFee: 0,
-    estimatedDelivery: '2026-03-05',
-    trackingHistory: [
-      { status: 'Order Placed', date: 'Mar 1, 2026 10:30 AM', completed: true },
-      { status: 'Order Confirmed', date: 'Mar 1, 2026 11:00 AM', completed: true },
-      { status: 'Order Packed', date: 'Mar 2, 2026 9:00 AM', completed: true },
-      { status: 'In Transit', date: 'Mar 2, 2026 2:00 PM', completed: true },
-      { status: 'Delivered', date: 'Mar 3, 2026 11:30 AM', completed: true }
-    ]
-  },
-  {
-    id: 'ORD-002',
-    date: '2026-02-28',
-    status: 'In Transit',
-    paymentMethod: 'Bank Transfer',
-    items: [
-      { productId: 2, name: 'Organic Rice', quantity: 10, price: 180, unit: 'kg' },
-      { productId: 3, name: 'Fresh Carrots', quantity: 2, price: 120, unit: 'kg' }
-    ],
-    deliveryAddress: '123 Main Street, Colombo, Western Province, 00100',
-    total: 2040,
-    deliveryFee: 200,
-    estimatedDelivery: '2026-03-10',
-    trackingHistory: [
-      { status: 'Order Placed', date: 'Feb 28, 2026 2:30 PM', completed: true },
-      { status: 'Payment Verified', date: 'Feb 28, 2026 3:00 PM', completed: true },
-      { status: 'Order Confirmed', date: 'Feb 28, 2026 3:15 PM', completed: true },
-      { status: 'Order Packed', date: 'Mar 7, 2026 10:00 AM', completed: true },
-      { status: 'Out for Delivery', date: 'Mar 8, 2026 8:00 AM', completed: true },
-      { status: 'Delivered', date: 'Estimated: Mar 10', completed: false }
-    ]
-  }
-];
+
 
 export function CustomerDashboard({ onNavigate }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('all');
 
-  // ÔöÇÔöÇ CART: start empty, loaded from Firestore ÔöÇÔöÇ
+  // ├ö├╢├ç├ö├╢├ç CART: start empty, loaded from Firestore ├ö├╢├ç├ö├╢├ç
   const [cart, setCart] = useState([]);
+  const [cartLoaded, setCartLoaded] = useState(false);
 
   const [activeSection, setActiveSection] = useState('browse');
   const { lang, setLang, t } = useLanguage();
@@ -133,13 +95,13 @@ export function CustomerDashboard({ onNavigate }) {
   const [showMessageFarmerModal, setShowMessageFarmerModal] = useState(false);
   const [selectedFarmer, setSelectedFarmer] = useState(null);
 
-  // ÔöÇÔöÇ FIREBASE STATE ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // ├ö├╢├ç├ö├╢├ç FIREBASE STATE ├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç
   const [uid, setUid] = useState(null);
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState([]);
   const [firestoreOrders, setFirestoreOrders] = useState([]);
 
-  // ÔöÇÔöÇ PROFILE: default values, overwritten by Firestore ÔöÇÔöÇ
+  // ├ö├╢├ç├ö├╢├ç PROFILE: default values, overwritten by Firestore ├ö├╢├ç├ö├╢├ç
   const [profile, setProfile] = useState({
     name: '',
     email: '',
@@ -151,9 +113,11 @@ export function CustomerDashboard({ onNavigate }) {
     postalCode: ''
   });
 
-  // ÔöÇÔöÇ LOAD DATA FROM FIREBASE ON LOGIN ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // ├ö├╢├ç├ö├╢├ç LOAD DATA FROM FIREBASE ON LOGIN ├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç
   useEffect(() => {
     console.log("CustomerDashboard useEffect mounted, calling onAuthStateChanged...");
+    let unsubProducts;
+    let unsubOrders;
     
     // Safety timeout: force loading to false after 3 seconds no matter what
     const timeoutId = setTimeout(() => {
@@ -174,18 +138,22 @@ export function CustomerDashboard({ onNavigate }) {
           if (firestoreProfile) setProfile(firestoreProfile);
 
           console.log("Loading cart...");
-          const savedCart = await loadCart(user.uid);
-          if (savedCart && savedCart.length > 0) setCart(savedCart);
+          try {
+            const savedCart = await loadCart(user.uid);
+            if (savedCart && savedCart.length > 0) setCart(savedCart);
+          } catch (e) {
+            console.error("Error loading cart:", e);
+          } finally {
+            setCartLoaded(true);
+          }
 
           console.log("Subscribing to products...");
-          const unsubProducts = subscribeToProducts((realtimeProducts) => {
+          unsubProducts = subscribeToProducts((realtimeProducts) => {
             if (realtimeProducts) setProducts(realtimeProducts);
           });
-          // Attach unsubProducts to window or global to clean up later if necessary
-          // But since the dashboard mounts once per user, this is fine.
 
           console.log("Subscribing to orders...");
-          const unsubOrders = subscribeToCustomerOrders(user.uid, (realtimeOrders) => {
+          unsubOrders = subscribeToCustomerOrders(user.uid, (realtimeOrders) => {
             if (realtimeOrders) setFirestoreOrders(realtimeOrders);
           });
           
@@ -201,24 +169,26 @@ export function CustomerDashboard({ onNavigate }) {
     return () => {
       clearTimeout(timeoutId);
       unsubscribe();
+      if (unsubProducts) unsubProducts();
+      if (unsubOrders) unsubOrders();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ÔöÇÔöÇ AUTO-SAVE CART TO FIRESTORE WHEN IT CHANGES ÔöÇÔöÇ
+  // ├ö├╢├ç├ö├╢├ç AUTO-SAVE CART TO FIRESTORE WHEN IT CHANGES ├ö├╢├ç├ö├╢├ç
   useEffect(() => {
-    if (uid) {
+    if (uid && cartLoaded) {
       saveCart(uid, cart);
     }
-  }, [cart, uid]);
+  }, [cart, uid, cartLoaded]);
 
-  // ÔöÇÔöÇ DEMO NOTIFICATIONS ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // ├ö├╢├ç├ö├╢├ç DEMO NOTIFICATIONS ├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç
   useEffect(() => {
     const demoNotifications = [
       {
         id: Date.now() + 1,
         type: 'product-available',
-        title: 'Ô£à Your Requested Product is Now Available!',
+        title: '✅ Your Requested Product is Now Available!',
         message: 'Fresh Mangoes (Organic) that you requested is now available from Farmer Pradeep in Anuradhapura',
         productName: 'Fresh Mangoes (Organic)',
         farmerName: 'Farmer Pradeep',
@@ -229,7 +199,7 @@ export function CustomerDashboard({ onNavigate }) {
       {
         id: Date.now() + 2,
         type: 'product-available',
-        title: 'Ô£à Product Available',
+        title: '✅ Product Available',
         message: 'Organic Carrots that you requested is now available from Farmer Nimal in Kandy',
         productName: 'Organic Carrots',
         farmerName: 'Farmer Nimal',
@@ -244,7 +214,7 @@ export function CustomerDashboard({ onNavigate }) {
     }
   }, []);
 
-  // ÔöÇÔöÇ SHOW LOADING SCREEN WHILE FIREBASE LOADS ÔöÇÔöÇ
+  // ├ö├╢├ç├ö├╢├ç SHOW LOADING SCREEN WHILE FIREBASE LOADS ├ö├╢├ç├ö├╢├ç
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -350,7 +320,7 @@ export function CustomerDashboard({ onNavigate }) {
     setShowMessageFarmerModal(true);
   };
 
-  // ÔöÇÔöÇ SAVE PROFILE TO FIRESTORE ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // ├ö├╢├ç├ö├╢├ç SAVE PROFILE TO FIRESTORE ├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç
   const handleSaveProfile = async (updatedProfile) => {
     setProfile(updatedProfile);
     if (uid) {
@@ -381,7 +351,7 @@ export function CustomerDashboard({ onNavigate }) {
       case 'profile':
         return <ProfileSection 
           profile={profile} 
-          setProfile={handleSaveProfile}  // ÔåÉ saves to Firestore
+          setProfile={handleSaveProfile}  // ├ö├Ñ├ë saves to Firestore
         />;
       case 'cart':
         return <CartSection 
@@ -396,7 +366,7 @@ export function CustomerDashboard({ onNavigate }) {
         />;
       case 'checkout':
         return <EnhancedCheckoutSection 
-          uid={uid}                        // ÔåÉ Firebase uid for saving orders
+          uid={uid}                        // ├ö├Ñ├ë Firebase uid for saving orders
           cart={cart}
           profile={profile}
           getCartTotal={getCartTotal}
@@ -408,7 +378,11 @@ export function CustomerDashboard({ onNavigate }) {
       case 'orders':
         return <EnhancedOrdersSection pastOrders={ordersToShow} uid={uid} />;
       case 'community':
-        return <CommunityNetwork currentUserRole="customer" products={products} />;
+        return <CommunityNetwork currentUserRole="customer" products={products} currentUserId={uid} />;
+      case 'requests':
+        return <CustomerRequestsSection uid={uid} />;
+      case 'settings':
+        return <CustomerSettingsSection uid={uid} />;
       default:
         return null;
     }
@@ -421,7 +395,7 @@ export function CustomerDashboard({ onNavigate }) {
       {!isSidebarOpen && (
         <button
           onClick={() => setIsSidebarOpen(true)}
-          style={{ position: 'absolute', top: '16px', left: '16px', zIndex: 50, background: '#115e59', color: 'white', border: 'none', borderRadius: '8px', padding: '8px', cursor: 'pointer' }}
+          style={{ position: 'absolute', top: '16px', left: '16px', zIndex: 50, background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '8px', padding: '8px', cursor: 'pointer' }}
         >
           <Menu size={24} />
         </button>
@@ -432,7 +406,7 @@ export function CustomerDashboard({ onNavigate }) {
         className="farmer-sidebar" 
         style={{ 
           width: '260px', 
-          backgroundColor: '#115e59', 
+          backgroundColor: 'var(--sidebar)', 
           color: 'white', 
           display: 'flex', 
           flexDirection: 'column',
@@ -445,7 +419,7 @@ export function CustomerDashboard({ onNavigate }) {
       >
         <div style={{ padding: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ backgroundColor: 'white', color: '#115e59', padding: '8px', borderRadius: '50%' }}>
+            <div style={{ backgroundColor: 'white', color: 'var(--sidebar)', padding: '8px', borderRadius: '50%' }}>
               <Sprout size={24} />
             </div>
             <h1 style={{ fontSize: '20px', fontWeight: 700, margin: 0 }}>NagroMS</h1>
@@ -459,11 +433,18 @@ export function CustomerDashboard({ onNavigate }) {
           <SidebarButton icon={<Home size={20} />} label={t('customer.sidebar.browse') || "Browse Products"} active={activeSection === 'browse'} onClick={() => setActiveSection('browse')} />
           <SidebarButton icon={<ShoppingCart size={20} />} label={t('customer.sidebar.cart') || "My Cart"} active={activeSection === 'cart'} onClick={() => setActiveSection('cart')} badge={getCartItemsCount()} />
           <SidebarButton icon={<FileText size={20} />} label={t('customer.sidebar.orders') || "Order History"} active={activeSection === 'orders'} onClick={() => setActiveSection('orders')} />
+          <SidebarButton icon={<FileText size={20} />} label={t('customer.sidebar.requests') || "Product Requests"} active={activeSection === 'requests'} onClick={() => setActiveSection('requests')} />
           <SidebarButton icon={<UserCircle size={20} />} label={t('customer.sidebar.profile') || "My Profile"} active={activeSection === 'profile'} onClick={() => setActiveSection('profile')} />
           <SidebarButton icon={<User size={20} />} label={t('customer.sidebar.community') || "Community"} active={activeSection === 'community'} onClick={() => setActiveSection('community')} />
         </nav>
 
-        <div style={{ padding: '12px' }}>
+        <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <SidebarButton
+            icon={<Settings size={20} />}
+            label={t('customer.sidebar.settings') || "Settings"}
+            active={activeSection === 'settings'}
+            onClick={() => setActiveSection('settings')}
+          />
           <SidebarButton
             icon={<LogOut size={20} />}
             label={t('customer.sidebar.logout') || "Logout"}
@@ -538,7 +519,7 @@ export function CustomerDashboard({ onNavigate }) {
       </div>
 
       {showRequestProductModal && (
-        <RequestProductModal onClose={() => setShowRequestProductModal(false)} />
+        <RequestProductModal uid={uid} customerName={profile.name} onClose={() => setShowRequestProductModal(false)} />
       )}
 
       {showMessageFarmerModal && selectedFarmer && (
@@ -554,7 +535,7 @@ export function CustomerDashboard({ onNavigate }) {
   );
 }
 
-// ─── SIDEBAR BUTTON ──────────────────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ SIDEBAR BUTTON ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 function SidebarButton({ icon, label, active, onClick, badge }) {
   return (
     <button
@@ -604,14 +585,16 @@ function SidebarButton({ icon, label, active, onClick, badge }) {
 
 
 
-// ÔöÇÔöÇÔöÇ BROWSE PRODUCTS ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+// ├ö├╢├ç├ö├╢├ç├ö├╢├ç BROWSE PRODUCTS ├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç
 function BrowseProducts({ searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, selectedLocation, setSelectedLocation, uniqueLocations, filteredProducts, cart, addToCart, updateQuantity, changeUnit, removeFromCart, onMessageFarmer, onRequestProduct }) {
   const { t } = useLanguage();
   return (
     <div className="space-y-6">
-      <div style={{ padding: '24px', backgroundColor: '#f0fdf4', borderRadius: '12px', border: '1px solid #dcfce7', marginBottom: '24px' }}>
-        <h3 style={{ fontSize: '20px', fontWeight: 600, color: '#166534', margin: '0 0 8px 0' }}>{t('customer.browse.title') || "Browse Products"}</h3>
-        <p style={{ color: '#15803d', margin: 0 }}>{t('customer.browse.subtitle') || "Fresh products directly from local farmers"}</p>
+      <div className="rounded-2xl p-8 text-white mb-6 animate-fadeIn" style={{ background: 'var(--theme-browse-gradient)' }}>
+        <h1 className="text-3xl mb-2 flex items-center gap-3" style={{ color: '#ffffff', margin: 0 }}>
+          <Sprout className="w-8 h-8" /> {t('customer.browse.title') || "Marketplace"}
+        </h1>
+        <p className="text-lg" style={{ color: 'rgba(255, 255, 255, 0.9)', margin: 0 }}>{t('customer.browse.subtitle') || "Fresh products directly from local farmers"}</p>
       </div>
 
       <div className="mb-6">
@@ -703,7 +686,7 @@ function BrowseProducts({ searchQuery, setSearchQuery, selectedCategory, setSele
   );
 }
 
-// ÔöÇÔöÇÔöÇ PROFILE SECTION ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+// ├ö├╢├ç├ö├╢├ç├ö├╢├ç PROFILE SECTION ├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç
 function ProfileSection({ profile, setProfile }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState(profile);
@@ -723,11 +706,11 @@ function ProfileSection({ profile, setProfile }) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl p-8" style={{color: '#ffffff'}}>
-        <h1 className="text-3xl mb-2 flex items-center gap-3" style={{color: '#ffffff'}}>
+      <div className="rounded-2xl p-8 text-white" style={{ background: 'var(--theme-profile-gradient)' }}>
+        <h1 className="text-3xl mb-2 flex items-center gap-3" style={{ color: '#ffffff', margin: 0 }}>
           <UserCircle className="w-8 h-8" /> My Profile
         </h1>
-        <p className="text-lg" style={{color: '#ffffff', opacity: 0.95}}>Manage your personal information and delivery address</p>
+        <p className="text-lg" style={{ color: 'rgba(255, 255, 255, 0.9)', margin: 0 }}>Manage your personal information and delivery address</p>
       </div>
 
       <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
@@ -790,16 +773,16 @@ function ProfileSection({ profile, setProfile }) {
   );
 }
 
-// ÔöÇÔöÇÔöÇ CART SECTION ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+// ├ö├╢├ç├ö├╢├ç├ö├╢├ç CART SECTION ├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç
 function CartSection({ cart, updateQuantity, removeFromCart, getCartTotal, getTotalDeliveryFee, setActiveSection, customerDistrict, products }) {
   if (cart.length === 0) {
     return (
       <div className="space-y-6">
-        <div className="bg-gradient-to-r from-orange-600 to-orange-500 rounded-2xl p-8 text-white">
-          <h1 className="text-3xl mb-2 flex items-center gap-3">
+        <div className="rounded-2xl p-8 text-white" style={{ background: 'var(--theme-cart-gradient)' }}>
+          <h1 className="text-3xl mb-2 flex items-center gap-3" style={{ color: '#ffffff', margin: 0 }}>
             <ShoppingCart className="w-8 h-8" /> Shopping Cart
           </h1>
-          <p className="text-orange-100 text-lg">Review your items and proceed to checkout</p>
+          <p className="text-lg" style={{ color: 'rgba(255, 255, 255, 0.9)', margin: 0 }}>Review your items and proceed to checkout</p>
         </div>
         <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-16 text-center">
           <ShoppingCart className="w-20 h-20 text-muted-foreground mx-auto mb-4" />
@@ -821,11 +804,11 @@ function CartSection({ cart, updateQuantity, removeFromCart, getCartTotal, getTo
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-orange-600 to-orange-500 rounded-2xl p-8 text-white">
-        <h1 className="text-3xl mb-2 flex items-center gap-3">
+      <div className="rounded-2xl p-8 text-white" style={{ background: 'var(--theme-cart-gradient)' }}>
+        <h1 className="text-3xl mb-2 flex items-center gap-3" style={{ color: '#ffffff', margin: 0 }}>
           <ShoppingCart className="w-8 h-8" /> Shopping Cart
         </h1>
-        <p className="text-orange-100 text-lg">{cart.length} {cart.length === 1 ? 'item' : 'items'} in your cart</p>
+        <p className="text-lg" style={{ color: 'rgba(255, 255, 255, 0.9)', margin: 0 }}>{cart.length} {cart.length === 1 ? 'item' : 'items'} in your cart</p>
       </div>
 
       <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
@@ -850,7 +833,7 @@ function CartSection({ cart, updateQuantity, removeFromCart, getCartTotal, getTo
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg text-foreground font-medium mb-1">{product.name}</h3>
-                    <p className="text-sm text-muted-foreground mb-2">{product.farmer} ÔÇó {product.location}</p>
+                    <p className="text-sm text-muted-foreground mb-2">{product.farmer} ├ö├ç├│ {product.location}</p>
                     <p className="text-lg text-primary font-semibold">LKR {itemPrice} / {itemUnit}</p>
                     <p className="text-xs text-muted-foreground mt-1">Delivery: {itemDeliveryFee === 0 ? 'FREE' : `LKR ${itemDeliveryFee}`}</p>
                   </div>
@@ -910,27 +893,62 @@ function CartSection({ cart, updateQuantity, removeFromCart, getCartTotal, getTo
   );
 }
 
-// ÔöÇÔöÇÔöÇ REQUEST PRODUCT MODAL ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
-function RequestProductModal({ onClose }) {
+// ├ö├╢├ç├ö├╢├ç├ö├╢├ç REQUEST PRODUCT MODAL ├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç
+function RequestProductModal({ uid, customerName, onClose }) {
   const [productName, setProductName] = useState('');
   const [description, setDescription] = useState('');
   const [quantity, setQuantity] = useState('');
+  const [followedFarmers, setFollowedFarmers] = useState([]);
+  const [targetType, setTargetType] = useState('all'); // 'all' or 'specific'
+  const [selectedFarmerIds, setSelectedFarmerIds] = useState([]); // Array of selected IDs
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = () => {
+  useEffect(() => {
+    const fetchFarmers = async () => {
+      if (uid) {
+        const farmers = await loadFollowedFarmers(uid);
+        setFollowedFarmers(farmers);
+      }
+    };
+    fetchFarmers();
+  }, [uid]);
+
+  const handleCheckboxChange = (farmerId) => {
+    setSelectedFarmerIds(prev => 
+      prev.includes(farmerId) 
+        ? prev.filter(id => id !== farmerId) 
+        : [...prev, farmerId]
+    );
+  };
+
+  const handleSubmit = async () => {
+    if (!productName.trim() || followedFarmers.length === 0) return;
     setSubmitted(true);
-    const requests = JSON.parse(localStorage.getItem('productRequests') || '[]');
-    requests.push({
-      id: Date.now(),
+
+    const targetFarmers = targetType === 'all' 
+      ? followedFarmers.map(f => f.id)
+      : selectedFarmerIds;
+
+    const targetFarmerNames = targetType === 'all' 
+      ? 'All Followed Farmers' 
+      : followedFarmers.filter(f => selectedFarmerIds.includes(f.id)).map(f => f.name).join(', ');
+
+    await createProductRequest({
+      customerId: uid,
+      customerName: customerName || 'Unknown Customer',
       productName,
       description,
       quantity,
-      dateRequested: new Date().toISOString(),
-      status: 'pending'
+      targetFarmers,
+      targetFarmerNames,
     });
-    localStorage.setItem('productRequests', JSON.stringify(requests));
+
     setTimeout(() => { onClose(); }, 2000);
   };
+
+  const isSubmitDisabled = !productName.trim() || 
+                           followedFarmers.length === 0 || 
+                           (targetType === 'specific' && selectedFarmerIds.length === 0);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -957,7 +975,41 @@ function RequestProductModal({ onClose }) {
                 <label className="block text-sm font-medium text-foreground mb-2">Quantity Needed</label>
                 <input type="text" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="e.g., 10 kg" className="w-full px-4 py-3 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary text-foreground" />
               </div>
-              <button onClick={handleSubmit} disabled={!productName.trim()} className="w-full px-6 py-3 bg-primary text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">Send Request To:</label>
+                <div className="flex gap-4 mb-2">
+                  <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                    <input type="radio" name="targetType" checked={targetType === 'all'} onChange={() => setTargetType('all')} disabled={followedFarmers.length === 0} />
+                    All Followed Farmers
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                    <input type="radio" name="targetType" checked={targetType === 'specific'} onChange={() => setTargetType('specific')} disabled={followedFarmers.length === 0} />
+                    Specific Farmers
+                  </label>
+                </div>
+                
+                {followedFarmers.length === 0 ? (
+                  <p className="text-xs text-red-500 italic mt-2">You aren't following any farmers yet. Follow farmers from the Community tab first!</p>
+                ) : targetType === 'specific' ? (
+                  <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3 bg-gray-50 space-y-2">
+                    {followedFarmers.map(f => (
+                      <label key={f.id} className="flex items-center gap-2 text-sm text-foreground cursor-pointer hover:bg-gray-155 p-1 rounded">
+                        <input 
+                          type="checkbox" 
+                          checked={selectedFarmerIds.includes(f.id)} 
+                          onChange={() => handleCheckboxChange(f.id)} 
+                        />
+                        <span>{f.name} ({f.district || 'No District'})</span>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-500 italic mt-2">This request will be sent to all {followedFarmers.length} farmers you follow.</p>
+                )}
+              </div>
+
+              <button onClick={handleSubmit} disabled={isSubmitDisabled} className="w-full px-6 py-3 bg-primary text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed">
                 Submit Request
               </button>
             </div>
@@ -976,7 +1028,97 @@ function RequestProductModal({ onClose }) {
   );
 }
 
-// ÔöÇÔöÇÔöÇ MESSAGE FARMER MODAL ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+function CustomerRequestsSection({ uid }) {
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!uid) return;
+    const unsub = subscribeToCustomerRequests(uid, (data) => {
+      setRequests(data);
+      setLoading(false);
+    });
+    return () => unsub();
+  }, [uid]);
+
+  if (loading) {
+    return <div className="text-center py-12 text-primary">Loading requests...</div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl p-8 text-white" style={{ background: 'var(--theme-community-gradient)' }}>
+        <h1 className="text-3xl mb-2 flex items-center gap-3" style={{ color: '#ffffff', margin: 0 }}>
+          <FileText className="w-8 h-8" /> Requested Products
+        </h1>
+        <p className="text-lg" style={{ color: 'rgba(255, 255, 255, 0.9)', margin: 0 }}>Track the products you've requested from farmers</p>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
+        <h2 className="text-2xl text-primary mb-6">Request History</h2>
+        {requests.length === 0 ? (
+          <div className="text-center py-12">
+            <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <p className="text-lg text-muted-foreground">You haven't requested any products yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {requests.map(req => (
+              <div key={req.id} className="p-5 border border-gray-200 rounded-xl hover:shadow-md transition-shadow">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                  <div>
+                    <h3 className="text-xl font-semibold text-foreground mb-1">{req.productName}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Requested on {new Date(req.createdAt).toLocaleDateString()} to: <strong className="text-primary">{req.targetFarmerNames}</strong>
+                    </p>
+                  </div>
+                  <div>
+                    <span className={`px-4 py-1.5 rounded-full text-sm font-semibold uppercase ${
+                      req.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                      req.status === 'declined' ? 'bg-red-100 text-red-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {req.status}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700 bg-gray-50 p-4 rounded-lg">
+                  <div>
+                    <p><strong>Quantity Needed:</strong> {req.quantity || 'N/A'}</p>
+                    <p className="mt-1"><strong>Description:</strong> {req.description || 'No description provided.'}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">Farmer Responses:</h4>
+                    {Object.keys(req.responses || {}).length === 0 ? (
+                      <p className="text-muted-foreground italic">Waiting for responses...</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {Object.entries(req.responses).map(([farmerId, resp]) => (
+                          <div key={farmerId} className="border-t border-gray-200 pt-2 first:border-0 first:pt-0">
+                            <p className="flex justify-between">
+                              <span className="font-medium text-foreground">{resp.farmerName}:</span>
+                              <span className={`font-semibold capitalize ${
+                                resp.status === 'accepted' ? 'text-green-600' : 'text-red-600'
+                              }`}>{resp.status}</span>
+                            </p>
+                            {resp.message && <p className="text-xs text-gray-500 italic mt-0.5">"{resp.message}"</p>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ├ö├╢├ç├ö├╢├ç├ö├╢├ç MESSAGE FARMER MODAL ├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç
 function MessageFarmerModal({ farmer, onClose }) {
   const [message, setMessage] = useState('');
   const [sent, setSent] = useState(false);
@@ -1039,7 +1181,7 @@ function MessageFarmerModal({ farmer, onClose }) {
   );
 }
 
-// ÔöÇÔöÇÔöÇ CATEGORY BUTTON ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+// ├ö├╢├ç├ö├╢├ç├ö├╢├ç CATEGORY BUTTON ├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç
 function CategoryButton({ label, active, onClick }) {
   return (
     <button
@@ -1055,7 +1197,7 @@ function CategoryButton({ label, active, onClick }) {
   );
 }
 
-// ÔöÇÔöÇÔöÇ PRODUCT CARD ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+// ├ö├╢├ç├ö├╢├ç├ö├╢├ç PRODUCT CARD ├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç
 function ProductCard({ product, onAddToCart, onMessageFarmer, inCart, cart, onUpdateQuantity, onChangeUnit, onRemoveFromCart }) {
   const cartItem = cart.find(item => item.id === product.id);
   const quantity = cartItem ? cartItem.quantity : 1;
@@ -1175,6 +1317,361 @@ function ProductCard({ product, onAddToCart, onMessageFarmer, inCart, cart, onUp
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── CUSTOMER SETTINGS SECTION ───
+function CustomerSettingsSection({ uid }) {
+  const { setLang } = useLanguage();
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState({ type: '', text: '' });
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isPasswordEditable, setIsPasswordEditable] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpInput, setOtpInput] = useState('');
+  
+  const [settings, setSettings] = useState({
+    languagePreference: 'en',
+    notifications: {
+      orderStatusUpdates: true,
+      promotions: false,
+      communityFeed: true,
+      chatbotAlerts: false
+    }
+  });
+
+  const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+
+  useEffect(() => {
+    if (!uid) return;
+    const docRef = doc(db, 'users', uid);
+    const unsub = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setSettings({
+          languagePreference: data.languagePreference || 'en',
+          notifications: {
+            orderStatusUpdates: true,
+            promotions: false,
+            communityFeed: true,
+            chatbotAlerts: false,
+            ...(data.notifications || {})
+          }
+        });
+      }
+    });
+    return () => unsub();
+  }, [uid]);
+
+  const handleLanguageChange = async (newLang) => {
+    setLang(newLang);
+    setSettings(prev => ({ ...prev, languagePreference: newLang }));
+    try {
+      await updateDoc(doc(db, 'users', uid), {
+        languagePreference: newLang
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleNotifChange = async (key, checked) => {
+    const updatedNotifs = { ...settings.notifications, [key]: checked };
+    setSettings(prev => ({ ...prev, notifications: updatedNotifs }));
+    try {
+      await updateDoc(doc(db, 'users', uid), {
+        notifications: updatedNotifs
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handlePasswordSave = async (e) => {
+    e.preventDefault();
+    if (!passwords.currentPassword) {
+      setMsg({ type: 'error', text: 'Please enter your current password for security verification.' });
+      return;
+    }
+    if (!passwords.newPassword || !passwords.confirmPassword) {
+      setMsg({ type: 'error', text: 'Please fill in all password fields.' });
+      return;
+    }
+    if (passwords.newPassword !== passwords.confirmPassword) {
+      setMsg({ type: 'error', text: 'New passwords do not match.' });
+      return;
+    }
+
+    setLoading(true);
+    setMsg({ type: '', text: '' });
+
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        // Reauthenticate the user first before updating the password
+        const credential = EmailAuthProvider.credential(user.email, passwords.currentPassword);
+        await reauthenticateWithCredential(user, credential);
+        
+        await updatePassword(user, passwords.newPassword);
+        setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        setIsPasswordEditable(false);
+        setMsg({ type: 'success', text: 'Password updated successfully!' });
+      } else {
+        throw new Error('No authenticated user found.');
+      }
+    } catch (error) {
+      console.error('Password update failed:', error);
+      let errMsg = 'Failed to update password.';
+      if (error.code === 'auth/wrong-password') {
+        errMsg = 'Incorrect current password.';
+      } else if (error.code === 'auth/weak-password') {
+        errMsg = 'Password must be at least 6 characters.';
+      } else {
+        errMsg = error.message || errMsg;
+      }
+      setMsg({ type: 'error', text: errMsg });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = () => {
+    if (otpInput.trim() === '1234') { // Mock verification logic matching farmer's verification OTP
+      setIsPasswordEditable(true);
+      setShowOtpModal(false);
+      setOtpInput('');
+      setMsg({ type: 'success', text: 'OTP verification successful. You can now edit your password.' });
+    } else {
+      alert('Invalid OTP. Please enter the verification code 1234.');
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl p-8 text-white animate-fadeIn" style={{ background: 'var(--theme-profile-gradient)' }}>
+        <h1 className="text-3xl mb-2 flex items-center gap-3" style={{ color: '#ffffff', margin: 0 }}>
+          <Settings className="w-8 h-8" /> Settings
+        </h1>
+        <p className="text-lg" style={{ color: 'rgba(255, 255, 255, 0.9)', margin: 0 }}>Manage your preferences and security settings</p>
+      </div>
+
+      {msg.text && (
+        <div className={`p-4 rounded-xl border ${
+          msg.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'
+        }`}>
+          {msg.text}
+        </div>
+      )}
+
+      <div className="grid md:grid-cols-2 gap-6">
+        
+        {/* Language Preferences Card */}
+        <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
+          <h2 className="text-xl text-primary font-bold mb-4">🌐 Preferences</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Language Preference</label>
+              <select
+                value={settings.languagePreference}
+                onChange={(e) => handleLanguageChange(e.target.value)}
+                className="w-full px-4 py-3 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+              >
+                <option value="en">English</option>
+                <option value="si">සිංහල</option>
+                <option value="ta">தமிழ்</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Notifications Preference Card */}
+        <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
+          <h2 className="text-xl text-primary font-bold mb-4">🔔 Notification Preferences</h2>
+          <div className="space-y-3">
+            {[
+              { key: 'orderStatusUpdates', label: 'Order Status Updates' },
+              { key: 'promotions', label: 'Promotions and Special Deals' },
+              { key: 'communityFeed', label: 'Community Feed Activity Alerts' },
+              { key: 'chatbotAlerts', label: 'Smart Assistant Notifications' }
+            ].map(item => (
+              <label key={item.key} className="flex items-center gap-3 text-sm text-foreground cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={settings.notifications[item.key]}
+                  onChange={(e) => handleNotifChange(item.key, e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                />
+                <span>{item.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Security / Password Change Card */}
+        <div className="bg-white rounded-2xl shadow-lg border border-green-100 p-6 md:col-span-2">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl text-primary font-bold">🔒 Security & Password</h2>
+            {!isPasswordEditable && (
+              <button
+                type="button"
+                onClick={() => setShowOtpModal(true)}
+                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+              >
+                Change Password
+              </button>
+            )}
+          </div>
+
+          {isPasswordEditable ? (
+            <form onSubmit={handlePasswordSave} className="space-y-4">
+              <div className="grid md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Current Password *</label>
+                  <input
+                    type="password"
+                    value={passwords.currentPassword}
+                    onChange={(e) => setPasswords({ ...passwords, currentPassword: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                    placeholder="Your current password"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">New Password *</label>
+                  <input
+                    type="password"
+                    value={passwords.newPassword}
+                    onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                    placeholder="Min 6 characters"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Confirm New Password *</label>
+                  <input
+                    type="password"
+                    value={passwords.confirmPassword}
+                    onChange={(e) => setPasswords({ ...passwords, confirmPassword: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                    placeholder="Retype new password"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50"
+                >
+                  {loading ? 'Updating...' : 'Save New Password'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsPasswordEditable(false)}
+                  className="px-6 py-2.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : (
+            <p className="text-sm text-muted-foreground">Click the change password button to set up a new password for your account security.</p>
+          )}
+        </div>
+
+        {/* Account Deactivation Card */}
+        <div className="bg-white rounded-2xl shadow-lg border border-red-100 p-6 md:col-span-2">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl text-primary font-bold">
+              🚨 Account Deactivation
+            </h2>
+          </div>
+
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0 p-3 bg-red-50 rounded-xl border border-red-100">
+              <AlertCircle className="w-6 h-6 text-red-600" />
+            </div>
+
+            <div className="flex-1">
+              <p className="text-sm text-muted-foreground mb-5">
+                Deleting your account is <span className="font-semibold text-red-600">permanent</span> and cannot be undone.
+                All your order history, connections, requests, and personal data will be
+                permanently removed from our database.
+              </p>
+
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(true)}
+                className="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+              >
+                Delete Account
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* OTP Verification Modal */}
+      {showOtpModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <h3 className="text-lg font-bold text-primary mb-2">Security Verification</h3>
+            <p className="text-sm text-muted-foreground mb-4">We\'ve sent a mock verification code. Please enter <strong>1234</strong> to authenticate password changes.</p>
+            <input
+              type="text"
+              maxLength={4}
+              value={otpInput}
+              onChange={(e) => setOtpInput(e.target.value)}
+              className="w-full px-4 py-3 bg-gray-50 rounded-lg border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary text-center text-xl font-bold tracking-widest text-foreground mb-4"
+              placeholder="••••"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={handleVerifyOtp}
+                className="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-green-700 transition-colors font-semibold"
+              >
+                Verify Code
+              </button>
+              <button
+                onClick={() => { setShowOtpModal(false); setOtpInput(''); }}
+                className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Deletion Warning Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center animate-fadeIn">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Settings className="w-8 h-8 text-red-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Are you absolutely sure?</h3>
+            <p className="text-sm text-muted-foreground mb-6">This action cannot be undone. Account deletion will be handled later with backend security protocols.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { alert('Account deletion will be processed later.'); setShowDeleteModal(false); }}
+                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-bold"
+              >
+                Yes, Delete
+              </button>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

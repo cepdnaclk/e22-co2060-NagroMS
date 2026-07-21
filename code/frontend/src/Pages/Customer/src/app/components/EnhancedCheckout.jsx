@@ -156,7 +156,10 @@ export function EnhancedCheckoutSection({ uid, cart, profile, getCartTotal, getT
       }
 
       console.log(`Placing ${orderPromises.length} orders for farmer(s)...`);
-      await Promise.all(orderPromises);
+      const results = await Promise.all(orderPromises);
+      if (results.includes(null)) {
+        throw new Error('One or more orders failed to save.');
+      }
 
       setOrderPlaced(true);
       setTimeout(() => {
@@ -192,11 +195,11 @@ export function EnhancedCheckoutSection({ uid, cart, profile, getCartTotal, getT
     <div className="space-y-6">
 
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-purple-600 to-purple-500 rounded-2xl p-8 text-white">
-        <h1 className="text-3xl mb-2 flex items-center gap-3">
+      <div className="rounded-2xl p-8 text-white" style={{ background: 'var(--theme-cart-gradient)' }}>
+        <h1 className="text-3xl mb-2 flex items-center gap-3" style={{ color: '#ffffff', margin: 0 }}>
           <Check className="w-8 h-8 bg-white/20 rounded-full p-1" /> {t('customer.checkout.title') || 'Checkout'}
         </h1>
-        <p className="text-purple-100 text-lg">{t('customer.checkout.subtitle') || 'Review your order and confirm delivery details'}</p>
+        <p className="text-lg" style={{ color: 'rgba(255, 255, 255, 0.9)', margin: 0 }}>{t('customer.checkout.subtitle') || 'Review your order and confirm delivery details'}</p>
       </div>
 
       {/* Delivery Address */}
@@ -540,7 +543,7 @@ export function EnhancedCheckoutSection({ uid, cart, profile, getCartTotal, getT
         <div className="pt-4 mt-6 space-y-3">
           <button
             onClick={handlePlaceOrder}
-            disabled={!isAddressComplete || (paymentMethod === 'bank-transfer' && !paymentReceipt) || !phoneVerified}
+            disabled={!isAddressComplete || (paymentMethod === 'bank-transfer' && !paymentReceipt)}
             className="w-full py-4 bg-primary text-white rounded-xl text-lg font-bold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             <Check className="w-6 h-6" />

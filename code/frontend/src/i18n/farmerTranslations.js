@@ -1,7 +1,7 @@
-const farmerTranslations = {
+﻿const farmerTranslations = {
   en: {
     farmer: {
-            header: {
+      header: {
         activeFarmer: 'Active Farmer',
         languageEnglish: 'English',
         languageSinhala: 'Sinhala',
@@ -192,7 +192,7 @@ const farmerTranslations = {
         submitAddProduct: 'නිෂ්පාදනය එක් කරන්න',
         noIncomingOrders: 'තවම ලැබෙන ඇණවුම් නැත.',
 
-title: 'දළ විශ්ලේෂණය', myProducts: 'මගේ නිෂ්පාදන', addProduct: 'නිෂ්පාදනයක් එක් කරන්න', addFirstProduct: 'ඔබේ පළමු නිෂ්පාදනය එක් කරන්න',
+        title: 'දළ විශ්ලේෂණය', myProducts: 'මගේ නිෂ්පාදන', addProduct: 'නිෂ්පාදනයක් එක් කරන්න', addFirstProduct: 'ඔබේ පළමු නිෂ්පාදනය එක් කරන්න',
         welcome: 'NagroMS වෙත සාදරයෙන් පිළිගනිමු!', noProductsText: "ඔබ තවමත් නිෂ්පාදන කිසිවක් එක් කර නොමැත.",
         available: 'පවතින', totalPrice: 'මුළු මුදල', status: 'තත්ත්වය', added: 'එක් කරන ලදි', editProduct: 'නිෂ්පාදනය සංස්කරණය',
         deleteProduct: 'නිෂ්පාදනය මකන්න', sales: 'විකුණුම්', totalRevenue: 'මුළු ආදායම', noSales: 'තවමත් විකුණුම් නැත.',
@@ -220,14 +220,14 @@ title: 'දළ විශ්ලේෂණය', myProducts: 'මගේ නිෂ්
         thursday: 'බ්‍රහස්පතින්දා', friday: 'සිකුරාදා', saturday: 'සෙනසුරාදා', sunday: 'ඉරිදා'
       },
       services: {
-        
-transportTitle: 'ප්රවාහන සේවාව',
+
+        transportTitle: 'ප්රවාහන සේවාව',
         transportDesc: 'ඔබගේ නිෂ්පාදන පාරිභෝගිකයින්ට හෝ වෙළඳපොළට බෙදා හැරීමට ප්රවාහන සහාය ඉල්ලන්න.',
         reqTransport: 'ප්රවාහනය ඉල්ලන්න',
         bankTitle: 'බැංකු විස්තර',
         bankDesc: 'පාරිභෝගික ගෙවීම් ලබා ගැනීමට ඔබගේ බැංකු ගිණුම් විස්තර කළමනාකරණය කරන්න.',
         manageBank: 'බැංකු විස්තර කළමනාකරණය',
-title: 'සේවාවන්', expertConsultation: 'විශේෂඥ උපදේශන', availableExperts: 'පවතින විශේෂඥයින්', viewProfile: 'පැතිකඩ බලන්න',
+        title: 'සේවාවන්', expertConsultation: 'විශේෂඥ උපදේශන', availableExperts: 'පවතින විශේෂඥයින්', viewProfile: 'පැතිකඩ බලන්න',
         sendRequest: 'ඉල්ලීමක් යවන්න', consultationMessage: 'උපදේශන පණිවිඩය', requestSent: 'ඉල්ලීම යවන ලදි', noExperts: 'විශේෂඥයින් නොමැත.',
         farmerUpdates: 'ගොවි යාවත්කාලීන කිරීම්', postUpdate: 'යාවත්කාලීනයක් පළ කරන්න', updateTitle: 'යාවත්කාලීන ශීර්ෂය', updateDescription: 'විස්තරය',
         noUpdates: 'තවමත් යාවත්කාලීන කිරීම් නොමැත.'
@@ -340,7 +340,7 @@ title: 'සේවාවන්', expertConsultation: 'විශේෂඥ උප�
         submitAddProduct: 'தயாரிப்பைச் சேர்க்கவும்',
         noIncomingOrders: 'இன்னும் வரும் ஆர்டர்கள் இல்லை.',
 
-title: 'கண்ணோட்டம்', myProducts: 'எனது தயாரிப்புகள்', addProduct: 'தயாரிப்பைச் சேர்', addFirstProduct: 'உங்கள் முதல் தயாரிப்பைச் சேர்',
+        title: 'கண்ணோட்டம்', myProducts: 'எனது தயாரிப்புகள்', addProduct: 'தயாரிப்பைச் சேர்', addFirstProduct: 'உங்கள் முதல் தயாரிப்பைச் சேர்',
         welcome: 'NagroMS க்கு வரவேற்கிறோம்!', noProductsText: "நீங்கள் இன்னும் எந்த தயாரிப்புகளையும் சேர்க்கவில்லை.",
         available: 'கையிருப்பு', totalPrice: 'மொத்த விலை', status: 'நிலை', added: 'சேர்க்கப்பட்டது', editProduct: 'திருத்து',
         deleteProduct: 'அழி', sales: 'விற்பனை', totalRevenue: 'மொத்த வருவாய்', noSales: 'இன்னும் விற்பனை இல்லை.',
@@ -368,14 +368,14 @@ title: 'கண்ணோட்டம்', myProducts: 'எனது தயார�
         thursday: 'வியாழன்', friday: 'வெள்ளி', saturday: 'சனி', sunday: 'ஞாயிறு'
       },
       services: {
-        
-transportTitle: 'போக்குவரத்து சேவை',
+
+        transportTitle: 'போக்குவரத்து சேவை',
         transportDesc: 'உங்கள் தயாரிப்புகளை வாடிக்கையாளர்கள் அல்லது சந்தைகளுக்கு கொண்டு செல்ல போக்குவரத்து உதவியை கோருங்கள்.',
         reqTransport: 'போக்குவரத்து கோருங்கள்',
         bankTitle: 'வங்கி விவரங்கள்',
         bankDesc: 'வாடிக்கையாளர் பணப்பரிவர்த்தனைகளை பெற உங்கள் வங்கி கணக்கு விவரங்களை நிர்வகிக்கவும்.',
         manageBank: 'வங்கி விவரங்களை நிர்வகிக்கவும்',
-title: 'சேவைகள்', expertConsultation: 'நிபுணர் ஆலோசனை', availableExperts: 'கிடைக்கக்கூடிய நிபுணர்கள்', viewProfile: 'சுயவிவரத்தைக் காண்',
+        title: 'சேவைகள்', expertConsultation: 'நிபுணர் ஆலோசனை', availableExperts: 'கிடைக்கக்கூடிய நிபுணர்கள்', viewProfile: 'சுயவிவரத்தைக் காண்',
         sendRequest: 'கோரிக்கையை அனுப்பு', consultationMessage: 'ஆலோசனை செய்தி', requestSent: 'கோரிக்கை அனுப்பப்பட்டது', noExperts: 'நிபுணர்கள் இல்லை.',
         farmerUpdates: 'விவசாயி புதுப்பிப்புகள்', postUpdate: 'புதுப்பிப்பை இடுகையிடு', updateTitle: 'தலைப்பு', updateDescription: 'விளக்கம்',
         noUpdates: 'புதுப்பிப்புகள் இல்லை.'

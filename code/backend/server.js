@@ -13,6 +13,8 @@ const authRoutes = require('./routes/authRoutes');
 const farmerRoutes = require('./routes/farmerRoutes');
 const weatherRoutes = require('./routes/weatherRoutes');
 const chatbotRoutes = require('./routes/chatbotRoutes');
+const expertRoutes = require('./routes/expertRoutes');
+const networkRoutes = require('./routes/networkRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -63,6 +65,8 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/farmer', farmerRoutes);
 app.use('/api/weather', weatherRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/expert', expertRoutes);
+app.use('/api/network', networkRoutes);
 
 // Add other routes when ready:
 app.use('/api/expert',   require('./routes/expertRoutes'));
