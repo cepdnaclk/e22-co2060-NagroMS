@@ -1,3 +1,4 @@
+![Uploading WhatsApp Image 2026-07-21 at 15.55.44.jpeg…]()
 **NagroMS – Networked Agro Management System**
 
 CO2060 – Second Year Software Engineering Project
