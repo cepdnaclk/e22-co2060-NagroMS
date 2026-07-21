@@ -144,9 +144,11 @@ const translations = {
         browse: 'Browse Products',
         cart: 'My Cart',
         orders: 'Order History',
+        requests: 'Product Requests',
         profile: 'My Profile',
         community: 'Community',
         checkout: 'Checkout',
+        settings: 'Settings',
         logout: 'Logout'
       },
       checkout: {
@@ -336,9 +338,11 @@ const translations = {
         browse: 'නිෂ්පාදන බලන්න',
         cart: 'මගේ කරත්තය',
         orders: 'ඇණවුම් ඉතිහාසය',
+        requests: 'නිෂ්පාදන ඉල්ලීම්',
         profile: 'මගේ පැතිකඩ',
         community: 'ප්‍රජාව',
         checkout: 'ගෙවීම් පිටුව',
+        settings: 'සැකසුම්',
         logout: 'ඉවත් වන්න'
       },
       checkout: {
@@ -527,9 +531,11 @@ const translations = {
         browse: 'பொருட்களை உலாவுக',
         cart: 'என் வண்டி',
         orders: 'ஆர்டர் வரலாறு',
+        requests: 'பொருள் கோரிக்கைகள்',
         profile: 'என் சுயவிவரம்',
         community: 'சமூகம்',
         checkout: 'வெளியேறுதல்',
+        settings: 'அமைப்புகள்',
         logout: 'வெளியேறு'
       },
       checkout: {
