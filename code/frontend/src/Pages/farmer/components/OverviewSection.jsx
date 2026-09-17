@@ -269,27 +269,58 @@ const DEFAULT_CROP_IMAGE = 'https://images.unsplash.com/photo-1500937386664-56d1
           return;
         }
         
+        const pNameLower2 = formData.productName.toLowerCase();
+        let category2 = 'vegetables';
+        if (pNameLower2.includes('mango') || pNameLower2.includes('banana') || pNameLower2.includes('papaya') || pNameLower2.includes('apple') || pNameLower2.includes('orange') || pNameLower2.includes('fruit')) category2 = 'fruits';
+        else if (pNameLower2.includes('rice') || pNameLower2.includes('corn') || pNameLower2.includes('wheat') || pNameLower2.includes('grain') || pNameLower2.includes('paddy')) category2 = 'grains';
+
         await updateDoc(doc(db, 'products', editProductId), {
           productName: formData.productName,
+          name: formData.productName,
           quantity: quantityNum,
           unit: formData.unit,
           pricePerUnit: priceNum,
+          price: priceNum,
           totalPrice: quantityNum * priceNum,
           stockStatus: formData.stockStatus,
           imageUrl: imageUrl,
           farmerId: user.uid,
+          farmer: profile?.fullName || profile?.businessName || profile?.contactPersonName || 'Farmer',
+          location: profile?.villageTown || profile?.district || '',
+          district: profile?.villageTown || profile?.district || '',
+          farmerPhone: profile?.phone || '',
+          category: category2,
+          available: `${quantityNum} ${formData.unit}`,
           updatedAt: serverTimestamp()
         });
       } else {
+        // Determine category from product name
+        const pNameLower = formData.productName.toLowerCase();
+        let category = 'vegetables';
+        if (pNameLower.includes('mango') || pNameLower.includes('banana') || pNameLower.includes('papaya') || pNameLower.includes('apple') || pNameLower.includes('orange') || pNameLower.includes('fruit')) category = 'fruits';
+        else if (pNameLower.includes('rice') || pNameLower.includes('corn') || pNameLower.includes('wheat') || pNameLower.includes('grain') || pNameLower.includes('paddy')) category = 'grains';
+
+        const farmerName = profile?.fullName || profile?.businessName || profile?.contactPersonName || 'Farmer';
+        const farmerLocation = profile?.villageTown || profile?.district || '';
+        const farmerPhone = profile?.phone || '';
+
         const newProduct = {
           productName: formData.productName,
+          name: formData.productName,
           quantity: quantityNum,
           unit: formData.unit,
           pricePerUnit: priceNum,
+          price: priceNum,
           totalPrice: quantityNum * priceNum,
           stockStatus: formData.stockStatus,
           imageUrl: imageUrl,
           farmerId: user.uid,
+          farmer: farmerName,
+          location: farmerLocation,
+          district: farmerLocation,
+          farmerPhone: farmerPhone,
+          category: category,
+          available: `${quantityNum} ${formData.unit}`,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         };
