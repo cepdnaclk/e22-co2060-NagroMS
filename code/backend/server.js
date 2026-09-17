@@ -50,6 +50,15 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
+// ── Root Route ────────────────────────────────────────────────
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Welcome to the NagroMS API! 🌾',
+    documentation: 'This is the backend server for NagroMS. Please use the /api endpoints to interact with the application.',
+  });
+});
+
 // ── Health check ─────────────────────────────────────────────
 app.get('/health', (req, res) => {
   res.status(200).json({
@@ -107,6 +116,8 @@ const startServer = (port) => {
   });
 };
 
-startServer(Number(PORT));
+if (process.env.NODE_ENV !== 'production') {
+  startServer(Number(PORT));
+}
 
 module.exports = app;

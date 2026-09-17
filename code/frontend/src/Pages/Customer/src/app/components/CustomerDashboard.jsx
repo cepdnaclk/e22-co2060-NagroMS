@@ -31,7 +31,7 @@ import {
 from 'lucide-react';
 
 import { auth, db } from '../../../../../utils/firebase.js';
-import { onAuthStateChanged, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
+import { onAuthStateChanged, signOut, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import '../../styles/index.css';
 import { 
@@ -113,54 +113,55 @@ export function CustomerDashboard({ onNavigate }) {
     postalCode: ''
   });
 
-  // ├ö├╢├ç├ö├╢├ç LOAD DATA FROM FIREBASE ON LOGIN ├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç
+  // ─── LOAD DATA & SUBSCRIBE TO REAL-TIME MARKETPLACE ──────────────
   useEffect(() => {
-    console.log("CustomerDashboard useEffect mounted, calling onAuthStateChanged...");
     let unsubProducts;
     let unsubOrders;
-    
-    // Safety timeout: force loading to false after 3 seconds no matter what
-    const timeoutId = setTimeout(() => {
-      if (loading) {
-        console.warn("Safety timeout triggered: Forcing loading to false.");
-        setLoading(false);
-      }
-    }, 3000);
 
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      console.log("onAuthStateChanged fired! User:", user ? user.uid : "null");
+    // Safety timeout to ensure UI never hangs
+    const timeoutId = setTimeout(() => {
+      setLoading(false);
+    }, 2000);
+
+    // 1. ALWAYS subscribe to real-time products for ALL visitors (guest & authenticated)
+    try {
+      unsubProducts = subscribeToProducts((realtimeProducts) => {
+        if (realtimeProducts && realtimeProducts.length > 0) {
+          setProducts(realtimeProducts);
+        }
+        setLoading(false);
+      });
+    } catch (e) {
+      console.warn('Error subscribing to products:', e);
+      setLoading(false);
+    }
+
+    // 2. Auth listener for customer-specific profile, cart, and orders
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
       try {
         if (user) {
           setUid(user.uid);
 
-          console.log("Loading profile...");
           const firestoreProfile = await loadCustomerProfile(user.uid);
           if (firestoreProfile) setProfile(firestoreProfile);
 
-          console.log("Loading cart...");
           try {
             const savedCart = await loadCart(user.uid);
             if (savedCart && savedCart.length > 0) setCart(savedCart);
           } catch (e) {
-            console.error("Error loading cart:", e);
+            console.warn("Cart load error:", e);
           } finally {
             setCartLoaded(true);
           }
 
-          console.log("Subscribing to products...");
-          unsubProducts = subscribeToProducts((realtimeProducts) => {
-            if (realtimeProducts) setProducts(realtimeProducts);
-          });
-
-          console.log("Subscribing to orders...");
           unsubOrders = subscribeToCustomerOrders(user.uid, (realtimeOrders) => {
             if (realtimeOrders) setFirestoreOrders(realtimeOrders);
           });
-          
-          console.log("Finished loading data!");
+        } else {
+          setCartLoaded(true);
         }
       } catch (err) {
-        console.error("Error during data loading:", err);
+        console.error("Auth state load error:", err);
       } finally {
         setLoading(false);
       }
@@ -168,11 +169,10 @@ export function CustomerDashboard({ onNavigate }) {
 
     return () => {
       clearTimeout(timeoutId);
-      unsubscribe();
       if (unsubProducts) unsubProducts();
       if (unsubOrders) unsubOrders();
+      unsubscribeAuth();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ├ö├╢├ç├ö├╢├ç AUTO-SAVE CART TO FIRESTORE WHEN IT CHANGES ├ö├╢├ç├ö├╢├ç
@@ -182,35 +182,11 @@ export function CustomerDashboard({ onNavigate }) {
     }
   }, [cart, uid, cartLoaded]);
 
-  // ├ö├╢├ç├ö├╢├ç DEMO NOTIFICATIONS ├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç
+  // ─── NOTIFICATIONS INITIALIZATION ──────────────────────────────
   useEffect(() => {
-    const demoNotifications = [
-      {
-        id: Date.now() + 1,
-        type: 'product-available',
-        title: '✅ Your Requested Product is Now Available!',
-        message: 'Fresh Mangoes (Organic) that you requested is now available from Farmer Pradeep in Anuradhapura',
-        productName: 'Fresh Mangoes (Organic)',
-        farmerName: 'Farmer Pradeep',
-        location: 'Anuradhapura',
-        read: false,
-        timestamp: new Date().toISOString()
-      },
-      {
-        id: Date.now() + 2,
-        type: 'product-available',
-        title: '✅ Product Available',
-        message: 'Organic Carrots that you requested is now available from Farmer Nimal in Kandy',
-        productName: 'Organic Carrots',
-        farmerName: 'Farmer Nimal',
-        location: 'Kandy',
-        read: false,
-        timestamp: new Date().toISOString()
-      }
-    ];
     const existing = localStorage.getItem('customerNotifications');
     if (!existing) {
-      localStorage.setItem('customerNotifications', JSON.stringify(demoNotifications));
+      localStorage.setItem('customerNotifications', JSON.stringify([]));
     }
   }, []);
 
@@ -449,7 +425,10 @@ export function CustomerDashboard({ onNavigate }) {
             icon={<LogOut size={20} />}
             label={t('customer.sidebar.logout') || "Logout"}
             active={false}
-            onClick={() => onNavigate('landing')}
+            onClick={async () => {
+              try { await signOut(auth); } catch(e) { console.warn('Sign out error:', e); }
+              onNavigate('landing');
+            }}
           />
         </div>
       </div>

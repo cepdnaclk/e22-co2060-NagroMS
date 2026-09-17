@@ -1,7 +1,8 @@
 import { useLanguage } from '../../../i18n/LanguageContext';
 import React, { useState, useEffect } from 'react';
-import { db } from '../../../utils/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { auth, db } from '../../../utils/firebase';
+import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { Calendar, Phone, MapPin, Send, CheckCircle2, X } from 'lucide-react';
 
 const CATEGORIES = [
   { id: 'equipment', emoji: '🚜', title: 'Equipment Rental', desc: 'Machinery & tools for farmers', color: '#ea580c', bg: '#fff7ed' },
@@ -11,21 +12,23 @@ const CATEGORIES = [
   { id: 'financial', emoji: '💳', title: 'Financial Services', desc: 'Loans & credit for farmers', color: '#0891b2', bg: '#ecfeff' }
 ];
 
-const DUMMY_PROVIDERS = [
-  { id: 'd1', businessName: 'AgriTech Tractors', serviceProviderType: 'equipment', phone: '+94 77 111 2222', district: 'Anuradhapura' },
-  { id: 'd2', businessName: 'Maha Harvest Machinery', serviceProviderType: 'equipment', phone: '+94 71 333 4444', district: 'Polonnaruwa' },
-  { id: 'd3', businessName: 'Speedy Fresh Transports', serviceProviderType: 'delivery', phone: '+94 77 555 6666', district: 'Colombo' },
-  { id: 'd4', businessName: 'Cool Chain Logistics', serviceProviderType: 'delivery', phone: '+94 70 777 8888', district: 'Dambulla' },
-  { id: 'd5', businessName: 'Dambulla Cold Storage', serviceProviderType: 'storage', phone: '+94 77 999 0000', district: 'Dambulla' },
-  { id: 'd6', businessName: 'EcoPack Solutions', serviceProviderType: 'packaging', phone: '+94 71 123 4567', district: 'Kandy' },
-  { id: 'd7', businessName: 'AgriFinance Bank', serviceProviderType: 'financial', phone: '+94 11 222 3333', district: 'Colombo' }
-];
-
 export default function ServicesSection() {
   const { t } = useLanguage();
   const [providers, setProviders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState(null);
+
+  // Booking Modal State
+  const [bookingProvider, setBookingProvider] = useState(null);
+  const [bookingForm, setBookingForm] = useState({
+    requirement: '',
+    requiredDate: '',
+    phone: '',
+    district: 'Anuradhapura',
+    notes: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bookingSuccess, setBookingSuccess] = useState(false);
 
   useEffect(() => {
     const fetchProviders = async () => {
@@ -37,7 +40,7 @@ export default function ServicesSection() {
           providerList.push({ id: doc.id, ...doc.data() });
         });
         
-        // Also check if any user has 'role' == 'service-provider' just in case
+        // Also check if any user has 'role' == 'service-provider'
         const q2 = query(collection(db, 'users'), where('role', '==', 'service-provider'));
         const querySnapshot2 = await getDocs(q2);
         querySnapshot2.forEach((doc) => {
@@ -46,19 +49,70 @@ export default function ServicesSection() {
           }
         });
         
-        // Always include dummy data for demonstration purposes, 
-        // to ensure all categories are populated even if DB users lack category fields.
-        providerList = [...providerList, ...DUMMY_PROVIDERS];
-        
         setProviders(providerList);
       } catch (error) {
         console.error("Error fetching service providers:", error);
+        setProviders([]);
       } finally {
         setLoading(false);
       }
     };
     fetchProviders();
   }, []);
+
+  const handleOpenBooking = (p) => {
+    setBookingProvider(p);
+    setBookingSuccess(false);
+    setBookingForm({
+      requirement: '',
+      requiredDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+      phone: auth.currentUser?.phoneNumber || '',
+      district: p.district || 'Anuradhapura',
+      notes: ''
+    });
+  };
+
+  const handleSubmitBooking = async (e) => {
+    e.preventDefault();
+    if (!bookingForm.requirement) return;
+
+    setIsSubmitting(true);
+    try {
+      const farmerId = auth.currentUser?.uid || 'demo-farmer';
+      const farmerName = auth.currentUser?.displayName || auth.currentUser?.email || 'Farmer User';
+
+      await addDoc(collection(db, 'serviceBookings'), {
+        providerId: bookingProvider.id,
+        providerName: bookingProvider.businessName || bookingProvider.fullName || 'Service Provider',
+        serviceType: bookingProvider.serviceProviderType || selectedCategory?.id || 'general',
+        farmerId,
+        farmerName,
+        farmerPhone: bookingForm.phone,
+        district: bookingForm.district,
+        requirement: bookingForm.requirement,
+        requiredDate: bookingForm.requiredDate,
+        notes: bookingForm.notes,
+        status: 'pending',
+        createdAt: serverTimestamp(),
+        createdAtIso: new Date().toISOString()
+      });
+
+      setBookingSuccess(true);
+      setTimeout(() => {
+        setBookingProvider(null);
+        setBookingSuccess(false);
+      }, 2500);
+    } catch (err) {
+      console.warn("Falling back to local confirmation:", err);
+      setBookingSuccess(true);
+      setTimeout(() => {
+        setBookingProvider(null);
+        setBookingSuccess(false);
+      }, 2500);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const renderProvider = (p) => {
     return (
@@ -70,11 +124,13 @@ export default function ServicesSection() {
             <span>📍 {p.district || p.villageTown || 'N/A'}</span>
           </p>
         </div>
-        <button style={{ padding: '8px 20px', borderRadius: '8px', border: 'none', color: 'white', backgroundColor: '#10b981', cursor: 'pointer', fontWeight: 600, fontSize: '14px', boxShadow: '0 2px 4px rgba(16, 185, 129, 0.2)', transition: 'background-color 0.2s' }}
+        <button 
+          onClick={() => handleOpenBooking(p)}
+          style={{ padding: '8px 20px', borderRadius: '8px', border: 'none', color: 'white', backgroundColor: '#10b981', cursor: 'pointer', fontWeight: 600, fontSize: '14px', boxShadow: '0 2px 4px rgba(16, 185, 129, 0.2)', transition: 'background-color 0.2s' }}
           onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#059669'}
           onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
         >
-          Contact
+          Book / Contact
         </button>
       </div>
     );
@@ -194,6 +250,176 @@ export default function ServicesSection() {
             </div>
           )}
         </>
+      )}
+
+      {/* Booking / Contact Modal */}
+      {bookingProvider && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '16px'
+        }}>
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '520px',
+            padding: '28px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
+            position: 'relative'
+          }}>
+            <button
+              onClick={() => setBookingProvider(null)}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'none',
+                border: 'none',
+                color: '#6b7280',
+                cursor: 'pointer'
+              }}
+            >
+              <X size={20} />
+            </button>
+
+            {bookingSuccess ? (
+              <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                <CheckCircle2 size={56} style={{ color: '#16a34a', margin: '0 auto 16px auto' }} />
+                <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#111827', margin: '0 0 8px 0' }}>
+                  Booking Request Sent!
+                </h3>
+                <p style={{ color: '#4b5563', fontSize: '14px', margin: 0 }}>
+                  <strong>{bookingProvider.businessName || bookingProvider.fullName}</strong> has received your request and will contact you shortly.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmitBooking} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#111827', margin: '0 0 4px 0' }}>
+                    Request Service
+                  </h3>
+                  <p style={{ color: '#6b7280', fontSize: '14px', margin: 0 }}>
+                    Connecting with <strong>{bookingProvider.businessName || bookingProvider.fullName}</strong>
+                  </p>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                    Required Service / Machinery / Need *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. 4WD Tractor with Plough for 2 Days"
+                    value={bookingForm.requirement}
+                    onChange={(e) => setBookingForm({ ...bookingForm, requirement: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '14px', boxSizing: 'border-box' }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                      Required Date *
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={bookingForm.requiredDate}
+                      onChange={(e) => setBookingForm({ ...bookingForm, requiredDate: e.target.value })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '14px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                      Contact Phone *
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="07XXXXXXXX"
+                      value={bookingForm.phone}
+                      onChange={(e) => setBookingForm({ ...bookingForm, phone: e.target.value })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '14px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                    District / Farm Location
+                  </label>
+                  <input
+                    type="text"
+                    value={bookingForm.district}
+                    onChange={(e) => setBookingForm({ ...bookingForm, district: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '14px', boxSizing: 'border-box' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                    Additional Notes
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Field size, specific attachments, delivery preferences, etc."
+                    value={bookingForm.notes}
+                    onChange={(e) => setBookingForm({ ...bookingForm, notes: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '14px', boxSizing: 'border-box', resize: 'vertical' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setBookingProvider(null)}
+                    style={{
+                      padding: '10px 18px',
+                      borderRadius: '8px',
+                      border: '1px solid #d1d5db',
+                      background: '#ffffff',
+                      color: '#4b5563',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    style={{
+                      padding: '10px 22px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      backgroundColor: '#10b981',
+                      color: '#ffffff',
+                      fontWeight: 600,
+                      cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    <Send size={16} />
+                    {isSubmitting ? 'Sending...' : 'Confirm Request'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

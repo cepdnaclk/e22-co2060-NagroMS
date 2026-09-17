@@ -9,11 +9,13 @@ import {
   Leaf,
   Bell,
   Menu,
-  X
+  X,
+  FileText
 } from 'lucide-react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import OverviewSection from './components/OverviewSection';
 import ManagementSection from './components/ManagementSection';
+import RequestsSection from './components/RequestsSection';
 import ServicesSection from './components/ServicesSection';
 import ChatbotSection from './components/ChatbotSection';
 import CommunitySection from './components/CommunitySection';
@@ -32,6 +34,8 @@ export function FarmerDashboard() {
         return <OverviewSection setActiveTab={setActiveTab} />;
       case 'management':
         return <ManagementSection />;
+      case 'requests':
+        return <RequestsSection />;
       case 'services':
         return <ServicesSection />;
       case 'chatbot':
@@ -100,6 +104,12 @@ export function FarmerDashboard() {
             label={t('farmer.sidebar.management') || 'Management'}
             isActive={activeTab === 'management'}
             onClick={() => setActiveTab('management')}
+          />
+          <SidebarItem
+            icon={<FileText size={20} />}
+            label={t('farmer.sidebar.requests') || 'Customer Requests'}
+            isActive={activeTab === 'requests'}
+            onClick={() => setActiveTab('requests')}
           />
           <SidebarItem
             icon={<Truck size={20} />}
