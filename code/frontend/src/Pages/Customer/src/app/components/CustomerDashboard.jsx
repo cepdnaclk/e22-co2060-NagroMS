@@ -25,8 +25,10 @@ import {
   Send,
   ChevronDown,
   PlusCircle,
-  Settings,
-  AlertCircle
+  AlertCircle,
+  Tractor,
+  GraduationCap,
+  Wrench
 } 
 from 'lucide-react';
 
@@ -54,8 +56,9 @@ import { NotificationCenter } from './NotificationCenter';
 import { EnhancedCheckoutSection } from './EnhancedCheckout';
 import { EnhancedOrdersSection } from './EnhancedOrders';
 import CommunityNetwork from '../../../../../components/Network/CommunityNetwork';
-
-
+import FarmersListSection from './FarmersListSection';
+import ExpertsListSection from './ExpertsListSection';
+import ServiceProvidersSection from './ServiceProvidersSection';
 
 // Delivery fee calculation based on district distance
 const DISTRICT_DELIVERY_FEES = {
@@ -353,6 +356,12 @@ export function CustomerDashboard({ onNavigate }) {
         />;
       case 'orders':
         return <EnhancedOrdersSection pastOrders={ordersToShow} uid={uid} />;
+      case 'farmers':
+        return <FarmersListSection />;
+      case 'experts':
+        return <ExpertsListSection />;
+      case 'serviceProviders':
+        return <ServiceProvidersSection />;
       case 'community':
         return <CommunityNetwork currentUserRole="customer" products={products} currentUserId={uid} />;
       case 'requests':
@@ -412,6 +421,9 @@ export function CustomerDashboard({ onNavigate }) {
           <SidebarButton icon={<FileText size={20} />} label={t('customer.sidebar.requests') || "Product Requests"} active={activeSection === 'requests'} onClick={() => setActiveSection('requests')} />
           <SidebarButton icon={<UserCircle size={20} />} label={t('customer.sidebar.profile') || "My Profile"} active={activeSection === 'profile'} onClick={() => setActiveSection('profile')} />
           <SidebarButton icon={<User size={20} />} label={t('customer.sidebar.community') || "Community"} active={activeSection === 'community'} onClick={() => setActiveSection('community')} />
+          <SidebarButton icon={<Tractor size={20} />} label={"Farmers"} active={activeSection === 'farmers'} onClick={() => setActiveSection('farmers')} />
+          <SidebarButton icon={<GraduationCap size={20} />} label={"Experts"} active={activeSection === 'experts'} onClick={() => setActiveSection('experts')} />
+          <SidebarButton icon={<Wrench size={20} />} label={"Service Providers"} active={activeSection === 'serviceProviders'} onClick={() => setActiveSection('serviceProviders')} />
         </nav>
 
         <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>

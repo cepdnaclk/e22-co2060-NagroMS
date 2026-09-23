@@ -16,6 +16,7 @@ import KnowledgeBase from './Pages/expert/Knowledgebase.jsx';
 import MyFarmers from './Pages/expert/MyFarmers.jsx';
 import ConnectionRequests from './Pages/expert/ConnectionRequests.jsx';
 import Settings from './Pages/expert/Settings.jsx';
+import Followers from './Pages/expert/Followers.jsx';
 // Farmer dashboard
 import { FarmerDashboard } from './Pages/farmer/farmerDashboard.jsx';
 
@@ -65,6 +66,7 @@ export default function App() {
           <Route path="knowledge" element={<KnowledgeBase />} />
           <Route path="farmers" element={<MyFarmers />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="followers" element={<Followers />} />
         </Route>
 
         {/* Farmer Dashboard Route */}
