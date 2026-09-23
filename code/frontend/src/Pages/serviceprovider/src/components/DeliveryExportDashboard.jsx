@@ -13,21 +13,46 @@ import {
 } from 'recharts';
 import { db } from '../../../../utils/firebase.js'; // Firebase integration
 import { 
-    collection, onSnapshot, doc, updateDoc, addDoc, getDocs, writeBatch 
+    collection, onSnapshot, doc, updateDoc, addDoc, getDocs, writeBatch, setDoc 
 } from 'firebase/firestore';
+import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+  iconUrl: require('leaflet/dist/images/marker-icon.png'),
+  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+});
+
+const truckIcon = new L.Icon({
+  iconUrl: 'https://cdn-icons-png.flaticon.com/512/713/713311.png',
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
+  popupAnchor: [0, -16],
+});
+
+const userIcon = L.divIcon({
+  className: 'custom-div-icon',
+  html: `<div style="background-color: #3b82f6; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 4px rgba(59,130,246,0.3), 0 4px 6px rgba(0,0,0,0.1);"></div>`,
+  iconSize: [22, 22],
+  iconAnchor: [11, 11]
+});
 
 const ds = {
     sidebar: 'linear-gradient(170deg,#0f172a 0%,#1e3a8a 50%,#0f172a 100%)',
     blue: '#2563eb', blueLt: '#eff6ff', blueBd: '#bfdbfe',
     green: '#16a34a', greenLt: '#f0fdf4', greenBd: '#dcfce7',
-    bg: '#f3f4f6', surface: '#ffffff',
-    border: '#e5e7eb', borderLt: '#f3f4f6',
-    text: '#111827', textSec: '#4b5563', textTer: '#9ca3af',
-    shadow: '0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.02)',
+    bg: '#f1f5f9', surface: '#ffffff',
+    border: '#e2e8f0', borderLt: '#f8fafc',
+    text: '#0f172a', textSec: '#475569', textTer: '#94a3b8',
+    shadow: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
+    shadowMd: '0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04)',
     fontD: "'Plus Jakarta Sans',sans-serif",
     fontB: "'Inter',sans-serif",
     fontM: "'JetBrains Mono',monospace",
-    amber: '#d97706', amberLt: '#fef3c7', amberBd: '#fde68a',
+    amber: '#d97706', amberLt: '#fffbeb', amberBd: '#fde68a',
     red: '#dc2626', redLt: '#fef2f2', redBd: '#fecaca',
     purple: '#8b5cf6', purpleLt: '#f5f3ff', purpleBd: '#ddd6fe',
     teal: '#0891b2', tealLt: '#ecfeff', tealBd: '#a5f3fc',
@@ -235,55 +260,72 @@ function DashboardHome({ setSection, onQuickAction, deliveries, exports, shipmen
     const active = shipments.filter(s => s.status === 'In Transit').length;
     const pending = deliveries.filter(d => d.status === 'Pending').length;
     const completed = deliveries.filter(d => d.status === 'Delivered').length;
+    const totalRevenue = deliveries.reduce((sum, d) => sum + (d.price || 0), 0);
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-                <KpiCard label="Total Requests" value={String(deliveries.length)} sub="All local deliveries" icon={<Package style={{ width: 18, height: 18 }} />} iconBg={ds.blueLt} iconColor={ds.blue} />
-                <KpiCard label="Active Deliveries" value={String(active)} sub="In transit shipments" icon={<Truck style={{ width: 18, height: 18 }} />} iconBg={ds.tealLt} iconColor={ds.teal} />
-                <KpiCard label="Pending Orders" value={String(pending)} sub="Requires response" icon={<Clock style={{ width: 18, height: 18 }} />} iconBg={ds.amberLt} iconColor={ds.amber} />
-                <KpiCard label="Monthly Revenue" value="Rs 651K" sub="Current Month (Jul)" icon={<TrendingUp style={{ width: 18, height: 18 }} />} iconBg={ds.greenLt} iconColor={ds.green} />
-            </div>
-
-            <div style={{ background: ds.surface, borderRadius: 18, border: `1px solid ${ds.border}`, padding: '20px', boxShadow: ds.shadow }}>
-                <h3 style={{ fontFamily: ds.fontD, fontSize: 14, fontWeight: 700, color: ds.text, margin: '0 0 12px 0' }}>Logistics Quick Actions</h3>
-                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                    <button onClick={() => onQuickAction('add-vehicle')} style={{ padding: '10px 16px', background: ds.blue, color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: ds.fontB, fontSize: 13, fontWeight: 600 }}>+ Add Vehicle</button>
-                    <button onClick={() => onQuickAction('assign-driver')} style={{ padding: '10px 16px', background: '#f3f4f6', color: ds.text, border: `1px solid ${ds.border}`, borderRadius: 8, cursor: 'pointer', fontFamily: ds.fontB, fontSize: 13, fontWeight: 600 }}>Assign Driver</button>
-                    <button onClick={() => onQuickAction('update-shipment')} style={{ padding: '10px 16px', background: '#f3f4f6', color: ds.text, border: `1px solid ${ds.border}`, borderRadius: 8, cursor: 'pointer', fontFamily: ds.fontB, fontSize: 13, fontWeight: 600 }}>Update Shipment</button>
-                    <button onClick={() => onQuickAction('create-export')} style={{ padding: '10px 16px', background: '#f3f4f6', color: ds.text, border: `1px solid ${ds.border}`, borderRadius: 8, cursor: 'pointer', fontFamily: ds.fontB, fontSize: 13, fontWeight: 600 }}>Create Export Order</button>
-                </div>
+                <KpiCard label="Total Requests" value={String(deliveries.length)} sub={`${completed} completed`} icon={<Package style={{ width: 18, height: 18 }} />} iconBg={ds.blueLt} iconColor={ds.blue} trend="+12%" />
+                <KpiCard label="Active in Transit" value={String(active)} sub="Live GPS tracking" icon={<Truck style={{ width: 18, height: 18 }} />} iconBg={ds.tealLt} iconColor={ds.teal} trend="+2 today" />
+                <KpiCard label="Pending Dispatch" value={String(pending)} sub="Awaiting acceptance" icon={<Clock style={{ width: 18, height: 18 }} />} iconBg={ds.amberLt} iconColor={ds.amber} trend={pending > 0 ? `${pending} urgent` : 'All clear'} trendUp={pending === 0} />
+                <KpiCard label="Monthly Revenue" value={`Rs ${(totalRevenue/1000).toFixed(0)}K`} sub="Current month total" icon={<TrendingUp style={{ width: 18, height: 18 }} />} iconBg={ds.greenLt} iconColor={ds.green} trend="+8.3%" />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px' }}>
                 <div style={{ background: ds.surface, borderRadius: 18, border: `1px solid ${ds.border}`, padding: '20px', boxShadow: ds.shadow }}>
-                    <h3 style={{ fontFamily: ds.fontD, fontSize: 14, fontWeight: 700, color: ds.text, margin: '0 0 16px 0' }}>Monthly Shipping Trends</h3>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+                        <div>
+                            <h3 style={{ fontFamily: ds.fontD, fontSize: 15, fontWeight: 700, color: ds.text, margin: '0 0 4px 0' }}>Monthly Shipping Trends</h3>
+                            <p style={{ margin: 0, fontSize: 12, color: ds.textSec }}>Deliveries and exports over the last 7 months</p>
+                        </div>
+                    </div>
                     <ResponsiveContainer width="100%" height={220}>
-                        <LineChart data={MONTHLY}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                            <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                            <YAxis tick={{ fontSize: 11 }} />
-                            <Tooltip />
-                            <Legend />
-                            <Line type="monotone" dataKey="deliveries" stroke={ds.blue} name="Local Deliveries" strokeWidth={2} />
-                            <Line type="monotone" dataKey="exports" stroke={ds.purple} name="Exports Processed" strokeWidth={2} />
-                        </LineChart>
+                        <BarChart data={MONTHLY} barGap={4}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                            <XAxis dataKey="month" tick={{ fontSize: 11, fill: ds.textTer }} axisLine={false} tickLine={false} />
+                            <YAxis tick={{ fontSize: 11, fill: ds.textTer }} axisLine={false} tickLine={false} />
+                            <Tooltip contentStyle={{ borderRadius: 10, border: `1px solid ${ds.border}`, boxShadow: ds.shadowMd, fontFamily: ds.fontB, fontSize: 12 }} />
+                            <Legend wrapperStyle={{ fontSize: 12, fontFamily: ds.fontB }} />
+                            <Bar dataKey="deliveries" fill={ds.blue} name="Local Deliveries" radius={[4,4,0,0]} />
+                            <Bar dataKey="exports" fill={ds.purple} name="Exports" radius={[4,4,0,0]} />
+                        </BarChart>
                     </ResponsiveContainer>
                 </div>
 
-                <div style={{ background: ds.surface, borderRadius: 18, border: `1px solid ${ds.border}`, padding: '20px', boxShadow: ds.shadow }}>
-                    <h3 style={{ fontFamily: ds.fontD, fontSize: 14, fontWeight: 700, color: ds.text, margin: '0 0 16px 0' }}>Recent Dispatch Alerts</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        {deliveries.slice(0, 4).map((d, idx) => (
-                            <div key={idx} style={{ display: 'flex', gap: 10, fontSize: 12 }}>
-                                <span style={{ fontSize: 16 }}>📋</span>
-                                <div>
-                                    <p style={{ margin: 0, fontWeight: 600, color: ds.text }}>{d.id}: {d.product} ({d.qty})</p>
-                                    <p style={{ margin: 0, fontSize: 10, color: ds.textSec }}>Route: {d.pickup} → {d.drop}</p>
+                <div style={{ background: ds.surface, borderRadius: 18, border: `1px solid ${ds.border}`, padding: '20px', boxShadow: ds.shadow, display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                        <h3 style={{ fontFamily: ds.fontD, fontSize: 15, fontWeight: 700, color: ds.text, margin: 0 }}>Pending Dispatch</h3>
+                        <span style={{ background: ds.amberLt, color: ds.amber, fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 99, border: `1px solid ${ds.amberBd}` }}>{pending} urgent</span>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, overflowY: 'auto' }}>
+                        {deliveries.filter(d => d.status === 'Pending').slice(0, 4).map((d) => (
+                            <div key={d.id} style={{ display: 'flex', gap: 12, padding: '12px', background: ds.bg, borderRadius: 12, border: `1px solid ${ds.border}`, alignItems: 'flex-start' }}>
+                                <div style={{ width: 36, height: 36, borderRadius: 10, background: ds.amberLt, color: ds.amber, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                    <Package size={18} />
+                                </div>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <p style={{ margin: '0 0 2px 0', fontSize: 12, fontWeight: 600, color: ds.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.product} <span style={{ color: ds.textTer, fontWeight: 400 }}>({d.qty})</span></p>
+                                    <p style={{ margin: 0, fontSize: 11, color: ds.textSec }}>{d.pickup} → {d.drop}</p>
                                 </div>
                             </div>
                         ))}
+                        {pending === 0 && <p style={{ fontSize: 13, color: ds.textSec, textAlign: 'center', marginTop: 40 }}>No pending dispatch alerts. ✅</p>}
                     </div>
+                    <button onClick={() => setSection('delivery')} style={{ width: '100%', padding: '10px', background: ds.blue, color: '#fff', border: 'none', borderRadius: 10, fontWeight: 600, fontFamily: ds.fontB, fontSize: 13, marginTop: 16, cursor: 'pointer' }}>View All Requests</button>
+                </div>
+            </div>
+
+            <div style={{ background: ds.surface, borderRadius: 18, border: `1px solid ${ds.border}`, padding: '20px', boxShadow: ds.shadow }}>
+                <h3 style={{ fontFamily: ds.fontD, fontSize: 15, fontWeight: 700, color: ds.text, margin: '0 0 14px 0' }}>Quick Actions</h3>
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                    {[
+                        { label: '+ Add Vehicle', action: 'add-vehicle', bg: ds.blue, color: '#fff', border: 'none' },
+                        { label: '👤 Assign Driver', action: 'assign-driver', bg: '#fff', color: ds.text, border: `1px solid ${ds.border}` },
+                        { label: '📦 Track Shipment', action: 'update-shipment', bg: '#fff', color: ds.text, border: `1px solid ${ds.border}` },
+                        { label: '✈️ Export Order', action: 'create-export', bg: '#fff', color: ds.text, border: `1px solid ${ds.border}` },
+                    ].map(btn => (
+                        <button key={btn.action} onClick={() => onQuickAction(btn.action)} style={{ padding: '10px 18px', background: btn.bg, color: btn.color, border: btn.border, borderRadius: 10, cursor: 'pointer', fontFamily: ds.fontB, fontSize: 13, fontWeight: 600, transition: 'opacity 0.15s' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.85'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>{btn.label}</button>
+                    ))}
                 </div>
             </div>
         </div>
@@ -291,64 +333,113 @@ function DashboardHome({ setSection, onQuickAction, deliveries, exports, shipmen
 }
 
 function DeliveryRequests({ deliveries, handleAction }) {
+    const [dispatching, setDispatching] = useState(null);
+
     return (
-        <div style={{ background: ds.surface, borderRadius: 18, border: `1px solid ${ds.border}`, overflow: 'hidden', boxShadow: ds.shadow }}>
-            <div style={{ padding: '16px 20px', borderBottom: `1px solid ${ds.border}` }}>
-                <h3 style={{ fontFamily: ds.fontD, fontSize: 14, fontWeight: 700, color: ds.text, margin: 0 }}>Pending Farmer Transport Orders</h3>
-            </div>
-            <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                        <tr>
-                            <TH>Order ID</TH>
-                            <TH>Farmer</TH>
-                            <TH>Customer Drop</TH>
-                            <TH>Product</TH>
-                            <TH>Weight / Qty</TH>
-                            <TH>Price Bid</TH>
-                            <TH>Distance</TH>
-                            <TH>Submission Date</TH>
-                            <TH>Status</TH>
-                            <TH>Actions</TH>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {deliveries.map(d => (
-                            <tr key={d.id}>
-                                <TD mono>{d.id}</TD>
-                                <TD>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                        <span>{d.farmerIcon}</span>
-                                        <strong>{d.farmer}</strong>
-                                    </div>
-                                </TD>
-                                <TD>
-                                    <div>
-                                        <p style={{ margin: 0, fontWeight: 600 }}>{d.customer}</p>
-                                        <p style={{ margin: 0, fontSize: 10, color: ds.textSec }}>Route: {d.pickup} → {d.drop}</p>
-                                    </div>
-                                </TD>
-                                <TD>{d.product}</TD>
-                                <TD mono>{d.qty}</TD>
-                                <TD mono style={{ fontWeight: 600 }}>Rs {d.price.toLocaleString()}</TD>
-                                <TD mono>{d.distance}</TD>
-                                <TD mono>{d.date}</TD>
-                                <TD><Badge label={d.status} cfg={delStatusCfg[d.status]} /></TD>
-                                <TD>
-                                    {d.status === 'Pending' ? (
-                                        <div style={{ display: 'flex', gap: 6 }}>
-                                            <button onClick={() => handleAction(d.id, 'Accepted')} style={{ padding: '4px 8px', background: ds.blue, border: 'none', color: '#fff', borderRadius: 4, cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>Accept</button>
-                                            <button onClick={() => handleAction(d.id, 'Rejected')} style={{ padding: '4px 8px', background: ds.red, border: 'none', color: '#fff', borderRadius: 4, cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>Reject</button>
-                                        </div>
-                                    ) : (
-                                        <span style={{ fontSize: 12, color: ds.textSec }}>Accepted & Logged</span>
-                                    )}
-                                </TD>
+        <div style={{ position: 'relative' }}>
+            <div style={{ background: ds.surface, borderRadius: 18, border: `1px solid ${ds.border}`, overflow: 'hidden', boxShadow: ds.shadow }}>
+                <div style={{ padding: '18px 24px', borderBottom: `1px solid ${ds.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                        <h3 style={{ fontFamily: ds.fontD, fontSize: 16, fontWeight: 700, color: ds.text, margin: '0 0 2px 0' }}>Pending Farmer Transport Orders</h3>
+                        <p style={{ margin: 0, fontSize: 12, color: ds.textSec }}>Accept or reject incoming delivery requests from farmers</p>
+                    </div>
+                    <span style={{ background: ds.amberLt, color: ds.amber, fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 99, border: `1px solid ${ds.amberBd}` }}>{deliveries.filter(d => d.status === 'Pending').length} Pending</span>
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                            <tr>
+                                <TH>Order ID</TH>
+                                <TH>Farmer</TH>
+                                <TH>Route</TH>
+                                <TH>Cargo</TH>
+                                <TH>Price Bid</TH>
+                                <TH>Date</TH>
+                                <TH>Status</TH>
+                                <TH>Actions</TH>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {deliveries.map(d => (
+                                <tr key={d.id} style={{ transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'} onMouseLeave={e => e.currentTarget.style.background = ''}>
+                                    <TD mono>{d.id}</TD>
+                                    <TD>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <div style={{ width: 32, height: 32, borderRadius: 8, background: ds.greenLt, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>{d.farmerIcon}</div>
+                                            <div>
+                                                <p style={{ margin: 0, fontWeight: 600, fontSize: 13 }}>{d.farmer}</p>
+                                            </div>
+                                        </div>
+                                    </TD>
+                                    <TD>
+                                        <div>
+                                            <p style={{ margin: 0, fontWeight: 600, fontSize: 12 }}>{d.pickup}</p>
+                                            <p style={{ margin: 0, fontSize: 11, color: ds.textSec }}>→ {d.drop} <span style={{ color: ds.textTer }}>({d.distance})</span></p>
+                                        </div>
+                                    </TD>
+                                    <TD>
+                                        <p style={{ margin: 0, fontWeight: 600, fontSize: 13 }}>{d.product}</p>
+                                        <p style={{ margin: 0, fontSize: 11, color: ds.textSec }}>{d.qty}</p>
+                                    </TD>
+                                    <TD><span style={{ fontFamily: ds.fontM, fontWeight: 700, color: ds.blue }}>Rs {d.price.toLocaleString()}</span></TD>
+                                    <TD><span style={{ fontFamily: ds.fontM, fontSize: 12 }}>{d.date}</span></TD>
+                                    <TD><Badge label={d.status} cfg={delStatusCfg[d.status]} /></TD>
+                                    <TD>
+                                        {d.status === 'Pending' ? (
+                                            <div style={{ display: 'flex', gap: 6 }}>
+                                                <button onClick={() => setDispatching(d)} style={{ padding: '6px 12px', background: ds.blue, border: 'none', color: '#fff', borderRadius: 7, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>Accept & Assign</button>
+                                                <button onClick={() => handleAction(d.id, 'Rejected')} style={{ padding: '6px 10px', background: ds.redLt, border: `1px solid ${ds.redBd}`, color: ds.red, borderRadius: 7, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>Reject</button>
+                                            </div>
+                                        ) : (
+                                            <span style={{ fontSize: 12, color: ds.textTer, fontStyle: 'italic' }}>Logged</span>
+                                        )}
+                                    </TD>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
+
+            {/* Dispatch Modal */}
+            {dispatching && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setDispatching(null)}>
+                    <div style={{ background: ds.surface, borderRadius: 20, padding: 32, width: 480, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', border: `1px solid ${ds.border}` }} onClick={e => e.stopPropagation()}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                            <div>
+                                <h2 style={{ fontFamily: ds.fontD, fontSize: 18, fontWeight: 700, margin: '0 0 4px 0', color: ds.text }}>Assign & Dispatch</h2>
+                                <p style={{ margin: 0, fontSize: 13, color: ds.textSec }}>Select a driver for order {dispatching.id}</p>
+                            </div>
+                            <button onClick={() => setDispatching(null)} style={{ background: ds.bg, border: `1px solid ${ds.border}`, borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: ds.textSec }}><X size={16} /></button>
+                        </div>
+
+                        <div style={{ background: ds.bg, borderRadius: 12, padding: 16, marginBottom: 20, border: `1px solid ${ds.border}` }}>
+                            <p style={{ margin: '0 0 4px 0', fontSize: 11, fontWeight: 600, color: ds.textTer, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Order Details</p>
+                            <p style={{ margin: '0 0 2px 0', fontWeight: 700, fontSize: 15, color: ds.text }}>{dispatching.product} — {dispatching.qty}</p>
+                            <p style={{ margin: 0, fontSize: 13, color: ds.textSec }}>{dispatching.pickup} → {dispatching.drop} ({dispatching.distance})</p>
+                        </div>
+
+                        <p style={{ margin: '0 0 10px 0', fontSize: 13, fontWeight: 600, color: ds.text }}>Available Fleet</p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 260, overflowY: 'auto' }}>
+                            {SEED_VEHICLES.filter(v => v.status === 'Available').map(v => (
+                                <div key={v.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', border: `1px solid ${ds.border}`, borderRadius: 12, background: ds.bg }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                        <div style={{ width: 40, height: 40, borderRadius: 10, background: ds.blueLt, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{v.emoji}</div>
+                                        <div>
+                                            <p style={{ margin: 0, fontWeight: 600, fontSize: 14, color: ds.text }}>{v.driver}</p>
+                                            <p style={{ margin: 0, fontSize: 12, color: ds.textSec }}>{v.type} · {v.plate} · {v.capacity}</p>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => { handleAction(dispatching.id, 'Accepted'); setDispatching(null); }} style={{ padding: '8px 16px', background: ds.blue, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Assign</button>
+                                </div>
+                            ))}
+                            {SEED_VEHICLES.filter(v => v.status === 'Available').length === 0 && (
+                                <p style={{ textAlign: 'center', color: ds.textSec, fontSize: 13, padding: 20 }}>No vehicles available right now.</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -412,101 +503,88 @@ function ExportRequests({ exports, handleAction }) {
     );
 }
 
-// ─── Live SVG Map of Sri Lanka displaying Driver telemetry coordinates ───────
-function LiveSriLankaMap({ shipments, selectedShipment, setSelectedShipment, gpsAccess }) {
-    // Map dimensions
-    const width = 280;
-    const height = 480;
+function MapRecenter({ location }) {
+    const map = useMap();
+    useEffect(() => {
+        if (location) {
+            map.flyTo([location.lat, location.lng], 11, { animate: true, duration: 1.2 });
+        }
+    }, [location, map]);
+    return null;
+}
 
-    // Approximate lat/lng to XY projections for Sri Lanka
-    // Latitude range: 5.9° N to 9.9° N (bottom to top)
-    // Longitude range: 79.5° E to 81.9° E (left to right)
-    const project = (lat, lng) => {
-        const x = ((lng - 79.5) / (81.9 - 79.5)) * width;
-        const y = height - ((lat - 5.9) / (9.9 - 5.9)) * height;
-        return { x, y };
-    };
-
+// ─── Real Leaflet Map displaying Driver telemetry coordinates ───────
+function LiveSriLankaMap({ shipments, selectedShipment, setSelectedShipment, gpsAccess, userLocation }) {
     return (
-        <div style={{ position: 'relative', background: '#eff6ff', borderRadius: 16, padding: '16px', border: `1px solid ${ds.blueBd}`, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ position: 'relative', background: '#eff6ff', borderRadius: 16, padding: '16px', border: `1px solid ${ds.blueBd}`, display: 'flex', flexDirection: 'column' }}>
             <div style={{ width: '100%', display: 'flex', justify: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                 <span style={{ fontSize: 12, fontWeight: 700, color: ds.blue }}>Island-wide Telemetry Map</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: gpsAccess ? ds.green : ds.red, display: 'inline-block' }}></span>
-                    <span style={{ fontSize: 10, color: ds.textSec }}>{gpsAccess ? 'Browser GPS Enabled' : 'GPS Simulation'}</span>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: gpsAccess ? ds.green : ds.amber, display: 'inline-block' }}></span>
+                    <span style={{ fontSize: 10, color: ds.textSec }}>{gpsAccess ? 'Browser GPS Enabled' : 'Simulating GPS'}</span>
                 </div>
             </div>
 
-            {/* Sri Lanka SVG Map representation */}
-            <div style={{ position: 'relative', width, height, background: '#e0f2fe', borderRadius: 12, overflow: 'hidden', border: `1px solid ${ds.border}` }}>
-                <svg width={width} height={height} style={{ display: 'block' }}>
-                    {/* Simplified SVG Outline of Sri Lanka coastline */}
-                    <path 
-                        d="M 120,20 C 130,25 150,50 160,80 C 170,110 185,150 190,180 C 195,210 210,240 220,280 C 225,320 220,360 200,400 C 180,440 160,460 140,465 C 120,470 100,465 95,455 C 80,440 75,410 70,390 C 65,370 60,330 65,290 C 70,250 80,210 85,180 C 90,150 95,110 100,80 C 105,50 115,25 120,20 Z" 
-                        fill="#fef08a" 
-                        stroke="#ca8a04" 
-                        strokeWidth="1.5"
+            <div style={{ width: '100%', height: 480, borderRadius: 12, overflow: 'hidden', border: `1px solid ${ds.border}` }}>
+                <MapContainer center={[7.8731, 80.7718]} zoom={7} style={{ width: '100%', height: '100%' }}>
+                    <TileLayer
+                        attribution='&copy; OpenStreetMap'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     />
+                    
+                    {selectedShipment?.gps && (
+                        <MapRecenter location={{ lat: selectedShipment.gps.driverLat, lng: selectedShipment.gps.driverLng }} />
+                    )}
 
-                    {/* Major cities indicators */}
-                    {[
-                        { name: 'Jaffna', lat: 9.6615, lng: 80.0255 },
-                        { name: 'Anuradhapura', lat: 8.3122, lng: 80.4037 },
-                        { name: 'Trincomalee', lat: 8.5775, lng: 81.2335 },
-                        { name: 'Kandy', lat: 7.2906, lng: 80.6337 },
-                        { name: 'Colombo', lat: 6.9271, lng: 79.8612 },
-                        { name: 'Galle', lat: 6.0535, lng: 80.2210 }
-                    ].map(city => {
-                        const pt = project(city.lat, city.lng);
-                        return (
-                            <g key={city.name}>
-                                <circle cx={pt.x} cy={pt.y} r="3" fill="#ca8a04" opacity="0.6" />
-                                <text x={pt.x + 5} y={pt.y + 3} fontSize="8" fontFamily={ds.fontB} fill={ds.textSec} opacity="0.7">{city.name}</text>
-                            </g>
-                        );
-                    })}
+                    {userLocation && (
+                        <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon}>
+                            <Popup><strong>Your Location</strong></Popup>
+                        </Marker>
+                    )}
 
-                    {/* Active Shipment Routes & Driver dots */}
                     {shipments.map(s => {
                         if (!s.gps) return null;
-                        const pickupPt = project(s.gps.pickupLat, s.gps.pickupLng);
-                        const dropPt = project(s.gps.dropLat, s.gps.dropLng);
-                        const driverPt = project(s.gps.driverLat, s.gps.driverLng);
                         const isSelected = selectedShipment?.id === s.id;
-
                         return (
-                            <g key={s.id} onClick={() => setSelectedShipment(s)} style={{ cursor: 'pointer' }}>
-                                {/* Route Line */}
-                                <line 
-                                    x1={pickupPt.x} y1={pickupPt.y} 
-                                    x2={dropPt.x} y2={dropPt.y} 
-                                    stroke={isSelected ? ds.blue : ds.textTer} 
-                                    strokeWidth={isSelected ? '2' : '1'} 
-                                    strokeDasharray="4"
+                            <div key={s.id}>
+                                {/* Route lines */}
+                                <Polyline 
+                                    positions={[
+                                        [s.gps.pickupLat, s.gps.pickupLng], 
+                                        [s.gps.driverLat, s.gps.driverLng]
+                                    ]} 
+                                    pathOptions={{ color: ds.blue, weight: 4 }} 
+                                />
+                                <Polyline 
+                                    positions={[
+                                        [s.gps.driverLat, s.gps.driverLng], 
+                                        [s.gps.dropLat, s.gps.dropLng]
+                                    ]} 
+                                    pathOptions={{ color: ds.textTer, weight: 4, dashArray: '5, 5' }} 
                                 />
 
-                                {/* Pickup Marker */}
-                                <circle cx={pickupPt.x} cy={pickupPt.y} r="4.5" fill={ds.amber} stroke="#fff" strokeWidth="1" />
-                                
-                                {/* Drop Marker */}
-                                <circle cx={dropPt.x} cy={dropPt.y} r="4.5" fill={ds.green} stroke="#fff" strokeWidth="1" />
+                                {/* Pickup marker */}
+                                <Marker position={[s.gps.pickupLat, s.gps.pickupLng]}>
+                                    <Popup><strong>Pickup</strong><br/>{s.from}</Popup>
+                                </Marker>
 
-                                {/* Driver Dot */}
-                                <circle cx={driverPt.x} cy={driverPt.y} r="6" fill={ds.blue} stroke="#fff" strokeWidth="1.5">
-                                    <animate attributeName="r" values="5;8;5" dur="1.5s" repeatCount="indefinite" />
-                                </circle>
+                                {/* Drop marker */}
+                                <Marker position={[s.gps.dropLat, s.gps.dropLng]}>
+                                    <Popup><strong>Drop-off</strong><br/>{s.to}</Popup>
+                                </Marker>
 
-                                {/* Hover tooltip details label */}
-                                {isSelected && (
-                                    <g>
-                                        <rect x={driverPt.x - 35} y={driverPt.y - 24} width="70" height="15" rx="3" fill="#1e293b" opacity="0.9" />
-                                        <text x={driverPt.x} y={driverPt.y - 14} fontSize="8.5" fill="#fff" textAnchor="middle" fontWeight="bold">{s.id}</text>
-                                    </g>
-                                )}
-                            </g>
+                                {/* Driver marker */}
+                                <Marker position={[s.gps.driverLat, s.gps.driverLng]} icon={truckIcon} eventHandlers={{ click: () => setSelectedShipment(s) }}>
+                                    <Popup>
+                                        <strong>{s.id}</strong><br/>
+                                        Driver: {s.driver}<br/>
+                                        Progress: {s.progress}%
+                                    </Popup>
+                                </Marker>
+                            </div>
                         );
                     })}
-                </svg>
+                </MapContainer>
             </div>
 
             {/* Selected shipment overlay card */}
@@ -528,8 +606,21 @@ function LiveSriLankaMap({ shipments, selectedShipment, setSelectedShipment, gps
     );
 }
 
-function ShipmentTracking({ shipments, vehicles, handleGpsAccess, gpsAccess, handleUpdateProgress }) {
+function ShipmentTracking({ shipments, vehicles, handleGpsAccess, gpsAccess, handleUpdateProgress, userLocation }) {
     const [selectedShipment, setSelectedShipment] = useState(shipments[0] || null);
+    const [simulating, setSimulating] = useState({});
+
+    // 5-second automatic simulation
+    useEffect(() => {
+        const interval = setInterval(() => {
+            shipments.forEach(s => {
+                if (simulating[s.id] && s.progress < 100 && s.status === 'In Transit') {
+                    handleUpdateProgress(s.id, Math.min(100, s.progress + 3));
+                }
+            });
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [simulating, shipments, handleUpdateProgress]);
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -581,8 +672,16 @@ function ShipmentTracking({ shipments, vehicles, handleGpsAccess, gpsAccess, han
                             {/* Increment/Decrement control to test GPS movement */}
                             {s.status === 'In Transit' && (
                                 <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                                    <button onClick={(e) => { e.stopPropagation(); handleUpdateProgress(s.id, Math.min(100, s.progress + 10)); }} style={{ padding: '4px 8px', background: ds.blueLt, color: ds.blue, border: 'none', borderRadius: 4, fontSize: 10, cursor: 'pointer', fontWeight: 600 }}>Simulate Movement (+10%)</button>
-                                    <button onClick={(e) => { e.stopPropagation(); handleUpdateProgress(s.id, 100); }} style={{ padding: '4px 8px', background: ds.greenLt, color: ds.green, border: 'none', borderRadius: 4, fontSize: 10, cursor: 'pointer', fontWeight: 600 }}>Complete Delivery</button>
+                                    <button 
+                                        onClick={(e) => { 
+                                            e.stopPropagation(); 
+                                            setSimulating(prev => ({ ...prev, [s.id]: !prev[s.id] })); 
+                                        }} 
+                                        style={{ padding: '6px 12px', background: simulating[s.id] ? ds.amberLt : ds.blueLt, color: simulating[s.id] ? ds.amber : ds.blue, border: 'none', borderRadius: 6, fontSize: 11, cursor: 'pointer', fontWeight: 600 }}
+                                    >
+                                        {simulating[s.id] ? '⏸ Pause Transit' : '🚚 Start Transit (GPS On)'}
+                                    </button>
+                                    <button onClick={(e) => { e.stopPropagation(); handleUpdateProgress(s.id, 100); }} style={{ padding: '6px 12px', background: ds.greenLt, color: ds.green, border: 'none', borderRadius: 6, fontSize: 11, cursor: 'pointer', fontWeight: 600 }}>Complete Delivery</button>
                                 </div>
                             )}
                         </div>
@@ -594,6 +693,7 @@ function ShipmentTracking({ shipments, vehicles, handleGpsAccess, gpsAccess, han
                     selectedShipment={selectedShipment} 
                     setSelectedShipment={setSelectedShipment} 
                     gpsAccess={gpsAccess} 
+                    userLocation={userLocation}
                 />
             </div>
         </div>
@@ -1007,6 +1107,14 @@ export default function DeliveryExportDashboard({ onNavigate }) {
     const [shipments, setShipments] = useState([]);
     const [vehicles, setVehicles] = useState([]);
     const [gpsAccess, setGpsAccess] = useState(false);
+    const [userLocation, setUserLocation] = useState(null);
+
+    const userIcon = L.divIcon({
+        className: 'custom-user-icon',
+        html: '<div style="background: #2563eb; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.3);"></div>',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7]
+    });
 
     // ── Real-time Database Synchronization via Firestore ───────────────────────
     useEffect(() => {
@@ -1086,6 +1194,7 @@ export default function DeliveryExportDashboard({ onNavigate }) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         setGpsAccess(true);
+                        setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
                         alert(`GPS access granted! Your coordinates: Lat ${position.coords.latitude.toFixed(4)} / Lng ${position.coords.longitude.toFixed(4)}. Simulating nearby fleet driver tracking.`);
                         // Move one in-transit driver close to user coordinates
                         const activeTransit = shipments.find(s => s.status === 'In Transit');
@@ -1107,6 +1216,7 @@ export default function DeliveryExportDashboard({ onNavigate }) {
             }
         } else {
             setGpsAccess(false);
+            setUserLocation(null);
             alert('GPS device location feed disabled.');
         }
     };
@@ -1175,7 +1285,7 @@ export default function DeliveryExportDashboard({ onNavigate }) {
                     }
                 };
                 // Save shipment document
-                await addDoc(collection(db, 'shipments'), newShip);
+                await setDoc(doc(db, 'shipments', d.id), newShip);
             }
         }
     };
@@ -1215,7 +1325,7 @@ export default function DeliveryExportDashboard({ onNavigate }) {
             case 'export':
                 return <ExportRequests exports={exports} handleAction={handleAction} />;
             case 'tracking':
-                return <ShipmentTracking shipments={shipments} vehicles={vehicles} handleGpsAccess={handleGpsAccess} gpsAccess={gpsAccess} handleUpdateProgress={handleUpdateProgress} />;
+                return <ShipmentTracking shipments={shipments} vehicles={vehicles} handleGpsAccess={handleGpsAccess} gpsAccess={gpsAccess} handleUpdateProgress={handleUpdateProgress} userLocation={userLocation} />;
             case 'vehicles':
                 return <VehiclesDrivers vehicles={vehicles} handleAddVehicle={handleAddVehicle} />;
             case 'history':
