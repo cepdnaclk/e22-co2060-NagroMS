@@ -25,6 +25,8 @@ export default function ServicesSection() {
     requiredDate: '',
     phone: '',
     district: 'Anuradhapura',
+    durationDays: 1,
+    proposedCost: '',
     notes: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,6 +70,8 @@ export default function ServicesSection() {
       requiredDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
       phone: auth.currentUser?.phoneNumber || '',
       district: p.district || 'Anuradhapura',
+      durationDays: 1,
+      proposedCost: '',
       notes: ''
     });
   };
@@ -91,6 +95,8 @@ export default function ServicesSection() {
         district: bookingForm.district,
         requirement: bookingForm.requirement,
         requiredDate: bookingForm.requiredDate,
+        durationDays: Number(bookingForm.durationDays) || 1,
+        proposedCost: Number(bookingForm.proposedCost) || 0,
         notes: bookingForm.notes,
         status: 'pending',
         createdAt: serverTimestamp(),
@@ -342,6 +348,22 @@ export default function ServicesSection() {
 
                   <div>
                     <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                      Duration (Days) *
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      value={bookingForm.durationDays}
+                      onChange={(e) => setBookingForm({ ...bookingForm, durationDays: e.target.value })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '14px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
                       Contact Phone *
                     </label>
                     <input
@@ -350,6 +372,19 @@ export default function ServicesSection() {
                       placeholder="07XXXXXXXX"
                       value={bookingForm.phone}
                       onChange={(e) => setBookingForm({ ...bookingForm, phone: e.target.value })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '14px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                      Proposed Cost (Rs)
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="e.g. 5000"
+                      value={bookingForm.proposedCost}
+                      onChange={(e) => setBookingForm({ ...bookingForm, proposedCost: e.target.value })}
                       style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '14px', boxSizing: 'border-box' }}
                     />
                   </div>

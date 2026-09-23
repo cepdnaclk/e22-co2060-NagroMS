@@ -14,7 +14,7 @@ import {
 import { db, auth } from '../../../../utils/firebase.js'; // Firebase integration
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { 
-    collection, onSnapshot, doc, updateDoc, addDoc, getDocs, writeBatch, setDoc 
+    collection, onSnapshot, doc, updateDoc, addDoc, getDocs, writeBatch, setDoc, deleteDoc
 } from 'firebase/firestore';
 import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -68,12 +68,6 @@ const SEED_DELIVERIES = [
     { id: 'DLV-2887', farmer: 'Rajan Muthu', farmerIcon: '👨‍🌾', customer: 'Wholesale Market', pickup: 'Batticaloa', drop: 'Kandy', product: 'Banana', qty: '1,200 kg', date: '2026-07-04', status: 'Delivered', price: 8500, distance: '174 km' }
 ];
 
-const SEED_EXPORTS = [
-    { id: 'EXP-0441', farmer: 'Nimal Fernando', farmerIcon: '👨‍🌾', product: 'Ceylon Cinnamon', destination: 'Germany', qty: '1,200 kg', status: 'Customs Clearance', documents: ['Phytosanitary', 'Origin Cert', 'Invoice'], customs: 'Under Review', price: 285000, date: '2026-07-05' },
-    { id: 'EXP-0440', farmer: 'Amara Jayaweera', farmerIcon: '👩‍🌾', product: 'Organic Tea', destination: 'Japan', qty: '800 kg', status: 'Processing', documents: ['Export License', 'Invoice', 'Packing List'], customs: 'Not Started', price: 192000, date: '2026-07-04' },
-    { id: 'EXP-0439', farmer: 'Sunil Perera', farmerIcon: '👨‍🌾', product: 'Black Pepper', destination: 'UAE', qty: '600 kg', status: 'Exported', documents: ['All Cleared'], customs: 'Approved', price: 168000, date: '2026-07-01' }
-];
-
 const SEED_SHIPMENTS = [
     { id: 'DLV-2890', farmer: 'Kamala Silva', driver: 'Asanka Perera', vehicle: 'LT-5892 (Lorry)', from: 'Kandy', to: 'Kandy City Center', progress: 65, status: 'In Transit', eta: '45 min', product: 'Tomatoes (800 kg)', gps: { driverLat: 7.2906, driverLng: 80.6337, pickupLat: 7.3000, pickupLng: 80.6500, dropLat: 7.2800, dropLng: 80.6200 } },
     { id: 'DLV-2888', farmer: 'Priya Kumar', driver: 'Ruwan Silva', vehicle: 'WP-3341 (Van)', from: 'Jaffna', to: 'Colombo 07', progress: 22, status: 'In Transit', eta: '5h 20min', product: 'Fresh Fruits (600 kg)', gps: { driverLat: 9.3000, driverLng: 80.1000, pickupLat: 9.6615, pickupLng: 80.0255, dropLat: 6.9271, dropLng: 79.8612 } }
@@ -86,19 +80,18 @@ const SEED_VEHICLES = [
 ];
 
 const MONTHLY = [
-    { month: 'Jan', deliveries: 48, exports: 12, revenue: 385 },
-    { month: 'Feb', deliveries: 62, exports: 15, revenue: 492 },
-    { month: 'Mar', deliveries: 71, exports: 18, revenue: 568 },
-    { month: 'Apr', deliveries: 58, exports: 14, revenue: 445 },
-    { month: 'May', deliveries: 84, exports: 22, revenue: 672 },
-    { month: 'Jun', deliveries: 96, exports: 28, revenue: 782 },
-    { month: 'Jul', deliveries: 79, exports: 24, revenue: 651 },
+    { month: 'Jan', deliveries: 48, revenue: 385 },
+    { month: 'Feb', deliveries: 62, revenue: 492 },
+    { month: 'Mar', deliveries: 71, revenue: 568 },
+    { month: 'Apr', deliveries: 58, revenue: 445 },
+    { month: 'May', deliveries: 84, revenue: 672 },
+    { month: 'Jun', deliveries: 96, revenue: 782 },
+    { month: 'Jul', deliveries: 79, revenue: 651 },
 ];
 
 const TYPE_DIST = [
-    { name: 'Local Delivery', value: 52, color: ds.blue },
-    { name: 'Inter-City', value: 28, color: ds.green },
-    { name: 'Export Logistics', value: 20, color: ds.purple },
+    { name: 'Local Delivery', value: 72, color: ds.blue },
+    { name: 'Inter-City', value: 28, color: ds.green }
 ];
 
 const PRODUCT_DIST = [
@@ -116,12 +109,7 @@ const delStatusCfg = {
     Delivered: { bg: ds.greenLt, color: '#166534', dot: ds.green },
     Rejected: { bg: ds.redLt, color: '#991b1b', dot: ds.red },
 };
-const expStatusCfg = {
-    Pending: { bg: ds.amberLt, color: '#92400e', dot: ds.amber },
-    Processing: { bg: ds.blueLt, color: '#1e40af', dot: ds.blue },
-    'Customs Clearance': { bg: ds.purpleLt, color: '#5b21b6', dot: ds.purple },
-    Exported: { bg: ds.greenLt, color: '#166534', dot: ds.green },
-};
+
 
 function Badge({ label, cfg }) {
     return (
@@ -174,7 +162,6 @@ function Sidebar({ collapsed, setCollapsed, active, setActive, onNavigate }) {
     const NAV = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'delivery', label: 'Delivery Requests', icon: Truck },
-        { id: 'export', label: 'Export Requests', icon: Ship },
         { id: 'tracking', label: 'Shipment Tracking', icon: Navigation },
         { id: 'vehicles', label: 'Vehicles & Drivers', icon: Car },
         { id: 'history', label: 'Delivery History', icon: Calendar },
@@ -219,7 +206,6 @@ function TopNav({ section }) {
     const labels = {
         dashboard: 'Dashboard Overview',
         delivery: 'Delivery Requests',
-        export: 'Export Logistics',
         tracking: 'Shipment Tracking Telemetry',
         vehicles: 'Fleet Management',
         history: 'Delivery History Log',
@@ -244,7 +230,7 @@ function TopNav({ section }) {
     );
 }
 
-function DashboardHome({ setSection, onQuickAction, deliveries, exports, shipments }) {
+function DashboardHome({ setSection, onQuickAction, deliveries, shipments }) {
     const active = shipments.filter(s => s.status === 'In Transit').length;
     const pending = deliveries.filter(d => d.status === 'Pending').length;
     const completed = deliveries.filter(d => d.status === 'Delivered').length;
@@ -264,7 +250,7 @@ function DashboardHome({ setSection, onQuickAction, deliveries, exports, shipmen
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                         <div>
                             <h3 style={{ fontFamily: ds.fontD, fontSize: 15, fontWeight: 700, color: ds.text, margin: '0 0 4px 0' }}>Monthly Shipping Trends</h3>
-                            <p style={{ margin: 0, fontSize: 12, color: ds.textSec }}>Deliveries and exports over the last 7 months</p>
+                            <p style={{ margin: 0, fontSize: 12, color: ds.textSec }}>Deliveries over the last 7 months</p>
                         </div>
                     </div>
                     <ResponsiveContainer width="100%" height={220}>
@@ -275,7 +261,6 @@ function DashboardHome({ setSection, onQuickAction, deliveries, exports, shipmen
                             <Tooltip contentStyle={{ borderRadius: 10, border: `1px solid ${ds.border}`, boxShadow: ds.shadowMd, fontFamily: ds.fontB, fontSize: 12 }} />
                             <Legend wrapperStyle={{ fontSize: 12, fontFamily: ds.fontB }} />
                             <Bar dataKey="deliveries" fill={ds.blue} name="Local Deliveries" radius={[4,4,0,0]} />
-                            <Bar dataKey="exports" fill={ds.purple} name="Exports" radius={[4,4,0,0]} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
@@ -309,7 +294,6 @@ function DashboardHome({ setSection, onQuickAction, deliveries, exports, shipmen
                     <button className="btn-3d" onClick={() => onQuickAction('add-vehicle')} style={{ padding: '10px 16px', background: ds.blue, color: '#fff', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: ds.fontB }}><Plus size={16} /> Add Vehicle</button>
                     <button className="btn-3d" onClick={() => onQuickAction('assign-driver')} style={{ padding: '10px 16px', background: ds.surface, color: ds.text, border: `1px solid ${ds.border}`, borderRadius: 12, fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: ds.fontB }}><User size={16} /> Assign Drivers</button>
                     <button className="btn-3d" onClick={() => onQuickAction('update-shipment')} style={{ padding: '10px 16px', background: ds.surface, color: ds.text, border: `1px solid ${ds.border}`, borderRadius: 12, fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: ds.fontB }}><CheckCircle size={16} /> Update Shipment</button>
-                    <button className="btn-3d" onClick={() => onQuickAction('create-export')} style={{ padding: '10px 16px', background: ds.surface, color: ds.text, border: `1px solid ${ds.border}`, borderRadius: 12, fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: ds.fontB }}><Ship size={16} /> Create Export</button>
                 </div>
             </div>
         </div>
@@ -428,64 +412,7 @@ function DeliveryRequests({ deliveries, handleAction }) {
     );
 }
 
-function ExportRequests({ exports, handleAction }) {
-    return (
-        <div style={{ background: ds.surface, borderRadius: 18, border: `1px solid ${ds.border}`, overflow: 'hidden', boxShadow: ds.shadow }}>
-            <div style={{ padding: '16px 20px', borderBottom: `1px solid ${ds.border}`, display: 'flex', justify: 'space-between', alignItems: 'center' }}>
-                <div>
-                    <h3 style={{ fontFamily: ds.fontD, fontSize: 14, fontWeight: 700, color: ds.text, margin: 0 }}>International Export Logistics</h3>
-                    <p style={{ margin: 0, fontSize: 11, color: ds.textTer }}>Manage phytosanitary certificates, custom clearance, and export shipments.</p>
-                </div>
-            </div>
-            <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                        <tr>
-                            <TH>Export ID</TH>
-                            <TH>Farmer</TH>
-                            <TH>Produce</TH>
-                            <TH>Destination</TH>
-                            <TH>Volume</TH>
-                            <TH>Clearing Status</TH>
-                            <TH>Uploaded Documents</TH>
-                            <TH>Customs Register</TH>
-                            <TH>Clearance Desk</TH>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {exports.map(e => (
-                            <tr key={e.id}>
-                                <TD mono>{e.id}</TD>
-                                <TD><strong>{e.farmer}</strong></TD>
-                                <TD>{e.product}</TD>
-                                <TD>{e.destination}</TD>
-                                <TD mono>{e.qty}</TD>
-                                <TD><Badge label={e.status} cfg={expStatusCfg[e.status]} /></TD>
-                                <TD>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                                        {e.documents.map(d => (
-                                            <span key={d} style={{ fontSize: 10, background: '#f3f4f6', padding: '2px 6px', borderRadius: 4, border: '1px solid #e5e7eb' }}>{d}</span>
-                                        ))}
-                                    </div>
-                                </TD>
-                                <TD><span style={{ fontSize: 12, color: e.customs === 'Approved' ? ds.green : ds.amber, fontWeight: 600 }}>{e.customs}</span></TD>
-                                <TD>
-                                    {e.status !== 'Exported' ? (
-                                        <div style={{ display: 'flex', gap: 6 }}>
-                                            <button onClick={() => handleAction && handleAction(e.id, 'Exported')} style={{ padding: '4px 8px', background: ds.green, border: 'none', color: '#fff', borderRadius: 4, cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>Clear for Export</button>
-                                        </div>
-                                    ) : (
-                                        <span style={{ fontSize: 12, color: ds.textSec }}>Shipped</span>
-                                    )}
-                                </TD>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
-}
+
 
 function MapRecenter({ location }) {
     const map = useMap();
@@ -698,7 +625,9 @@ function ShipmentTracking({ shipments, vehicles, handleGpsAccess, gpsAccess, han
     );
 }
 
-function VehiclesDrivers({ vehicles, handleAddVehicle }) {
+function VehiclesDrivers({ vehicles, handleAddVehicle, handleDeleteVehicle, handleUpdateVehicleDriver }) {
+    const [editingDriverId, setEditingDriverId] = useState(null);
+    const [editDriverName, setEditDriverName] = useState('');
     const [plate, setPlate] = useState('');
     const [type, setType] = useState('10-Ton Lorry');
     const [capacity, setCapacity] = useState('');
@@ -746,6 +675,7 @@ function VehiclesDrivers({ vehicles, handleAddVehicle }) {
                                 <TH>Hauling Capacity</TH>
                                 <TH>Last Inspection</TH>
                                 <TH>Status</TH>
+                                <TH>Actions</TH>
                             </tr>
                         </thead>
                         <tbody>
@@ -765,6 +695,20 @@ function VehiclesDrivers({ vehicles, handleAddVehicle }) {
                                     <TD mono>{v.capacity}</TD>
                                     <TD mono>{v.lastService}</TD>
                                     <TD><Badge label={v.status} cfg={v.status === 'Available' ? delStatusCfg.Delivered : delStatusCfg['In Transit']} /></TD>
+                                    <TD>
+                                        {editingDriverId === v.id ? (
+                                            <div style={{ display: 'flex', gap: 6 }}>
+                                                <input value={editDriverName} onChange={e => setEditDriverName(e.target.value)} style={{ padding: '4px 6px', width: 120, fontSize: 12, border: `1px solid ${ds.border}`, borderRadius: 4 }} />
+                                                <button onClick={() => { handleUpdateVehicleDriver(v.id, editDriverName); setEditingDriverId(null); }} style={{ padding: '4px 8px', background: ds.green, color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>Save</button>
+                                                <button onClick={() => setEditingDriverId(null)} style={{ padding: '4px 8px', background: ds.surface, color: ds.textSec, border: `1px solid ${ds.border}`, borderRadius: 4, cursor: 'pointer', fontSize: 11 }}>Cancel</button>
+                                            </div>
+                                        ) : (
+                                            <div style={{ display: 'flex', gap: 6 }}>
+                                                <button onClick={() => { setEditingDriverId(v.id); setEditDriverName(v.driver); }} style={{ padding: '4px 8px', background: ds.blueLt, color: ds.blue, border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>Edit Driver</button>
+                                                <button onClick={() => handleDeleteVehicle(v.id)} style={{ padding: '4px 8px', background: ds.redLt, color: ds.red, border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>Delete</button>
+                                            </div>
+                                        )}
+                                    </TD>
                                 </tr>
                             ))}
                         </tbody>
@@ -1171,7 +1115,6 @@ export default function DeliveryExportDashboard({ onNavigate }) {
     const [section, setSection] = useState('dashboard');
 
     const [deliveries, setDeliveries] = useState([]);
-    const [exports, setExports] = useState([]);
     const [shipments, setShipments] = useState([]);
     const [vehicles, setVehicles] = useState([]);
     const [gpsAccess, setGpsAccess] = useState(false);
@@ -1199,21 +1142,6 @@ export default function DeliveryExportDashboard({ onNavigate }) {
             } else {
                 const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 setDeliveries(list);
-            }
-        });
-
-        // 2. Exports Listener
-        const unsubExports = onSnapshot(collection(db, 'exports'), (snapshot) => {
-            if (snapshot.empty) {
-                const batch = writeBatch(db);
-                SEED_EXPORTS.forEach(e => {
-                    const docRef = doc(collection(db, 'exports'), e.id);
-                    batch.set(docRef, e);
-                });
-                batch.commit();
-            } else {
-                const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                setExports(list);
             }
         });
 
@@ -1256,7 +1184,6 @@ export default function DeliveryExportDashboard({ onNavigate }) {
 
         return () => {
             unsubDeliveries();
-            unsubExports();
             unsubShipments();
             unsubVehicles();
         };
@@ -1375,6 +1302,34 @@ export default function DeliveryExportDashboard({ onNavigate }) {
         }
     };
 
+    const handleDeleteVehicle = async (id) => {
+        if (!window.confirm("Are you sure you want to permanently delete this vehicle from the fleet?")) return;
+        try {
+            await deleteDoc(doc(db, 'vehicles', id));
+            // Also remove it from local state in case the listener doesn't catch it immediately or if it's a mock
+            setVehicles(prev => prev.filter(v => v.id !== id));
+        } catch (error) {
+            console.error('Failed to delete vehicle:', error);
+            alert('Failed to delete from database. It might be a mock object or lacking permissions.');
+            setVehicles(prev => prev.filter(v => v.id !== id));
+        }
+    };
+
+    const handleUpdateVehicleDriver = async (id, newDriver) => {
+        if (!newDriver.trim()) {
+            alert('Driver name cannot be empty.');
+            return;
+        }
+        try {
+            await updateDoc(doc(db, 'vehicles', id), { driver: newDriver });
+            setVehicles(prev => prev.map(v => v.id === id ? { ...v, driver: newDriver } : v));
+        } catch (error) {
+            console.error('Failed to update driver:', error);
+            alert('Failed to update in database. Updating locally instead.');
+            setVehicles(prev => prev.map(v => v.id === id ? { ...v, driver: newDriver } : v));
+        }
+    };
+
     const handleQuickAction = (action) => {
         if (action === 'add-vehicle') {
             setSection('vehicles');
@@ -1383,9 +1338,6 @@ export default function DeliveryExportDashboard({ onNavigate }) {
             alert('Select vehicle in the directory to assign or change active drivers.');
         } else if (action === 'update-shipment') {
             setSection('tracking');
-        } else if (action === 'create-export') {
-            setSection('export');
-            alert('Click accept on export orders or add a custom export row.');
         }
     };
 
@@ -1400,15 +1352,13 @@ export default function DeliveryExportDashboard({ onNavigate }) {
     const renderSection = () => {
         switch (section) {
             case 'dashboard':
-                return <DashboardHome setSection={setSection} onQuickAction={handleQuickAction} deliveries={deliveries} exports={exports} shipments={shipments} />;
+                return <DashboardHome setSection={setSection} onQuickAction={handleQuickAction} deliveries={deliveries} shipments={shipments} />;
             case 'delivery':
                 return <DeliveryRequests deliveries={activeDeliveries} handleAction={handleAction} />;
-            case 'export':
-                return <ExportRequests exports={exports} handleAction={handleAction} />;
             case 'tracking':
                 return <ShipmentTracking shipments={shipments} vehicles={vehicles} handleGpsAccess={handleGpsAccess} gpsAccess={gpsAccess} handleUpdateProgress={handleUpdateProgress} userLocation={userLocation} />;
             case 'vehicles':
-                return <VehiclesDrivers vehicles={vehicles} handleAddVehicle={handleAddVehicle} />;
+                return <VehiclesDrivers vehicles={vehicles} handleAddVehicle={handleAddVehicle} handleDeleteVehicle={handleDeleteVehicle} handleUpdateVehicleDriver={handleUpdateVehicleDriver} />;
             case 'history':
                 return <DeliveryHistory completedDeliveries={completedDeliveries} />;
             case 'analytics':
@@ -1418,7 +1368,7 @@ export default function DeliveryExportDashboard({ onNavigate }) {
             case 'settings':
                 return <LogisticsSettings />;
             default:
-                return <DashboardHome setSection={setSection} onQuickAction={handleQuickAction} deliveries={deliveries} exports={exports} shipments={shipments} />;
+                return <DashboardHome setSection={setSection} onQuickAction={handleQuickAction} deliveries={deliveries} shipments={shipments} />;
         }
     };
 

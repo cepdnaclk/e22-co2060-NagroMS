@@ -1,4 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { db, auth } from '../../../../utils/firebase';
+import { collection, query, where, onSnapshot, doc, updateDoc, addDoc, deleteDoc } from 'firebase/firestore';
 import {
     LayoutDashboard, Boxes, FileText, Tag, Wrench, History,
     BarChart2, MessageSquare, Star, Settings, LogOut,
@@ -425,23 +427,171 @@ function DashboardHome({ setSection }) {
     );
 }
 
+// ─── Equipment CRUD Form Modal ──────────────────────────────────────────────────
+const BLANK_EQ = { name: '', category: 'Tractors', dailyRate: '', weeklyRate: '', monthlyRate: '', condition: 'Good', status: 'Available', location: '', emoji: '🚜', utilization: 0 };
+const CATEGORIES_LIST = ['Tractors', 'Harvesters', 'Irrigation', 'Crop Care', 'Tillage'];
+const CONDITIONS_LIST = ['Excellent', 'Good', 'Fair', 'Needs Service'];
+const STATUSES_LIST = ['Available', 'Rented', 'Maintenance', 'Reserved'];
+const EMOJI_MAP = { Tractors: '🚜', Harvesters: '🌾', Irrigation: '💧', 'Crop Care': '🌿', Tillage: '🔧' };
+
+function EquipmentFormModal({ initial, onSave, onClose }) {
+    const [form, setForm] = useState(initial || BLANK_EQ);
+    const [saving, setSaving] = useState(false);
+
+    const set = (field, val) => setForm(prev => ({ ...prev, [field]: val }));
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!form.name || !form.location || !form.dailyRate) {
+            alert('Please fill in all required fields: Name, Location, and Daily Rate.');
+            return;
+        }
+        setSaving(true);
+        const payload = {
+            ...form,
+            emoji: EMOJI_MAP[form.category] || '🚜',
+            dailyRate: Number(form.dailyRate),
+            weeklyRate: Number(form.weeklyRate) || Number(form.dailyRate) * 6,
+            monthlyRate: Number(form.monthlyRate) || Number(form.dailyRate) * 22,
+            utilization: Number(form.utilization) || 0,
+            lastMaintenance: form.lastMaintenance || new Date().toISOString().split('T')[0],
+            totalRentals: form.totalRentals || 0,
+        };
+        await onSave(payload);
+        setSaving(false);
+    };
+
+    const inp = (label, field, type = 'text', placeholder = '', required = false) => (
+        <div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: c.textSec, marginBottom: 4 }}>{label}{required && ' *'}</label>
+            <input type={type} placeholder={placeholder} value={form[field] || ''} required={required}
+                onChange={e => set(field, e.target.value)}
+                style={{ width: '100%', padding: '8px 12px', border: `1px solid ${c.border}`, borderRadius: 7, fontSize: 13, boxSizing: 'border-box', fontFamily: c.fontB }} />
+        </div>
+    );
+
+    const sel = (label, field, options) => (
+        <div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: c.textSec, marginBottom: 4 }}>{label}</label>
+            <select value={form[field]} onChange={e => set(field, e.target.value)}
+                style={{ width: '100%', padding: '8px 12px', border: `1px solid ${c.border}`, borderRadius: 7, fontSize: 13, background: '#fff', fontFamily: c.fontB }}>
+                {options.map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
+        </div>
+    );
+
+    return (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.4)', backdropFilter: 'blur(6px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={onClose}>
+            <div style={{ background: '#fff', borderRadius: 20, padding: 28, width: '100%', maxWidth: 560, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 50px rgba(0,0,0,0.25)' }} onClick={e => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                    <div>
+                        <h2 style={{ fontFamily: c.fontD, fontSize: 18, fontWeight: 800, color: c.text, margin: 0 }}>{initial ? 'Edit Equipment' : 'Add New Equipment'}</h2>
+                        <p style={{ fontFamily: c.fontB, fontSize: 12, color: c.textTer, margin: '3px 0 0' }}>Fill in the details for your agricultural asset</p>
+                    </div>
+                    <button onClick={onClose} style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: c.textSec }}><X size={16} /></button>
+                </div>
+
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    {inp('Equipment Name', 'name', 'text', 'e.g. Mahindra 575 DI Tractor', true)}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                        {sel('Category', 'category', CATEGORIES_LIST)}
+                        {inp('Location', 'location', 'text', 'e.g. Anuradhapura', true)}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                        {inp('Daily Rate (Rs)', 'dailyRate', 'number', '5500', true)}
+                        {inp('Weekly Rate (Rs)', 'weeklyRate', 'number', '32000')}
+                        {inp('Monthly Rate (Rs)', 'monthlyRate', 'number', '115000')}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                        {sel('Condition', 'condition', CONDITIONS_LIST)}
+                        {sel('Status', 'status', STATUSES_LIST)}
+                    </div>
+                    <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
+                        <button type="button" onClick={onClose} style={{ padding: '9px 18px', borderRadius: 8, border: `1px solid ${c.border}`, background: '#fff', cursor: 'pointer', fontFamily: c.fontB, fontSize: 13, fontWeight: 600, color: c.textSec }}>Cancel</button>
+                        <button type="submit" disabled={saving} style={{ padding: '9px 22px', borderRadius: 8, border: 'none', background: c.green, color: '#fff', cursor: saving ? 'not-allowed' : 'pointer', fontFamily: c.fontB, fontSize: 13, fontWeight: 700 }}>
+                            {saving ? 'Saving...' : (initial ? 'Update Equipment' : 'Add to Fleet')}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
 // ─── Equipment Tab ─────────────────────────────────────────────────────────────
 function EquipmentManagement({ equipment, setEquipment }) {
     const [search, setSearch] = useState('');
+    const [modal, setModal] = useState(null); // null | 'add' | { ...editItem }
 
     const filtered = useMemo(() => {
         return equipment.filter(e => e.name.toLowerCase().includes(search.toLowerCase()) || e.id.toLowerCase().includes(search.toLowerCase()) || e.category.toLowerCase().includes(search.toLowerCase()));
     }, [equipment, search]);
 
+    const handleSave = async (payload) => {
+        if (modal === 'add') {
+            // Adding new equipment
+            const newItem = { ...payload, id: 'EQ-' + Date.now() };
+            try {
+                const docRef = await addDoc(collection(db, 'equipmentFleet'), newItem);
+                setEquipment(prev => [...prev, { ...newItem, id: docRef.id }]);
+            } catch (err) {
+                console.warn('Firebase write failed, using local state:', err);
+                setEquipment(prev => [...prev, newItem]);
+            }
+        } else {
+            // Editing existing equipment
+            const id = modal.id;
+            const updated = { ...payload, id };
+            try {
+                if (!String(id).startsWith('EQ-0')) { // real Firestore doc
+                    await updateDoc(doc(db, 'equipmentFleet', id), payload);
+                }
+                setEquipment(prev => prev.map(e => e.id === id ? updated : e));
+            } catch (err) {
+                console.warn('Firebase update failed, using local state:', err);
+                setEquipment(prev => prev.map(e => e.id === id ? updated : e));
+            }
+        }
+        setModal(null);
+    };
+
+    const handleDelete = async (eq) => {
+        if (!window.confirm(`Permanently remove "${eq.name}" from your fleet?`)) return;
+        try {
+            if (!String(eq.id).startsWith('EQ-0')) {
+                await deleteDoc(doc(db, 'equipmentFleet', eq.id));
+            }
+        } catch (err) {
+            console.warn('Firebase delete failed, removing locally:', err);
+        }
+        setEquipment(prev => prev.filter(e => e.id !== eq.id));
+    };
+
     return (
         <div style={{ background: c.surface, borderRadius: 16, border: `1px solid ${c.border}`, padding: '20px', boxShadow: c.shadow }}>
+            {modal && (
+                <EquipmentFormModal
+                    initial={modal === 'add' ? null : modal}
+                    onSave={handleSave}
+                    onClose={() => setModal(null)}
+                />
+            )}
+
             <SectionHeader
                 title="Fleet Management"
                 subtitle="Manage and track your agricultural assets, availability, and structural condition records"
                 action={
-                    <div style={{ display: 'flex', gap: 8 }}>
+                    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                         <ActionBtn label="Export Data" icon={<Download style={{ width: 14, height: 14 }} />} variant="secondary" onClick={() => exportToCSV('NagroMS_Fleet.csv', equipment)} />
-                        <ActionBtn label="Add Asset" icon={<Plus style={{ width: 14, height: 14 }} />} variant="primary" />
+                        <button onClick={() => setModal('add')} style={{
+                            display: 'flex', alignItems: 'center', gap: 6,
+                            background: '#047857', color: '#fff', border: 'none', borderRadius: 8,
+                            padding: '10px 18px', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(4, 120, 87, 0.3)', transition: 'all 0.2s'
+                        }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                            <Plus style={{ width: 18, height: 18 }} />
+                            Add Equipment
+                        </button>
                     </div>
                 }
             />
@@ -470,11 +620,12 @@ function EquipmentManagement({ equipment, setEquipment }) {
                             <TH>Condition</TH>
                             <TH>Utilization</TH>
                             <TH>Status</TH>
+                            <TH>Actions</TH>
                         </tr>
                     </thead>
                     <tbody>
                         {filtered.map(eq => (
-                            <tr key={eq.id}>
+                            <tr key={eq.id} style={{ transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = c.bg} onMouseLeave={e => e.currentTarget.style.background = ''}>
                                 <TD mono>{eq.id}</TD>
                                 <TD>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -488,11 +639,11 @@ function EquipmentManagement({ equipment, setEquipment }) {
                                 <TD>{eq.category}</TD>
                                 <TD>
                                     <div>
-                                        <span style={{ fontFamily: c.fontM, fontSize: 12, fontWeight: 600 }}>Rs {eq.dailyRate}/d</span>
-                                        <p style={{ margin: 0, fontSize: 11, color: c.textTer }}>Rs {eq.monthlyRate.toLocaleString()}/mo</p>
+                                        <span style={{ fontFamily: c.fontM, fontSize: 12, fontWeight: 600 }}>Rs {Number(eq.dailyRate).toLocaleString()}/d</span>
+                                        <p style={{ margin: 0, fontSize: 11, color: c.textTer }}>Rs {Number(eq.monthlyRate).toLocaleString()}/mo</p>
                                     </div>
                                 </TD>
-                                <TD><StatusBadge label={eq.condition} cfg={eqCondCfg[eq.condition]} /></TD>
+                                <TD><StatusBadge label={eq.condition} cfg={eqCondCfg[eq.condition] || eqCondCfg.Good} /></TD>
                                 <TD>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, width: 80 }}>
                                         <div style={{ flex: 1, height: 5, background: c.borderLt, borderRadius: 9, overflow: 'hidden' }}>
@@ -501,11 +652,34 @@ function EquipmentManagement({ equipment, setEquipment }) {
                                         <span style={{ fontFamily: c.fontM, fontSize: 11, fontWeight: 600 }}>{eq.utilization}%</span>
                                     </div>
                                 </TD>
-                                <TD><StatusBadge label={eq.status} cfg={eqStatusCfg[eq.status]} /></TD>
+                                <TD><StatusBadge label={eq.status} cfg={eqStatusCfg[eq.status] || eqStatusCfg.Available} /></TD>
+                                <TD>
+                                    <div style={{ display: 'flex', gap: 6 }}>
+                                        <button
+                                            onClick={() => setModal(eq)}
+                                            title="Edit Equipment"
+                                            style={{ padding: '5px 10px', background: c.blueLt, color: c.blue, border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}
+                                        >
+                                            <Edit2 size={11} /> Edit
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(eq)}
+                                            title="Delete Equipment"
+                                            style={{ padding: '5px 10px', background: c.redLt, color: c.red, border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}
+                                        >
+                                            <Trash2 size={11} /> Delete
+                                        </button>
+                                    </div>
+                                </TD>
                             </tr>
                         ))}
                     </tbody>
                 </table>
+                {filtered.length === 0 && (
+                    <div style={{ padding: 40, textAlign: 'center' }}>
+                        <p style={{ color: c.textTer, fontSize: 14 }}>No equipment found. Add your first asset above.</p>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -513,65 +687,141 @@ function EquipmentManagement({ equipment, setEquipment }) {
 
 // ─── Rental Requests Tab ───────────────────────────────────────────────────────
 function RentalRequests({ requests, handleRequest }) {
-    return (
-        <div style={{ background: c.surface, borderRadius: 16, border: `1px solid ${c.border}`, padding: '20px', boxShadow: c.shadow }}>
-            <SectionHeader
-                title="Inbound Rental Enquiries"
-                subtitle="Approve or reject rental schedules submitted by farmers directly from the marketplace portal"
-            />
-            <div style={{ overflowX: 'auto', margin: '0 -20px' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                        <tr>
-                            <TH>ID</TH>
-                            <TH>Farmer Profile</TH>
-                            <TH>Requested Asset</TH>
-                            <TH>Booking Window</TH>
-                            <TH>Financials</TH>
-                            <TH>Status</TH>
-                            <TH>Actions</TH>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {requests.map(req => (
-                            <tr key={req.id}>
-                                <TD mono>{req.id}</TD>
-                                <TD>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                        <span style={{ fontSize: 18 }}>{req.farmerIcon}</span>
-                                        <div>
-                                            <p style={{ margin: 0, fontWeight: 600 }}>{req.farmer}</p>
-                                            <p style={{ margin: 0, fontSize: 11, color: c.textTer }}>{req.contact} · {req.district}</p>
-                                        </div>
-                                    </div>
-                                </TD>
-                                <TD>{req.equipment}</TD>
-                                <TD>
+    const pending = useMemo(() => requests.filter(r => r.status === 'Pending'), [requests]);
+    const others  = useMemo(() => requests.filter(r => r.status !== 'Pending'), [requests]);
+
+    const ReqTable = ({ rows, dimmed = false }) => (
+        <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                    <tr>
+                        <TH>ID</TH>
+                        <TH>Farmer</TH>
+                        <TH>Requested Asset</TH>
+                        <TH>Date / Duration</TH>
+                        <TH>Cost (Rs)</TH>
+                        <TH>Status</TH>
+                        {!dimmed && <TH>Actions</TH>}
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows.map(req => (
+                        <tr key={req.id}
+                            style={{ opacity: dimmed ? 0.6 : 1, transition: 'background 0.15s' }}
+                            onMouseEnter={e => e.currentTarget.style.background = c.bg}
+                            onMouseLeave={e => e.currentTarget.style.background = ''}>
+                            <TD mono>{String(req.id).slice(0, 12)}</TD>
+                            <TD>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <span style={{ fontSize: 18 }}>{req.farmerIcon}</span>
                                     <div>
-                                        <span style={{ fontSize: 12, fontWeight: 500 }}><Calendar style={{ width: 11, height: 11, display: 'inline', marginRight: 3 }} />{req.pickupDate}</span>
-                                        <p style={{ margin: 0, fontSize: 11, color: c.textTer }}>Duration: {req.durationDays} days</p>
+                                        <p style={{ margin: 0, fontWeight: 600, fontSize: 13 }}>{req.farmer}</p>
+                                        <p style={{ margin: 0, fontSize: 11, color: c.textTer }}>{req.contact} · {req.district}</p>
+                                    </div>
+                                </div>
+                            </TD>
+                            <TD>{req.equipment}</TD>
+                            <TD>
+                                <span style={{ fontSize: 12, fontWeight: 500 }}>
+                                    <Calendar style={{ width: 11, height: 11, display: 'inline', marginRight: 3 }} />{req.pickupDate}
+                                </span>
+                                <p style={{ margin: 0, fontSize: 11, color: c.textTer }}>Duration: {req.durationDays} day{req.durationDays !== 1 ? 's' : ''}</p>
+                            </TD>
+                            <TD mono style={{ fontWeight: 600 }}>Rs {Number(req.totalCost).toLocaleString()}</TD>
+                            <TD><StatusBadge label={req.status} cfg={reqStatusCfg[req.status] || reqStatusCfg.Pending} /></TD>
+                            {!dimmed && (
+                                <TD>
+                                    <div style={{ display: 'flex', gap: 6 }}>
+                                        <button onClick={() => handleRequest(req.id, 'Accepted')}
+                                            style={{ border: 'none', background: c.greenLt, color: c.green, padding: '6px 12px', borderRadius: 7, cursor: 'pointer', fontWeight: 700, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                            <Check style={{ width: 13, height: 13 }} /> Accept
+                                        </button>
+                                        <button onClick={() => handleRequest(req.id, 'Rejected')}
+                                            style={{ border: 'none', background: c.redLt, color: c.red, padding: '6px 12px', borderRadius: 7, cursor: 'pointer', fontWeight: 700, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                            <X style={{ width: 13, height: 13 }} /> Reject
+                                        </button>
                                     </div>
                                 </TD>
-                                <TD mono style={{ fontWeight: 600 }}>Rs {req.totalCost.toLocaleString()}</TD>
-                                <TD><StatusBadge label={req.status} cfg={reqStatusCfg[req.status]} /></TD>
-                                <TD>
-                                    {req.status === 'Pending' ? (
-                                        <div style={{ display: 'flex', gap: 6 }}>
-                                            <button onClick={() => handleRequest(req.id, 'Accepted')} title="Accept Request" style={{ border: 'none', background: c.greenLt, color: c.green, padding: '4px 8px', borderRadius: 6, cursor: 'pointer' }}><Check style={{ width: 14, height: 14 }} /></button>
-                                            <button onClick={() => handleRequest(req.id, 'Rejected')} title="Reject Request" style={{ border: 'none', background: c.redLt, color: c.red, padding: '4px 8px', borderRadius: 6, cursor: 'pointer' }}><X style={{ width: 14, height: 14 }} /></button>
-                                        </div>
-                                    ) : (
-                                        <span style={{ fontSize: 12, color: c.textSec }}>Completed</span>
-                                    )}
-                                </TD>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                            )}
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+            {/* ── WAITING FOR ACTION panel ── */}
+            <div style={{
+                background: c.surface,
+                borderRadius: 16,
+                border: `1px solid ${pending.length > 0 ? c.blueBd : c.border}`,
+                overflow: 'hidden',
+                boxShadow: pending.length > 0 ? `0 4px 20px -4px ${c.blueLt}` : c.shadow,
+                transition: 'all 0.3s'
+            }}>
+                {/* Header */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', background: pending.length > 0 ? 'linear-gradient(to right, #f8fafc, #eff6ff)' : c.bg, borderBottom: `1px solid ${c.border}` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{ width: 40, height: 40, borderRadius: 12, background: pending.length > 0 ? c.blue : c.border, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: pending.length > 0 ? '0 4px 12px rgba(59,130,246,0.25)' : 'none' }}>
+                            <Clock style={{ width: 20, height: 20, color: '#fff' }} />
+                        </div>
+                        <div>
+                            <p style={{ fontFamily: c.fontD, fontSize: 16, fontWeight: 800, color: c.text, margin: 0 }}>Waiting for Action</p>
+                            <p style={{ fontFamily: c.fontB, fontSize: 12, color: pending.length > 0 ? c.blue : c.textSec, margin: '2px 0 0', fontWeight: pending.length > 0 ? 600 : 400 }}>Farmers awaiting your response</p>
+                        </div>
+                    </div>
+                    {pending.length > 0 && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: `1px solid ${c.blueBd}`, padding: '6px 14px', borderRadius: 99, boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: c.blue, animation: 'pulse 2s infinite' }} />
+                            <span style={{ fontFamily: c.fontB, fontSize: 13, fontWeight: 800, color: '#1e40af' }}>
+                                {pending.length} pending
+                            </span>
+                        </div>
+                    )}
+                </div>
+
+                {/* Pending table */}
+                {pending.length > 0 ? (
+                    <div style={{ padding: '0 4px' }}>
+                        <ReqTable rows={pending} dimmed={false} />
+                    </div>
+                ) : (
+                    <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+                        <div style={{ width: 64, height: 64, borderRadius: '50%', background: c.greenLt, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                            <Check style={{ width: 32, height: 32, color: c.green }} />
+                        </div>
+                        <p style={{ fontFamily: c.fontD, fontSize: 16, fontWeight: 800, color: c.text, margin: '0 0 6px' }}>All caught up!</p>
+                        <p style={{ fontFamily: c.fontB, fontSize: 13, color: c.textTer, margin: 0 }}>No pending requests right now.</p>
+                    </div>
+                )}
+            </div>
+
+            {/* ── ALL OTHER REQUESTS (Accepted / In Progress / Completed / Rejected) ── */}
+            <div style={{ background: c.surface, borderRadius: 16, border: `1px solid ${c.border}`, overflow: 'hidden', boxShadow: c.shadow }}>
+                <div style={{ padding: '14px 20px', borderBottom: `1px solid ${c.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                        <p style={{ fontFamily: c.fontD, fontSize: 14, fontWeight: 700, color: c.text, margin: 0 }}>Request History</p>
+                        <p style={{ fontFamily: c.fontB, fontSize: 12, color: c.textTer, margin: 0 }}>Accepted, in-progress, completed & rejected</p>
+                    </div>
+                    <span style={{ fontFamily: c.fontM, fontSize: 12, fontWeight: 700, color: c.textSec }}>{others.length} records</span>
+                </div>
+                {others.length > 0 ? (
+                    <ReqTable rows={others} dimmed={true} />
+                ) : (
+                    <div style={{ padding: '28px', textAlign: 'center' }}>
+                        <p style={{ fontFamily: c.fontB, fontSize: 13, color: c.textTer, margin: 0 }}>No request history yet.</p>
+                    </div>
+                )}
             </div>
         </div>
     );
 }
+
+
+
 
 // ─── Equipment Categories Tab ──────────────────────────────────────────────────
 function EquipmentCategories() {
@@ -916,15 +1166,70 @@ export default function EquipmentRentalDashboard({ onNavigate = () => { } }) {
     const [equipment, setEquipment] = useState(EQUIPMENT);
     const [requests, setRequests] = useState(RENTAL_REQUESTS);
 
-    const handleRequest = (id, newStatus) => {
-        setRequests(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
-        if (newStatus === 'Accepted') {
-            const req = requests.find(r => r.id === id);
-            if (req) {
-                // Toggle status of associated equipment
-                setEquipment(prevEq => prevEq.map(eq => eq.name === req.equipment ? { ...eq, status: 'Rented' } : eq));
-                alert(`Approved request! Gear ${req.equipment} is now rented to farmer ${req.farmer}.`);
+    useEffect(() => {
+        const q = query(collection(db, 'serviceBookings'), where('serviceType', 'in', ['equipment', 'Equipment Rental']));
+        const unsub = onSnapshot(q, (snapshot) => {
+            const fetched = [];
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                
+                // If it's available in my list, it should show to me
+                // Either the equipment name matches OR we just show it if we have no auth
+                // To be safe, we'll check if the requirement matches any equipment in our fleet, 
+                // OR if the providerId matches our currently simulated auth.
+                
+                const matchesFleet = equipment.some(e => e.name.toLowerCase().includes(data.requirement?.toLowerCase() || '')) ||
+                                     equipment.some(e => e.category.toLowerCase().includes(data.requirement?.toLowerCase() || ''));
+                                     
+                if (matchesFleet || !data.providerId) {
+                    fetched.push({
+                        id: docSnap.id,
+                        farmer: data.farmerName || 'Farmer User',
+                        farmerIcon: '👨‍🌾',
+                        equipment: data.requirement,
+                        durationDays: data.durationDays || 1,
+                        pickupDate: data.requiredDate || 'N/A',
+                        returnDate: 'N/A', // Could compute
+                        totalCost: data.proposedCost || 0,
+                        contact: data.farmerPhone || 'N/A',
+                        status: data.status === 'pending' ? 'Pending' : (data.status === 'accepted' ? 'Accepted' : (data.status === 'rejected' ? 'Rejected' : 'Completed')),
+                        district: data.district || 'Anuradhapura'
+                    });
+                }
+            });
+            if (fetched.length > 0) {
+                setRequests(prev => {
+                    // merge with mock data for visual purposes if you want, but better to just use fetched + mock
+                    const newIds = new Set(fetched.map(f => f.id));
+                    const remainingMocks = prev.filter(p => !newIds.has(p.id) && String(p.id).startsWith('RNT'));
+                    return [...fetched, ...remainingMocks];
+                });
             }
+        });
+        return () => unsub();
+    }, [equipment]);
+
+    const handleRequest = async (id, newStatus) => {
+        try {
+            // Optimistic update
+            setRequests(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
+            
+            // Try to update firebase if it's a real document (not a mock RNT-xxx)
+            if (!String(id).startsWith('RNT')) {
+                const firestoreStatus = newStatus.toLowerCase();
+                await updateDoc(doc(db, 'serviceBookings', id), { status: firestoreStatus });
+            }
+            
+            if (newStatus === 'Accepted') {
+                const req = requests.find(r => r.id === id);
+                if (req) {
+                    setEquipment(prevEq => prevEq.map(eq => (eq.name.includes(req.equipment) || req.equipment.includes(eq.name)) ? { ...eq, status: 'Rented' } : eq));
+                    alert(`Approved request! Gear ${req.equipment} is now rented to farmer ${req.farmer}.`);
+                }
+            }
+        } catch (error) {
+            console.error('Error updating status:', error);
+            alert('Failed to update status in backend.');
         }
     };
 
