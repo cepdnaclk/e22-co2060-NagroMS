@@ -113,7 +113,7 @@ export function SignUpPage() {
   const getDashRoute = (role) => {
     const map = {
       farmer: 'farmer-dashboard', customer: 'customer-dashboard',
-      'service-provider': 'service-provider-dashboard', expert: 'expert-dashboard',
+      'service-provider': formData.accountType === 'individual' ? 'driver-dashboard' : 'service-provider-dashboard', expert: 'expert-dashboard',
     };
     return map[role] || 'login';
   };

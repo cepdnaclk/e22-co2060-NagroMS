@@ -31,11 +31,14 @@ function sanitizeUser(user) {
   return safe;
 }
 
-// Helper to get dashboard route based on roles
-function getDashboardRoute(roles) {
+// Helper to get dashboard route based on user roles and accountType
+function getDashboardRoute(user) {
+  const roles = user?.roles || [];
   if (!roles || roles.length === 0) return 'login';
   if (roles.includes('expert')) return 'expert-dashboard';
-  if (roles.includes('service-provider')) return 'service-provider-dashboard';
+  if (roles.includes('service-provider')) {
+    return user?.accountType === 'individual' ? 'driver-dashboard' : 'service-provider-dashboard';
+  }
   if (roles.includes('customer')) return 'customer-dashboard';
   if (roles.includes('farmer')) return 'farmer-dashboard';
   return 'login';
@@ -93,7 +96,7 @@ async function register(req, res) {
       success: true,
       message: 'Account created successfully.',
       user: sanitizeUser(userDoc),
-      dashboardRoute: getDashboardRoute(roles || []),
+      dashboardRoute: getDashboardRoute({ roles: roles || [], accountType }),
     });
   } catch (error) {
     console.error('Register error:', error);
@@ -124,7 +127,7 @@ async function loginVerify(req, res) {
       success: true,
       message: 'Login verified.',
       user: sanitizeUser(user),
-      dashboardRoute: getDashboardRoute(user.roles),
+      dashboardRoute: getDashboardRoute(user),
     });
   } catch (error) {
     console.error('Login verify error:', error);
@@ -157,7 +160,7 @@ async function socialLogin(req, res) {
       success: true,
       message: 'Social login successful.',
       user: sanitizeUser(user),
-      dashboardRoute: getDashboardRoute(user.roles),
+      dashboardRoute: getDashboardRoute(user),
     });
   } catch (error) {
     console.error('Social login error:', error);
