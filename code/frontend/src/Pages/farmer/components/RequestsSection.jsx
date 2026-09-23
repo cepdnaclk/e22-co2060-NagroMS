@@ -17,29 +17,41 @@ export default function RequestsSection() {
   const [actionStatus, setActionStatus] = useState(''); // 'accept' or 'decline'
   const [submitting, setSubmitting] = useState(false);
 
-  const farmerId = auth.currentUser?.uid;
+  const [currentUser, setCurrentUser] = useState(() => auth.currentUser);
+  const farmerId = currentUser?.uid || 'farmer-demo';
 
   useEffect(() => {
-    if (!farmerId) return;
+    const unsubAuth = auth.onAuthStateChanged((user) => {
+      setCurrentUser(user);
+    });
+    return () => unsubAuth();
+  }, []);
 
+  useEffect(() => {
     // Load farmer profile to get name for response
     const fetchProfile = async () => {
-      const docRef = doc(db, 'users', farmerId);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        setFarmerProfile(docSnap.data());
+      if (currentUser?.uid) {
+        try {
+          const docRef = doc(db, 'users', currentUser.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            setFarmerProfile(docSnap.data());
+          }
+        } catch (e) {
+          console.warn('Could not fetch farmer profile:', e);
+        }
       }
     };
     fetchProfile();
 
     // Subscribe to requests targeting this farmer
     const unsub = subscribeToFarmerRequests(farmerId, (data) => {
-      setRequests(data);
+      setRequests(data || []);
       setLoading(false);
     });
 
     return () => unsub();
-  }, [farmerId]);
+  }, [farmerId, currentUser]);
 
   const handleActionClick = (req, status) => {
     setRespondingTo(req);

@@ -253,7 +253,7 @@ export default function CommunitySection() {
         }
       }
 
-      await fetch('http://localhost:5000/api/farmer/updates', {
+      await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/farmer/updates`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ title: newUpdateTitle, description: newUpdateDesc, imageUrl })
@@ -273,7 +273,8 @@ export default function CommunitySection() {
     if (!currentUid) return;
     try {
       const token = localStorage.getItem('nagroms_token') || (auth.currentUser ? await auth.currentUser.getIdToken().catch(() => '') : '');
-      await fetch('http://localhost:5000/api/farmer/community/posts', {
+      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+      await fetch(`${API_BASE}/farmer/community/posts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ title: newPostTitle, description: newPostDesc })
@@ -290,7 +291,8 @@ export default function CommunitySection() {
     if (!currentUid || !commentText[postId]) return;
     try {
       const token = localStorage.getItem('nagroms_token') || (auth.currentUser ? await auth.currentUser.getIdToken().catch(() => '') : '');
-      await fetch(`http://localhost:5000/api/farmer/community/posts/${postId}/comments`, {
+      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+      await fetch(`${API_BASE}/farmer/community/posts/${postId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ text: commentText[postId] })
@@ -306,7 +308,8 @@ export default function CommunitySection() {
     if (!currentUid) return;
     try {
       const token = localStorage.getItem('nagroms_token') || (auth.currentUser ? await auth.currentUser.getIdToken().catch(() => '') : '');
-      await fetch(`http://localhost:5000/api/farmer/community/posts/${postId}/like`, {
+      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+      await fetch(`${API_BASE}/farmer/community/posts/${postId}/like`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -330,7 +333,6 @@ export default function CommunitySection() {
       followingName: safeTargetName
     };
 
-    // 1. Optimistic UI update so count & button toggle IMMEDIATELY
     setFollowing(prev => {
       if (prev.some(f => f.followingId === targetUserId)) return prev;
       return [...prev, newFollowObj];
@@ -349,7 +351,6 @@ export default function CommunitySection() {
       const connId = `${currentUid}_${targetUserId}`;
       const expertFarmerId = `${targetUserId}_${currentUid}`;
 
-      // 1. Create/update record in 'follows' collection
       await setDoc(doc(db, 'follows', followId), {
         followerId: currentUid,
         followingId: targetUserId,
@@ -358,7 +359,6 @@ export default function CommunitySection() {
         createdAt: new Date().toISOString()
       }, { merge: true }).catch(e => console.warn('Follows setDoc warn:', e));
 
-      // 2. Create/update record in 'connections' collection
       await setDoc(doc(db, 'connections', connId), {
         requesterId: currentUid,
         targetId: targetUserId,
@@ -367,7 +367,6 @@ export default function CommunitySection() {
         createdAt: new Date().toISOString()
       }, { merge: true }).catch(e => console.warn('Connections setDoc warn:', e));
 
-      // 3. Create/update record in 'expertFarmers' collection
       await setDoc(doc(db, 'expertFarmers', expertFarmerId), {
         expertId: targetUserId,
         memberId: currentUid,
@@ -377,16 +376,15 @@ export default function CommunitySection() {
         connectedAt: new Date().toISOString()
       }, { merge: true }).catch(e => console.warn('ExpertFarmers setDoc warn:', e));
 
-      // Backend API call fallback
       const token = localStorage.getItem('nagroms_token') || (auth.currentUser ? await auth.currentUser.getIdToken().catch(() => null) : null);
       if (token) {
-        fetch('http://localhost:5000/api/network/toggle', {
+        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+        fetch(`${API_BASE}/network/toggle`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({ targetId: targetUserId, currentlyConnected: false })
         }).catch(err => console.warn('Backend toggle follow err:', err));
       }
-
     } catch (err) {
       console.error('Error following user:', err);
     }
@@ -396,7 +394,6 @@ export default function CommunitySection() {
     const currentUid = getCurrentUid();
     if (!currentUid || !targetUserId) return;
 
-    // 1. Optimistic UI update so count & button toggle IMMEDIATELY
     setFollowing(prev => prev.filter(f => f.followingId !== targetUserId));
 
     try {
@@ -408,7 +405,6 @@ export default function CommunitySection() {
       await deleteDoc(doc(db, 'connections', connId)).catch(() => {});
       await deleteDoc(doc(db, 'expertFarmers', expertFarmerId)).catch(() => {});
 
-      // Clean up any auto-ID docs in follows collection matching targetUserId
       const existingFollows = following.filter(f => f.followingId === targetUserId);
       for (const item of existingFollows) {
         if (item.id && item.id !== followId) {
@@ -416,10 +412,10 @@ export default function CommunitySection() {
         }
       }
 
-      // Backend API call fallback
       const token = localStorage.getItem('nagroms_token') || (auth.currentUser ? await auth.currentUser.getIdToken().catch(() => null) : null);
       if (token) {
-        fetch('http://localhost:5000/api/network/toggle', {
+        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+        fetch(`${API_BASE}/network/toggle`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({ targetId: targetUserId, currentlyConnected: true })
@@ -442,7 +438,6 @@ export default function CommunitySection() {
                            (profile?.email && profile.email.includes('@')) ? profile.email.split('@')[0] :
                            (localStorage.getItem('userName') || fallbackName);
 
-      // Attempt direct Firestore addDoc first
       await addDoc(collection(db, 'consultations'), {
         expertId: expertId,
         farmerId: currentUid,
@@ -456,7 +451,8 @@ export default function CommunitySection() {
       console.warn('Direct Firestore consultation failed, attempting backend endpoint...', err);
       try {
         const token = localStorage.getItem('nagroms_token') || (auth.currentUser ? await auth.currentUser.getIdToken().catch(() => null) : null);
-        const res = await fetch('http://localhost:5000/api/farmer/consultations/request', {
+        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+        const res = await fetch(`${API_BASE}/farmer/consultations/request`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({ expertId, message: 'I need consultation.' })

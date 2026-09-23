@@ -81,8 +81,8 @@ export function LoginPage() {
       // Phone/NIC login: look up email from backend by phone or NIC
       if (loginMethod === 'phone' || loginMethod === 'nic') {
         try {
-          const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
-          const res  = await fetch(`${backendUrl}/api/auth/find-user`, {
+          const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+          const res  = await fetch(`${apiUrl}/auth/find-user`, {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

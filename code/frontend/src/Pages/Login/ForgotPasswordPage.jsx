@@ -10,7 +10,7 @@ const REQUIREMENTS = [
   { label: 'One special character',   test: p => /[^A-Za-z0-9]/.test(p) },
 ];
 
-const API = "http://localhost:5000/api";
+const API = `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}`;
 
 export function ForgotPasswordPage() {
   const navigate = useNavigate();

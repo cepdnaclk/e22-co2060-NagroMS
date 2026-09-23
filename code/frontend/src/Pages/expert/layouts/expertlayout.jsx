@@ -3,7 +3,7 @@ import { Outlet, Navigate, NavLink, useNavigate, useLocation } from 'react-route
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import {
     LayoutDashboard, Calendar, MessageSquare, BookOpen,
-    Users, Settings, LogOut, GraduationCap, UserPlus
+    Users, Settings, LogOut, GraduationCap, UserPlus, Heart
 } from 'lucide-react';
 import { logout } from '../../../utils/firebase.js';
 import { RoleSwitcher } from '../../../components/RoleSwitcher.jsx';
@@ -17,6 +17,7 @@ const navItems = [
     { to: '/expert-dashboard/qa', label: 'Q&A Forum', icon: MessageSquare },
     { to: '/expert-dashboard/knowledge', label: 'Knowledge Base', icon: BookOpen },
     { to: '/expert-dashboard/farmers', label: 'My Network', icon: Users },
+    { to: '/expert-dashboard/followers', label: 'My Followers', icon: Heart },
 ];
 
 const pageTitles = {
@@ -26,6 +27,7 @@ const pageTitles = {
     '/expert-dashboard/qa': 'Q&A Forum',
     '/expert-dashboard/knowledge': 'Knowledge Base',
     '/expert-dashboard/farmers': 'My Network',
+    '/expert-dashboard/followers': 'My Followers',
     '/expert-dashboard/settings': 'Settings',
 };
 

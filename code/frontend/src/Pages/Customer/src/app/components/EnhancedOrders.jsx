@@ -19,12 +19,14 @@ import {
   collection, addDoc, getDocs, query, 
   where, doc, updateDoc, onSnapshot 
 } from 'firebase/firestore';
+import { LiveTrackingModal } from './LiveTrackingModal';
 
 // ─── ENHANCED ORDERS SECTION ─────────────────────────────────────────────────
 export function EnhancedOrdersSection({ pastOrders, uid }) {
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [trackingOrder, setTrackingOrder] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [reviews, setReviews] = useState({}); // { orderId: review }
   const [orders, setOrders] = useState(pastOrders);
@@ -256,6 +258,30 @@ export function EnhancedOrdersSection({ pastOrders, uid }) {
                       Order Cancelled
                     </div>
                   )}
+
+                  {/* Tracking Button - for active orders (not delivered, cancelled, declined, rejected) */}
+                  {['pending', 'confirmed', 'accepted', 'packed', 'picked up', 'in transit', 'out for delivery'].includes(order.status?.toLowerCase()) && (
+                    <button
+                      onClick={() => setTrackingOrder(order)}
+                      className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 text-sm transition-all ${
+                        ['picked up', 'in transit', 'out for delivery'].includes(order.status?.toLowerCase())
+                          ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-[0_0_15px_rgba(37,99,235,0.4)]'
+                          : 'bg-gray-800 text-white hover:bg-gray-900'
+                      }`}
+                    >
+                      {['picked up', 'in transit', 'out for delivery'].includes(order.status?.toLowerCase()) ? (
+                        <>
+                          <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+                          Track Live
+                        </>
+                      ) : (
+                        <>
+                          <MapPin className="w-4 h-4" />
+                          Track Order
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
 
                 {/* Expand/Collapse Button */}
@@ -266,7 +292,7 @@ export function EnhancedOrdersSection({ pastOrders, uid }) {
                   {expandedOrder === order.id ? (
                     <><ChevronUp className="w-5 h-5" />Hide Details</>
                   ) : (
-                    <><ChevronDown className="w-5 h-5" />View Details & Track Order</>
+                    <><ChevronDown className="w-5 h-5" />View Details</>
                   )}
                 </button>
               </div>
@@ -414,6 +440,26 @@ export function EnhancedOrdersSection({ pastOrders, uid }) {
           ))
         )}
       </div>
+
+      {/* ── LIVE TRACKING MODAL ── */}
+      {trackingOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-200 relative">
+             <button 
+                onClick={() => setTrackingOrder(null)}
+                className="absolute top-4 right-4 z-[9999] p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 border border-gray-200 text-gray-700"
+              >
+                <X className="w-5 h-5" />
+             </button>
+             <div className="flex-1 overflow-y-auto">
+               <LiveTrackingModal 
+                 order={trackingOrder} 
+                 onClose={() => setTrackingOrder(null)} 
+               />
+             </div>
+          </div>
+        </div>
+      )}
 
       {/* ── REVIEW MODAL ── */}
       {showReviewModal && selectedOrder && (

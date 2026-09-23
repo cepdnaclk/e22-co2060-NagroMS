@@ -8,17 +8,21 @@ import {
   Settings,
   Leaf,
   Bell,
-  FileText
+  Menu,
+  X,
+  FileText,
+  GraduationCap
 } from 'lucide-react';
 import { useLanguage } from '../../i18n/LanguageContext';
+import { auth } from '../../utils/firebase';
 import OverviewSection from './components/OverviewSection';
 import ManagementSection from './components/ManagementSection';
+import RequestsSection from './components/RequestsSection';
 import ServicesSection from './components/ServicesSection';
 import ChatbotSection from './components/ChatbotSection';
 import CommunitySection from './components/CommunitySection';
 import SettingsSection from './components/SettingsSection';
 import NotificationsSection from './components/NotificationsSection';
-import RequestsSection from './components/RequestSection';
 import './farmerDashboard.css';
 
 export function FarmerDashboard() {
@@ -31,6 +35,8 @@ export function FarmerDashboard() {
         return <OverviewSection setActiveTab={setActiveTab} />;
       case 'management':
         return <ManagementSection />;
+      case 'requests':
+        return <RequestsSection />;
       case 'services':
         return <ServicesSection />;
       case 'chatbot':
@@ -39,8 +45,6 @@ export function FarmerDashboard() {
         return <CommunitySection />;
       case 'notifications':
         return <NotificationsSection />;
-      case 'requests':
-        return <RequestsSection />;
       case 'settings':
         return <SettingsSection />;
       default:
@@ -74,6 +78,12 @@ export function FarmerDashboard() {
             onClick={() => setActiveTab('management')}
           />
           <SidebarItem
+            icon={<FileText size={20} />}
+            label={t('farmer.sidebar.requests') || 'Customer Requests'}
+            isActive={activeTab === 'requests'}
+            onClick={() => setActiveTab('requests')}
+          />
+          <SidebarItem
             icon={<Truck size={20} />}
             label={t('farmer.sidebar.services')}
             isActive={activeTab === 'services'}
@@ -92,14 +102,8 @@ export function FarmerDashboard() {
             onClick={() => setActiveTab('community')}
           />
           <SidebarItem
-            icon={<FileText size={20} />}
-            label={t('farmer.sidebar.requests') || 'Requests'}
-            isActive={activeTab === 'requests'}
-            onClick={() => setActiveTab('requests')}
-          />
-          <SidebarItem
             icon={<Bell size={20} />}
-            label={t('farmer.sidebar.notifications')}
+            label={t('farmer.sidebar.notifications') || 'Notifications'}
             isActive={activeTab === 'notifications'}
             onClick={() => setActiveTab('notifications')}
           />
@@ -151,4 +155,4 @@ function SidebarItem({ icon, label, isActive, onClick }) {
       <span>{label}</span>
     </button>
   );
-}
+}

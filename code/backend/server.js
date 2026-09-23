@@ -1,92 +1,123 @@
 // ============================================================
-// NagroMS — server.js  (Express entry point)
+// NagroMS Backend — server.js
 // ============================================================
 
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
 
-const express    = require('express');
-const cors       = require('cors');
-const helmet     = require('helmet');
-const morgan     = require('morgan');
-const rateLimit  = require('express-rate-limit');
-
-// ── Initialise Firebase Admin (must happen before any route requires it) ──
+// Initialise Firebase Admin
 require('./config/firebase');
 
-// ── Routes ────────────────────────────────────────────────────────────────
-const authRoutes    = require('./routes/authRoutes');
-const farmerRoutes  = require('./routes/farmerRoutes');
-const expertRoutes  = require('./routes/expertRoutes');
-const networkRoutes = require('./routes/networkRoutes');
+const authRoutes = require('./routes/authRoutes');
+const farmerRoutes = require('./routes/farmerRoutes');
 const weatherRoutes = require('./routes/weatherRoutes');
+const chatbotRoutes = require('./routes/chatbotRoutes');
+const expertRoutes = require('./routes/expertRoutes');
+const networkRoutes = require('./routes/networkRoutes');
 
-// ─────────────────────────────────────────────────────────────────────────
-const app  = express();
+const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ── Security / logging middleware ─────────────────────────────────────────
+// ── Security middleware ──────────────────────────────────────
 app.use(helmet());
-app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// ── CORS ──────────────────────────────────────────────────────────────────
-const allowedOrigins = [
-  process.env.FRONTEND_URL || 'http://localhost:3000',
-  'http://localhost:3001',
-];
+// ── CORS ─────────────────────────────────────────────────────
 app.use(cors({
-  origin: (origin, cb) => {
-    // Allow requests with no origin (e.g. mobile apps, curl, Postman)
-    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-    cb(new Error(`CORS: origin "${origin}" not allowed`));
+  origin: function(origin, callback) {
+    callback(null, true);
   },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 }));
 
-// ── Body parsers ──────────────────────────────────────────────────────────
+// ── Rate limiting ────────────────────────────────────────────
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  message: { success: false, message: 'Too many requests. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// ── Body parsing ─────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// ── Global rate limiter ───────────────────────────────────────────────────
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, message: 'Too many requests, please try again later.' },
-});
-app.use(limiter);
+// ── Request logging ──────────────────────────────────────────
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// ── Health check ──────────────────────────────────────────────────────────
-app.get('/health', (_req, res) =>
-  res.json({ status: 'ok', timestamp: new Date().toISOString() })
-);
-
-// ── API Routes ────────────────────────────────────────────────────────────
-app.use('/api/auth',    authRoutes);
-app.use('/api/farmer',  farmerRoutes);
-app.use('/api/expert',  expertRoutes);
-app.use('/api/network', networkRoutes);
-app.use('/api/weather', weatherRoutes);
-
-// ── 404 handler ───────────────────────────────────────────────────────────
-app.use((_req, res) =>
-  res.status(404).json({ success: false, message: 'Route not found' })
-);
-
-// ── Global error handler ──────────────────────────────────────────────────
-// eslint-disable-next-line no-unused-vars
-app.use((err, _req, res, _next) => {
-  console.error('Unhandled error:', err);
-  res.status(err.status || 500).json({
-    success: false,
-    message: err.message || 'Internal server error',
+// ── Root Route ────────────────────────────────────────────────
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Welcome to the NagroMS API! 🌾',
+    documentation: 'This is the backend server for NagroMS. Please use the /api endpoints to interact with the application.',
   });
 });
 
-// ── Start ──────────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`✅  NagroMS backend running on http://localhost:${PORT}`);
-  console.log(`   Environment : ${process.env.NODE_ENV || 'development'}`);
-  console.log(`   Firebase    : ${process.env.FIREBASE_PROJECT_ID}`);
+// ── Health check ─────────────────────────────────────────────
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: '🌾 NagroMS API is running',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString(),
+  });
 });
+
+// ── API Routes ───────────────────────────────────────────────
+app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/farmer', farmerRoutes);
+app.use('/api/weather', weatherRoutes);
+app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/expert', expertRoutes);
+app.use('/api/network', networkRoutes);
+
+// ── 404 handler ──────────────────────────────────────────────
+app.use((req, res) => {
+  res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` });
+});
+
+// ── Global error handler ─────────────────────────────────────
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error('❌ Server Error:', err.stack || err);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Internal server error',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+  });
+});
+
+// ── Start server with retry on EADDRINUSE ─────────────────────
+const startServer = (port) => {
+  const server = app.listen(port, () => {
+    console.log(`\n🌾 NagroMS Backend running`);
+    console.log(`📡 Port     : ${port}`);
+    console.log(`🌍 Env      : ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔗 Health   : http://localhost:${port}/health\n`);
+  });
+
+  server.on('error', (err) => {
+    if (err && err.code === 'EADDRINUSE') {
+      console.warn(`⚠️  Port ${port} in use — trying ${port + 1}...`);
+      startServer(port + 1);
+    } else {
+      console.error('❌ Server error:', err);
+      process.exit(1);
+    }
+  });
+};
+
+if (process.env.NODE_ENV !== 'production') {
+  startServer(Number(PORT));
+}
+
+module.exports = app;
+

@@ -44,6 +44,7 @@ export default function OverviewSection({ setActiveTab }) {
     if (status === 'Low Stock') return t('farmer.productForm.lowStock') || 'Low Stock';
     return status;
   };
+
 const PREDEFINED_CROPS = [
   { name: t('farmer.crops.rice') || 'Rice (Paddy)', image: 'https://images.unsplash.com/photo-1586521995568-39abaa0c2311?auto=format&fit=crop&q=80&w=800' },
   { name: t('farmer.crops.tomatoes') || 'Tomatoes', image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&q=80&w=800' },
@@ -102,9 +103,8 @@ const DEFAULT_CROP_IMAGE = 'https://images.unsplash.com/photo-1500937386664-56d1
       const fetchWeather = async () => {
         const cityName = profile.villageTown || profile.district || 'Colombo';
         try {
-          const weatherRes = await fetch(`http://localhost:5000/api/weather/current?city=${encodeURIComponent(cityName)}`);
+          const weatherRes = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/weather/current?city=${encodeURIComponent(cityName)}`);
           const weatherData = await weatherRes.json();
-
           if (weatherData.success) {
             setWeather({
               temp: Math.round(weatherData.temperature),
@@ -214,7 +214,7 @@ const DEFAULT_CROP_IMAGE = 'https://images.unsplash.com/photo-1500937386664-56d1
       const user = auth.currentUser;
       if (!user) return;
       const token = await user.getIdToken();
-      await fetch(`http://localhost:5000/api/farmer/orders/${orderId}`, {
+      await fetch(`${process.env.REACT_APP_API_URL || `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}`}/farmer/orders/${orderId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -299,27 +299,58 @@ const DEFAULT_CROP_IMAGE = 'https://images.unsplash.com/photo-1500937386664-56d1
           return;
         }
         
+        const pNameLower2 = formData.productName.toLowerCase();
+        let category2 = 'vegetables';
+        if (pNameLower2.includes('mango') || pNameLower2.includes('banana') || pNameLower2.includes('papaya') || pNameLower2.includes('apple') || pNameLower2.includes('orange') || pNameLower2.includes('fruit')) category2 = 'fruits';
+        else if (pNameLower2.includes('rice') || pNameLower2.includes('corn') || pNameLower2.includes('wheat') || pNameLower2.includes('grain') || pNameLower2.includes('paddy')) category2 = 'grains';
+
         await updateDoc(doc(db, 'products', editProductId), {
           productName: formData.productName,
+          name: formData.productName,
           quantity: quantityNum,
           unit: formData.unit,
           pricePerUnit: priceNum,
+          price: priceNum,
           totalPrice: quantityNum * priceNum,
           stockStatus: formData.stockStatus,
           imageUrl: imageUrl,
           farmerId: user.uid,
+          farmer: profile?.fullName || profile?.businessName || profile?.contactPersonName || 'Farmer',
+          location: profile?.villageTown || profile?.district || '',
+          district: profile?.villageTown || profile?.district || '',
+          farmerPhone: profile?.phone || '',
+          category: category2,
+          available: `${quantityNum} ${formData.unit}`,
           updatedAt: serverTimestamp()
         });
       } else {
+        // Determine category from product name
+        const pNameLower = formData.productName.toLowerCase();
+        let category = 'vegetables';
+        if (pNameLower.includes('mango') || pNameLower.includes('banana') || pNameLower.includes('papaya') || pNameLower.includes('apple') || pNameLower.includes('orange') || pNameLower.includes('fruit')) category = 'fruits';
+        else if (pNameLower.includes('rice') || pNameLower.includes('corn') || pNameLower.includes('wheat') || pNameLower.includes('grain') || pNameLower.includes('paddy')) category = 'grains';
+
+        const farmerName = profile?.fullName || profile?.businessName || profile?.contactPersonName || 'Farmer';
+        const farmerLocation = profile?.villageTown || profile?.district || '';
+        const farmerPhone = profile?.phone || '';
+
         const newProduct = {
           productName: formData.productName,
+          name: formData.productName,
           quantity: quantityNum,
           unit: formData.unit,
           pricePerUnit: priceNum,
+          price: priceNum,
           totalPrice: quantityNum * priceNum,
           stockStatus: formData.stockStatus,
           imageUrl: imageUrl,
           farmerId: user.uid,
+          farmer: farmerName,
+          location: farmerLocation,
+          district: farmerLocation,
+          farmerPhone: farmerPhone,
+          category: category,
+          available: `${quantityNum} ${formData.unit}`,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         };

@@ -16,11 +16,14 @@ import KnowledgeBase from './Pages/expert/Knowledgebase.jsx';
 import MyFarmers from './Pages/expert/MyFarmers.jsx';
 import ConnectionRequests from './Pages/expert/ConnectionRequests.jsx';
 import Settings from './Pages/expert/Settings.jsx';
+import Followers from './Pages/expert/Followers.jsx';
 // Farmer dashboard
 import { FarmerDashboard } from './Pages/farmer/farmerDashboard.jsx';
 
 // Service provider dashboard
 import ServiceProviderDashboard from './Pages/serviceprovider/src/components/ServiceProviderDashboard.jsx';
+import DriverDashboard from './Pages/serviceprovider/src/components/DriverDashboard.jsx';
+import CompanyDriverDashboard from './Pages/serviceprovider/src/components/CompanyDriverDashboard.jsx';
 
 // Customer dashboard
 import { CustomerDashboard } from './Pages/Customer/src/app/components/CustomerDashboard.jsx';
@@ -63,6 +66,7 @@ export default function App() {
           <Route path="knowledge" element={<KnowledgeBase />} />
           <Route path="farmers" element={<MyFarmers />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="followers" element={<Followers />} />
         </Route>
 
         {/* Farmer Dashboard Route */}
@@ -74,6 +78,13 @@ export default function App() {
 
         {/* Service Provider Dashboard Route */}
         <Route path="/service-provider-dashboard" element={<ServiceProviderDashboard onNavigate={(path) => { if (path === 'landing') window.location.href = '/login'; }} />} />
+        
+        {/* Driver Dashboard Route */}
+        <Route path="/driver-dashboard" element={<DriverDashboard onNavigate={(path) => { if (path === 'landing') window.location.href = '/login'; }} />} />
+
+        {/* Company Driver Magic Link Route */}
+        <Route path="/company-driver/:shipmentId" element={<CompanyDriverDashboard />} />
+
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

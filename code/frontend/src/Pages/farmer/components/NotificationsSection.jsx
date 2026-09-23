@@ -39,7 +39,7 @@ export default function NotificationsSection() {
     if (!auth.currentUser) return;
     try {
       const token = await auth.currentUser.getIdToken();
-      await fetch(`http://localhost:5000/api/farmer/notifications/${notifId}/read`, {
+      await fetch(`${process.env.REACT_APP_API_URL || `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}`}/farmer/notifications/${notifId}/read`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`

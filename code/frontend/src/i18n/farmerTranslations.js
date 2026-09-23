@@ -18,8 +18,8 @@ const farmerTranslations = {
         name: 'Name', phone: 'Phone', email: 'Email', location: 'Location', notAvailable: 'Not available'
       },
       sidebar: {
-        overview: 'Overview', management: 'Management', services: 'Services', chatbot: 'AI Assistant',
-        community: 'Community', notifications: 'Notifications', settings: 'Settings', logout: 'Logout', requests: 'Requests'
+        overview: 'Overview', management: 'Management', requests: 'Customer Requests', services: 'Services', chatbot: 'AI Assistant',
+        community: 'Community', notifications: 'Notifications', settings: 'Settings', logout: 'Logout'
       },
       overview: {
         addNewProduct: 'Add New Product',
@@ -223,8 +223,8 @@ const farmerTranslations = {
         title: 'ශීර්ෂය', name: 'නම', phone: 'දුරකථනය', email: 'ඊමේල්', location: 'ස්ථානය', notAvailable: 'ලබා ගත නොහැක'
       },
       sidebar: {
-        overview: 'දළ විශ්ලේෂණය', management: 'කළමනාකරණය', services: 'සේවාවන්', chatbot: 'කෘත්‍රිම බුද්ධි සහායක',
-        community: 'ප්‍රජාව', notifications: 'නිවේදන', settings: 'සැකසුම්', logout: 'ඉවත් වන්න', requests: 'ඉල්ලීම්'
+        overview: 'දළ විශ්ලේෂණය', management: 'කළමනාකරණය', requests: 'පාරිභෝගික ඉල්ලීම්', services: 'සේවාවන්', chatbot: 'කෘත්‍රිම බුද්ධි සහායක',
+        community: 'ප්‍රජාව', notifications: 'නිවේදන', settings: 'සැකසුම්', logout: 'ඉවත් වන්න'
       },
       overview: {
         addNewProduct: 'නව නිෂ්පාදනයක් එක් කරන්න',
@@ -423,8 +423,8 @@ const farmerTranslations = {
         name: 'பெயர்', phone: 'தொலைபேசி', email: 'மின்னஞ்சல்', location: 'இடம்', notAvailable: 'கிடைக்கவில்லை'
       },
       sidebar: {
-        overview: 'கண்ணோட்டம்', management: 'மேலாண்மை', services: 'சேவைகள்', chatbot: 'செயற்கை நுண்ணறிவு உதவியாளர்',
-        community: 'சமூகம்', notifications: 'அறிவிப்புகள்', settings: 'அமைப்புகள்', logout: 'வெளியேறு', requests: 'கோரிக்கைகள்'
+        overview: 'கண்ணோட்டம்', management: 'மேலாண்மை', requests: 'வாடிக்கையாளர் கோரிக்கைகள்', services: 'சேவைகள்', chatbot: 'செயற்கை நுண்ணறிவு உதவியாளர்',
+        community: 'சமூகம்', notifications: 'அறிவிப்புகள்', settings: 'அமைப்புகள்', logout: 'வெளியேறு'
       },
       overview: {
         addNewProduct: 'புதிய தயாரிப்பைச் சேர்க்கவும்',

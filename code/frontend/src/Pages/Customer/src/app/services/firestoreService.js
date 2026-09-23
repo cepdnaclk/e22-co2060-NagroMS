@@ -55,39 +55,49 @@ export const fetchProducts = async () => {
 
     for (const docSnap of querySnapshot.docs) {
       const data = docSnap.data();
-      let farmerName = 'Unknown Farmer';
-      let location = 'Unknown Location';
-      let farmerPhone = 'N/A';
+      let farmerName = data.farmer || data.farmerName || '';
+      let location = data.location || data.district || '';
+      let farmerPhone = data.farmerPhone || data.phone || '';
 
-      if (data.farmerId) {
+      if (data.farmerId && (!farmerName || !location)) {
         try {
           const userSnap = await getDoc(doc(db, 'users', data.farmerId));
           if (userSnap.exists()) {
             const ud = userSnap.data();
-            farmerName = ud.fullName || ud.name || ud.businessName || 'Unknown Farmer';
-            location = ud.villageTown || ud.district || ud.village || ud.addressLine1 || 'Unknown Location';
-            farmerPhone = ud.phone || ud.phoneNumber || 'N/A';
+            farmerName = ud.fullName || ud.name || ud.businessName || farmerName;
+            location = ud.villageTown || ud.district || ud.village || location;
+            farmerPhone = ud.phone || ud.phoneNumber || farmerPhone;
           }
         } catch (e) {
           console.warn('Could not fetch farmer details', e);
         }
       }
 
+      const n = (data.productName || data.name || '').toLowerCase();
+      let inferredCategory = 'vegetables';
+      if (n.includes('mango') || n.includes('banana') || n.includes('papaya') || n.includes('apple') || n.includes('orange') || n.includes('fruit')) inferredCategory = 'fruits';
+      else if (n.includes('rice') || n.includes('corn') || n.includes('wheat') || n.includes('grain') || n.includes('paddy')) inferredCategory = 'grains';
+
       productsList.push({
         id: docSnap.id,
         ...data,
-        name: data.productName || data.name || 'Unnamed Product',
+        name: data.productName || data.name || 'Farm Produce',
+        productName: data.productName || data.name || 'Farm Produce',
         image: data.imageUrl || data.image || '',
-        price: data.pricePerUnit || data.price || 0,
+        price: Number(data.pricePerUnit || data.price || 0),
+        pricePerUnit: Number(data.pricePerUnit || data.price || 0),
+        unit: data.unit || 'kg',
+        quantity: Number(data.quantity || 0),
         available: `${data.quantity || 0} ${data.unit || 'kg'}`,
-        farmer: farmerName,
-        location: location,
-        district: location,
-        farmerPhone: farmerPhone,
-        category: 'general',
+        farmer: farmerName || 'Farmer',
+        farmerId: data.farmerId || '',
+        location: location || '',
+        district: location || '',
+        farmerPhone: farmerPhone || '',
+        category: inferredCategory,
         rating: 5.0,
         availableUnits: [
-          { unit: data.unit || 'kg', price: data.pricePerUnit || data.price || 0, label: data.unit || 'kg' }
+          { unit: data.unit || 'kg', price: Number(data.pricePerUnit || data.price || 0), label: data.unit || 'kg' }
         ]
       });
     }
@@ -103,54 +113,66 @@ export const subscribeToProducts = (callback) => {
   const q = query(collection(db, 'products'));
   const unsubscribe = onSnapshot(q, async (querySnapshot) => {
     try {
-      const productsList = [];
       const promises = querySnapshot.docs.map(async (docSnap) => {
         const data = docSnap.data();
-        let farmerName = 'Unknown Farmer';
-        let location = 'Unknown Location';
-        let farmerPhone = 'N/A';
+        let farmerName = data.farmer || data.farmerName || '';
+        let location = data.location || data.district || '';
+        let farmerPhone = data.farmerPhone || data.phone || '';
 
-        if (data.farmerId) {
+        if (data.farmerId && (!farmerName || !location)) {
           try {
             const userSnap = await getDoc(doc(db, 'users', data.farmerId));
             if (userSnap.exists()) {
               const ud = userSnap.data();
-              farmerName = ud.fullName || ud.name || ud.businessName || 'Unknown Farmer';
-              location = ud.villageTown || ud.district || ud.village || ud.addressLine1 || 'Unknown Location';
-              farmerPhone = ud.phone || ud.phoneNumber || 'N/A';
+              if (!farmerName) farmerName = ud.fullName || ud.name || ud.businessName || ud.contactPersonName || '';
+              if (!location) location = ud.villageTown || ud.district || ud.village || '';
+              if (!farmerPhone) farmerPhone = ud.phone || ud.phoneNumber || '';
             }
           } catch (e) {
-            console.warn('Could not fetch farmer details', e);
+            // User lookup may fail due to security rules — that's OK, show product anyway
+            console.warn('Could not fetch farmer details for product', docSnap.id, e.message);
           }
         }
 
         const n = (data.productName || data.name || '').toLowerCase();
-        let inferredCategory = 'general';
-        if (n.includes('tomato') || n.includes('carrot') || n.includes('onion') || n.includes('cabbage') || n.includes('chili') || n.includes('potato') || n.includes('bean') || n.includes('pumpkin')) inferredCategory = 'vegetables';
-        else if (n.includes('mango') || n.includes('banana') || n.includes('papaya') || n.includes('apple') || n.includes('orange') || n.includes('fruit')) inferredCategory = 'fruits';
-        else if (n.includes('rice') || n.includes('corn') || n.includes('wheat') || n.includes('grain')) inferredCategory = 'grains';
+        let inferredCategory = data.category || 'vegetables';
+        if (!data.category) {
+          if (n.includes('mango') || n.includes('banana') || n.includes('papaya') || n.includes('apple') || n.includes('orange') || n.includes('fruit')) inferredCategory = 'fruits';
+          else if (n.includes('rice') || n.includes('corn') || n.includes('wheat') || n.includes('grain') || n.includes('paddy')) inferredCategory = 'grains';
+        }
 
         return {
           id: docSnap.id,
           ...data,
-          name: data.productName || data.name || 'Unnamed Product',
+          name: data.productName || data.name || 'Farm Produce',
+          productName: data.productName || data.name || 'Farm Produce',
           image: data.imageUrl || data.image || '',
-          price: data.pricePerUnit || data.price || 0,
-          available: `${data.quantity || 0} ${data.unit || 'kg'}`,
-          farmer: farmerName,
-          location: location,
-          district: location,
-          farmerPhone: farmerPhone,
+          price: Number(data.pricePerUnit || data.price || 0),
+          pricePerUnit: Number(data.pricePerUnit || data.price || 0),
+          unit: data.unit || 'kg',
+          quantity: Number(data.quantity || 0),
+          available: data.available || `${data.quantity || 0} ${data.unit || 'kg'}`,
+          farmer: farmerName || 'Farmer',
+          farmerId: data.farmerId || '',
+          location: location || '',
+          district: location || '',
+          farmerPhone: farmerPhone || '',
           category: inferredCategory,
-          rating: 5.0,
-          availableUnits: [
-            { unit: data.unit || 'kg', price: data.pricePerUnit || data.price || 0, label: data.unit || 'kg' }
+          rating: data.rating || 5.0,
+          availableUnits: data.availableUnits || [
+            { unit: data.unit || 'kg', price: Number(data.pricePerUnit || data.price || 0), label: data.unit || 'kg' }
           ]
         };
       });
 
-      const resolvedProducts = await Promise.all(promises);
-      callback(resolvedProducts);
+      const resolvedLive = await Promise.all(promises);
+      // Sort by newest first
+      resolvedLive.sort((a, b) => {
+        const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+        const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+        return tb - ta;
+      });
+      callback(resolvedLive);
     } catch (error) {
       console.error('Error processing real-time products:', error);
       callback([]);

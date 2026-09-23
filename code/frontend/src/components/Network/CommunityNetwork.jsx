@@ -75,18 +75,31 @@ export default function CommunityNetwork({ currentUserRole, products = [], curre
   };
 
   // Available tabs based on role
-  const tabs = [
-    ...(currentUserRole === 'customer' ? [
+  let tabs = [];
+  if (currentUserRole === 'customer') {
+    tabs = [
       { id: 'feed', label: 'My Feed', icon: '✨' },
-      { id: 'following', label: 'Following', icon: '✅' }
-    ] : []),
-    { id: 'farmer', label: 'Farmers', icon: '🌾' },
-    { id: 'customer', label: 'Customers', icon: '👥' },
-    { id: 'expert', label: 'Experts', icon: '🎓' },
-  ].filter(tab => tab.id !== currentUserRole);
+      { id: 'following', label: 'Following', icon: '✅' },
+      { id: 'farmer', label: 'Farmers', icon: '🌾' }
+    ];
+  } else if (currentUserRole === 'farmer') {
+    tabs = [
+      { id: 'feed', label: 'My Feed', icon: '✨' },
+      { id: 'following', label: 'Following', icon: '✅' },
+      { id: 'expert', label: 'Experts', icon: '🎓' }
+    ];
+  } else {
+    tabs = [
+      { id: 'farmer', label: 'Farmers', icon: '🌾' },
+      { id: 'customer', label: 'Customers', icon: '👥' },
+      { id: 'expert', label: 'Experts', icon: '🎓' }
+    ].filter(tab => tab.id !== currentUserRole);
+  }
 
   const filteredUsers = users.filter(u => {
-    const matchRole = activeTab === 'following' ? u.role === 'farmer' && isConnected(u.id) : u.role === activeTab;
+    const matchRole = activeTab === 'following' 
+      ? isConnected(u.id) 
+      : (u.role === activeTab || (Array.isArray(u.roles) && u.roles.includes(activeTab)));
     const matchSearch = (u.fullName || u.contactPersonName || u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
                         (u.district || u.location || '').toLowerCase().includes(searchTerm.toLowerCase());
     return matchRole && matchSearch;

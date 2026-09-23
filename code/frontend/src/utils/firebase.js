@@ -44,8 +44,7 @@ if (typeof window !== 'undefined') {
 
 const googleProvider = new GoogleAuthProvider();
 const facebookProvider = new FacebookAuthProvider();
-const BACKEND = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
-const API = `${BACKEND}/api`;
+const API = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 // Helper — generate a fake email for phone/NIC-only users
 function generateFakeEmail(formData) {
