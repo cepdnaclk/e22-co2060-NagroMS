@@ -21,6 +21,7 @@ import { FarmerDashboard } from './Pages/farmer/farmerDashboard.jsx';
 
 // Service provider dashboard
 import ServiceProviderDashboard from './Pages/serviceprovider/src/components/ServiceProviderDashboard.jsx';
+import DriverDashboard from './Pages/serviceprovider/src/components/DriverDashboard.jsx';
 
 // Customer dashboard
 import { CustomerDashboard } from './Pages/Customer/src/app/components/CustomerDashboard.jsx';
@@ -74,6 +75,9 @@ export default function App() {
 
         {/* Service Provider Dashboard Route */}
         <Route path="/service-provider-dashboard" element={<ServiceProviderDashboard onNavigate={(path) => { if (path === 'landing') window.location.href = '/login'; }} />} />
+        
+        {/* Driver Dashboard Route */}
+        <Route path="/driver-dashboard" element={<DriverDashboard onNavigate={(path) => { if (path === 'landing') window.location.href = '/login'; }} />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

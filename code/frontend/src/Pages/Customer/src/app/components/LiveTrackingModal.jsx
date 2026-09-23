@@ -346,9 +346,14 @@ export function LiveTrackingModal({ order, onClose }) {
           setShipment({ id: snap.id, ...snap.data() });
           setLastUpdated(new Date());
           setLoading(false);
+        } else {
+          setLoading(false);
         }
       },
-      () => {}
+      err => {
+        console.error("Firebase tracking error (by ID):", err);
+        setLoading(false);
+      }
     );
 
     // Listener 2 — by orderId field
@@ -365,7 +370,7 @@ export function LiveTrackingModal({ order, onClose }) {
         }
       },
       err => {
-        console.error("Firebase tracking error:", err);
+        console.error("Firebase tracking error (by field):", err);
         setLoading(false);
       }
     );

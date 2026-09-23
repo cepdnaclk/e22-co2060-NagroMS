@@ -132,26 +132,13 @@ function Badge({ label, cfg }) {
 
 function KpiCard({ label, value, sub, icon, iconBg, iconColor, trend, trendUp = true }) {
     return (
-        <div style={{ 
-            background: `linear-gradient(135deg, ${ds.surface} 0%, ${iconBg}15 100%)`, 
+        <div className="hover-3d glass-card" style={{ 
             borderRadius: 20, 
-            border: `1px solid ${ds.border}`, 
             padding: '22px 20px', 
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.02), 0 4px 6px -4px rgba(0, 0, 0, 0.02), inset 0 1px 0 rgba(255,255,255,0.6)', 
-            transition: 'transform 0.25s ease, box-shadow 0.25s ease',
             position: 'relative',
             overflow: 'hidden',
             cursor: 'pointer'
-        }}
-        onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-3px)';
-            e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05)';
-        }}
-        onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0px)';
-            e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.02), 0 4px 6px -4px rgba(0, 0, 0, 0.02), inset 0 1px 0 rgba(255,255,255,0.6)';
-        }}
-        >
+        }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: iconBg }} />
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <div style={{ width: 42, height: 42, borderRadius: 12, background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: iconColor, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.06)' }}>
@@ -272,7 +259,7 @@ function DashboardHome({ setSection, onQuickAction, deliveries, exports, shipmen
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px' }}>
-                <div style={{ background: ds.surface, borderRadius: 18, border: `1px solid ${ds.border}`, padding: '20px', boxShadow: ds.shadow }}>
+                <div className="hover-3d glass-card" style={{ borderRadius: 18, padding: '20px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                         <div>
                             <h3 style={{ fontFamily: ds.fontD, fontSize: 15, fontWeight: 700, color: ds.text, margin: '0 0 4px 0' }}>Monthly Shipping Trends</h3>
@@ -292,7 +279,7 @@ function DashboardHome({ setSection, onQuickAction, deliveries, exports, shipmen
                     </ResponsiveContainer>
                 </div>
 
-                <div style={{ background: ds.surface, borderRadius: 18, border: `1px solid ${ds.border}`, padding: '20px', boxShadow: ds.shadow, display: 'flex', flexDirection: 'column' }}>
+                <div className="hover-3d glass-card" style={{ borderRadius: 18, padding: '20px', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                         <h3 style={{ fontFamily: ds.fontD, fontSize: 15, fontWeight: 700, color: ds.text, margin: 0 }}>Pending Dispatch</h3>
                         <span style={{ background: ds.amberLt, color: ds.amber, fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 99, border: `1px solid ${ds.amberBd}` }}>{pending} urgent</span>
@@ -315,17 +302,13 @@ function DashboardHome({ setSection, onQuickAction, deliveries, exports, shipmen
                 </div>
             </div>
 
-            <div style={{ background: ds.surface, borderRadius: 18, border: `1px solid ${ds.border}`, padding: '20px', boxShadow: ds.shadow }}>
+            <div className="glass-card" style={{ borderRadius: 18, padding: '20px' }}>
                 <h3 style={{ fontFamily: ds.fontD, fontSize: 15, fontWeight: 700, color: ds.text, margin: '0 0 14px 0' }}>Quick Actions</h3>
                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                    {[
-                        { label: '+ Add Vehicle', action: 'add-vehicle', bg: ds.blue, color: '#fff', border: 'none' },
-                        { label: '👤 Assign Driver', action: 'assign-driver', bg: '#fff', color: ds.text, border: `1px solid ${ds.border}` },
-                        { label: '📦 Track Shipment', action: 'update-shipment', bg: '#fff', color: ds.text, border: `1px solid ${ds.border}` },
-                        { label: '✈️ Export Order', action: 'create-export', bg: '#fff', color: ds.text, border: `1px solid ${ds.border}` },
-                    ].map(btn => (
-                        <button key={btn.action} onClick={() => onQuickAction(btn.action)} style={{ padding: '10px 18px', background: btn.bg, color: btn.color, border: btn.border, borderRadius: 10, cursor: 'pointer', fontFamily: ds.fontB, fontSize: 13, fontWeight: 600, transition: 'opacity 0.15s' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.85'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>{btn.label}</button>
-                    ))}
+                    <button className="btn-3d" onClick={() => onQuickAction('add-vehicle')} style={{ padding: '10px 16px', background: ds.blue, color: '#fff', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: ds.fontB }}><Plus size={16} /> Add Vehicle</button>
+                    <button className="btn-3d" onClick={() => onQuickAction('assign-driver')} style={{ padding: '10px 16px', background: ds.surface, color: ds.text, border: `1px solid ${ds.border}`, borderRadius: 12, fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: ds.fontB }}><User size={16} /> Assign Drivers</button>
+                    <button className="btn-3d" onClick={() => onQuickAction('update-shipment')} style={{ padding: '10px 16px', background: ds.surface, color: ds.text, border: `1px solid ${ds.border}`, borderRadius: 12, fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: ds.fontB }}><CheckCircle size={16} /> Update Shipment</button>
+                    <button className="btn-3d" onClick={() => onQuickAction('create-export')} style={{ padding: '10px 16px', background: ds.surface, color: ds.text, border: `1px solid ${ds.border}`, borderRadius: 12, fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: ds.fontB }}><Ship size={16} /> Create Export</button>
                 </div>
             </div>
         </div>
@@ -361,7 +344,7 @@ function DeliveryRequests({ deliveries, handleAction }) {
                         </thead>
                         <tbody>
                             {deliveries.map(d => (
-                                <tr key={d.id} style={{ transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'} onMouseLeave={e => e.currentTarget.style.background = ''}>
+                                <tr key={d.id} className="table-row-3d" style={{ transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'} onMouseLeave={e => e.currentTarget.style.background = ''}>
                                     <TD mono>{d.id}</TD>
                                     <TD>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -403,8 +386,8 @@ function DeliveryRequests({ deliveries, handleAction }) {
 
             {/* Dispatch Modal */}
             {dispatching && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setDispatching(null)}>
-                    <div style={{ background: ds.surface, borderRadius: 20, padding: 32, width: 480, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', border: `1px solid ${ds.border}` }} onClick={e => e.stopPropagation()}>
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.3)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setDispatching(null)}>
+                    <div className="glass-card" style={{ borderRadius: 24, padding: 32, width: 480, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)', border: `1px solid rgba(255,255,255,0.8)` }} onClick={e => e.stopPropagation()}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                             <div>
                                 <h2 style={{ fontFamily: ds.fontD, fontSize: 18, fontWeight: 700, margin: '0 0 4px 0', color: ds.text }}>Assign & Dispatch</h2>
@@ -422,15 +405,15 @@ function DeliveryRequests({ deliveries, handleAction }) {
                         <p style={{ margin: '0 0 10px 0', fontSize: 13, fontWeight: 600, color: ds.text }}>Available Fleet</p>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 260, overflowY: 'auto' }}>
                             {SEED_VEHICLES.filter(v => v.status === 'Available').map(v => (
-                                <div key={v.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', border: `1px solid ${ds.border}`, borderRadius: 12, background: ds.bg }}>
+                                <div key={v.id} className="hover-3d glass-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderRadius: 16, marginBottom: 12 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                        <div style={{ width: 40, height: 40, borderRadius: 10, background: ds.blueLt, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{v.emoji}</div>
+                                        <div style={{ width: 40, height: 40, borderRadius: 12, background: ds.blueLt, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{v.emoji}</div>
                                         <div>
-                                            <p style={{ margin: 0, fontWeight: 600, fontSize: 14, color: ds.text }}>{v.driver}</p>
+                                            <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: ds.text }}>{v.driver}</p>
                                             <p style={{ margin: 0, fontSize: 12, color: ds.textSec }}>{v.type} · {v.plate} · {v.capacity}</p>
                                         </div>
                                     </div>
-                                    <button onClick={() => { handleAction(dispatching.id, 'Accepted'); setDispatching(null); }} style={{ padding: '8px 16px', background: ds.blue, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Assign</button>
+                                    <button className="btn-3d" onClick={() => { handleAction(dispatching.id, 'Accepted'); setDispatching(null); }} style={{ padding: '8px 16px', background: ds.blue, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Assign</button>
                                 </div>
                             ))}
                             {SEED_VEHICLES.filter(v => v.status === 'Available').length === 0 && (
@@ -624,7 +607,7 @@ function ShipmentTracking({ shipments, vehicles, handleGpsAccess, gpsAccess, han
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ background: ds.surface, borderRadius: 18, border: `1px solid ${ds.border}`, padding: 20, boxShadow: ds.shadow, display: 'flex', justify: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+            <div className="glass-card" style={{ borderRadius: 18, padding: 20, display: 'flex', justify: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
                 <div>
                     <h3 style={{ fontFamily: ds.fontD, fontSize: 14, fontWeight: 700, color: ds.text, marginBottom: 4 }}>Active Shipments Transit Progress</h3>
                     <p style={{ fontSize: 12, color: ds.textSec, margin: 0 }}>Real-time GPS delivery tracking logs.</p>
@@ -638,7 +621,7 @@ function ShipmentTracking({ shipments, vehicles, handleGpsAccess, gpsAccess, han
             <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1.2fr', gap: 16 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     {shipments.map(s => (
-                        <div key={s.id} onClick={() => setSelectedShipment(s)} style={{ background: ds.surface, borderRadius: 18, border: `1px solid ${selectedShipment?.id === s.id ? ds.blue : ds.border}`, padding: 20, boxShadow: ds.shadow, cursor: 'pointer' }}>
+                        <div key={s.id} className="hover-3d glass-card" onClick={() => setSelectedShipment(s)} style={{ borderRadius: 18, border: `2px solid ${selectedShipment?.id === s.id ? ds.blue : 'transparent'}`, padding: 20, cursor: 'pointer' }}>
                             <div style={{ display: 'flex', justify: 'space-between', marginBottom: 12 }}>
                                 <div>
                                     <span style={{ fontFamily: ds.fontM, fontSize: 14, fontWeight: 700, color: ds.text }}>{s.id}</span>
@@ -1343,6 +1326,46 @@ export default function DeliveryExportDashboard({ onNavigate }) {
 
     return (
         <div style={{ display: 'flex', background: ds.bg, minHeight: '100vh', width: '100%', fontVariantNumeric: 'tabular-nums' }}>
+            <style>{`
+                .glass-card {
+                    background: rgba(255, 255, 255, 0.65);
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
+                    border: 1px solid rgba(255, 255, 255, 0.9);
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+                }
+                .hover-3d {
+                    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease, border-color 0.4s ease;
+                }
+                .hover-3d:hover {
+                    transform: translateY(-8px) scale(1.015);
+                    box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.1), 0 15px 15px -5px rgba(0, 0, 0, 0.04);
+                    border-color: rgba(255, 255, 255, 1);
+                    z-index: 10;
+                }
+                .btn-3d {
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                }
+                .btn-3d:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2);
+                }
+                .btn-3d:active {
+                    transform: translateY(1px);
+                    box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+                }
+                .table-row-3d {
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+                .table-row-3d:hover {
+                    background: #f8fafc !important;
+                    transform: scale(1.005) translateY(-2px);
+                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+                    z-index: 20;
+                    position: relative;
+                }
+            `}</style>
             <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} active={section} setActive={setSection} onNavigate={onNavigate} />
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                 <TopNav section={section} />
