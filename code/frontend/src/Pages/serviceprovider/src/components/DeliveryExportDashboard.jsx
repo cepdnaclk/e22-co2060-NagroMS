@@ -652,19 +652,33 @@ function ShipmentTracking({ shipments, vehicles, handleGpsAccess, gpsAccess, han
                                 </div>
                             </div>
 
-                            {/* Increment/Decrement control to test GPS movement */}
-                            {s.status === 'In Transit' && (
-                                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                            {/* Increment/Decrement control to test GPS movement and Driver Link */}
+                            {s.status !== 'Delivered' && (
+                                <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                                    {s.status === 'In Transit' && (
+                                        <button 
+                                            onClick={(e) => { 
+                                                e.stopPropagation(); 
+                                                setSimulating(prev => ({ ...prev, [s.id]: !prev[s.id] })); 
+                                            }} 
+                                            style={{ padding: '6px 12px', background: simulating[s.id] ? ds.amberLt : ds.blueLt, color: simulating[s.id] ? ds.amber : ds.blue, border: 'none', borderRadius: 6, fontSize: 11, cursor: 'pointer', fontWeight: 600 }}
+                                        >
+                                            {simulating[s.id] ? '⏸ Pause Transit' : '🚚 Start Transit (GPS On)'}
+                                        </button>
+                                    )}
+                                    {s.status === 'In Transit' && (
+                                        <button onClick={(e) => { e.stopPropagation(); handleUpdateProgress(s.id, 100); }} style={{ padding: '6px 12px', background: ds.greenLt, color: ds.green, border: 'none', borderRadius: 6, fontSize: 11, cursor: 'pointer', fontWeight: 600 }}>Complete Delivery</button>
+                                    )}
                                     <button 
                                         onClick={(e) => { 
                                             e.stopPropagation(); 
-                                            setSimulating(prev => ({ ...prev, [s.id]: !prev[s.id] })); 
+                                            navigator.clipboard.writeText(`${window.location.origin}/company-driver/${s.id}`);
+                                            alert(`Driver Magic Link Copied!\n\n${window.location.origin}/company-driver/${s.id}`);
                                         }} 
-                                        style={{ padding: '6px 12px', background: simulating[s.id] ? ds.amberLt : ds.blueLt, color: simulating[s.id] ? ds.amber : ds.blue, border: 'none', borderRadius: 6, fontSize: 11, cursor: 'pointer', fontWeight: 600 }}
+                                        style={{ padding: '6px 12px', background: ds.purpleLt, color: ds.purple, border: `1px solid ${ds.purpleBd}`, borderRadius: 6, fontSize: 11, cursor: 'pointer', fontWeight: 600 }}
                                     >
-                                        {simulating[s.id] ? '⏸ Pause Transit' : '🚚 Start Transit (GPS On)'}
+                                        🔗 Copy Driver Link
                                     </button>
-                                    <button onClick={(e) => { e.stopPropagation(); handleUpdateProgress(s.id, 100); }} style={{ padding: '6px 12px', background: ds.greenLt, color: ds.green, border: 'none', borderRadius: 6, fontSize: 11, cursor: 'pointer', fontWeight: 600 }}>Complete Delivery</button>
                                 </div>
                             )}
                         </div>
@@ -691,10 +705,18 @@ function VehiclesDrivers({ vehicles, handleAddVehicle }) {
 
     const onSubmit = (e) => {
         e.preventDefault();
-        if (!plate || !capacity || !driver) return;
+        if (!plate || !capacity || !driver) {
+            alert('Please fill out all fields: License Plate, Capacity, and Driver Name.');
+            return;
+        }
+        
+        let emoji = '🚚';
+        if (type === 'Mini Van') emoji = '🚐';
+        else if (type === 'Refrigerated Truck') emoji = '🚛';
+
         handleAddVehicle({
             id: 'VH-' + Math.floor(Math.random()*100),
-            emoji: '🚚',
+            emoji,
             type,
             plate,
             status: 'Available',
@@ -702,6 +724,8 @@ function VehiclesDrivers({ vehicles, handleAddVehicle }) {
             capacity,
             lastService: new Date().toISOString().split('T')[0]
         });
+        
+        alert('Vehicle successfully registered!');
         setPlate('');
         setCapacity('');
         setDriver('');
@@ -1155,11 +1179,18 @@ export default function DeliveryExportDashboard({ onNavigate }) {
                     const docRef = doc(collection(db, 'vehicles'), v.id);
                     batch.set(docRef, v);
                 });
-                batch.commit();
+                batch.commit().catch(e => {
+                    console.error('Batch commit failed', e);
+                    setVehicles(SEED_VEHICLES);
+                });
             } else {
                 const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 setVehicles(list);
             }
+        }, (error) => {
+            console.error('Firebase vehicles listener failed:', error);
+            // Fallback to seed data if permissions are missing
+            setVehicles(SEED_VEHICLES);
         });
 
         return () => {
@@ -1274,7 +1305,13 @@ export default function DeliveryExportDashboard({ onNavigate }) {
     };
 
     const handleAddVehicle = async (newVeh) => {
-        await addDoc(collection(db, 'vehicles'), newVeh);
+        try {
+            await addDoc(collection(db, 'vehicles'), newVeh);
+        } catch (error) {
+            console.error('Failed to add vehicle to Firebase:', error);
+            // Fallback to local state so the UI still updates
+            setVehicles(prev => [...prev, newVeh]);
+        }
     };
 
     const handleQuickAction = (action) => {
