@@ -11,7 +11,8 @@ import {
     LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
-import { db } from '../../../../utils/firebase.js'; // Firebase integration
+import { db, auth } from '../../../../utils/firebase.js'; // Firebase integration
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { 
     collection, onSnapshot, doc, updateDoc, addDoc, getDocs, writeBatch, setDoc 
 } from 'firebase/firestore';
@@ -1020,6 +1021,10 @@ function LogisticsMessages() {
 function LogisticsSettings() {
     const [bizName, setBizName] = useState(localStorage.getItem('businessName') || 'Agro Logistics Hub');
     const [tab, setTab] = useState('profile');
+    const [existingPassword, setExistingPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [loading, setLoading] = useState(false);
 
     const handleSave = (e) => {
         e.preventDefault();
@@ -1068,14 +1073,70 @@ function LogisticsSettings() {
                 )}
 
                 {tab === 'security' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 400 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 400 }}>
                         <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>Security Settings</h4>
+                        
                         <div>
-                            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: ds.textSec, marginBottom: 4 }}>Update Password</label>
-                            <input type="password" placeholder="••••••••" style={{ width: '100%', padding: 8, border: `1px solid ${ds.border}`, borderRadius: 6, fontSize: 13 }} />
+                            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: ds.textSec, marginBottom: 4 }}>Existing Password</label>
+                            <input type="password" placeholder="••••••••" value={existingPassword} onChange={e => setExistingPassword(e.target.value)} style={{ width: '100%', padding: 8, border: `1px solid ${ds.border}`, borderRadius: 6, fontSize: 13 }} />
                         </div>
-                        <button onClick={() => alert('Password updated.')} style={{ padding: '8px 12px', background: ds.blue, color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600, fontSize: 12, alignSelf: 'flex-start' }}>
-                            Update Password
+                        <div>
+                            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: ds.textSec, marginBottom: 4 }}>New Password</label>
+                            <input type="password" placeholder="••••••••" value={newPassword} onChange={e => setNewPassword(e.target.value)} style={{ width: '100%', padding: 8, border: `1px solid ${ds.border}`, borderRadius: 6, fontSize: 13 }} />
+                        </div>
+                        <div>
+                            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: ds.textSec, marginBottom: 4 }}>Re-enter New Password</label>
+                            <input type="password" placeholder="••••••••" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} style={{ width: '100%', padding: 8, border: `1px solid ${ds.border}`, borderRadius: 6, fontSize: 13 }} />
+                        </div>
+
+                        <button 
+                            disabled={loading}
+                            onClick={async () => {
+                                if (!existingPassword || !newPassword || !confirmPassword) {
+                                    alert('Please fill out all password fields.');
+                                    return;
+                                }
+                                if (newPassword !== confirmPassword) {
+                                    alert('New passwords do not match. Please try again.');
+                                    return;
+                                }
+                                if (newPassword.length < 6) {
+                                    alert('New password must be at least 6 characters long.');
+                                    return;
+                                }
+
+                                setLoading(true);
+                                try {
+                                    const user = auth.currentUser;
+                                    if (user && user.email) {
+                                        // Re-authenticate user before changing password
+                                        const credential = EmailAuthProvider.credential(user.email, existingPassword);
+                                        await reauthenticateWithCredential(user, credential);
+                                        // Update to new password
+                                        await updatePassword(user, newPassword);
+                                        alert('Security alert: Your password has been successfully updated in Firebase!');
+                                    } else {
+                                        // Fallback for simulated dashboard environment where user is not logged into Firebase Auth
+                                        console.warn('Simulating password update because no Firebase user is currently logged in.');
+                                        alert('Security alert: Your password has been updated successfully! (Simulation mode)');
+                                    }
+                                    setExistingPassword('');
+                                    setNewPassword('');
+                                    setConfirmPassword('');
+                                } catch (error) {
+                                    console.error('Password update failed:', error);
+                                    if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                                        alert('The existing password you entered is incorrect.');
+                                    } else {
+                                        alert(`Failed to update password: ${error.message}`);
+                                    }
+                                } finally {
+                                    setLoading(false);
+                                }
+                            }} 
+                            style={{ padding: '8px 12px', background: ds.blue, color: '#fff', border: 'none', borderRadius: 6, cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 600, fontSize: 12, alignSelf: 'flex-start', opacity: loading ? 0.7 : 1 }}
+                        >
+                            {loading ? 'Updating...' : 'Update Password'}
                         </button>
                     </div>
                 )}
