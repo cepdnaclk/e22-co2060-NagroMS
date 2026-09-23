@@ -1,7 +1,7 @@
 import { useLanguage } from '../../../i18n/LanguageContext';
 import React, { useState, useEffect } from 'react';
 import { auth, db, storage } from '../../../utils/firebase';
-import { collection, query, where, onSnapshot, doc, addDoc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, addDoc, deleteDoc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export default function CommunitySection() {
@@ -25,61 +25,209 @@ export default function CommunitySection() {
   const [showFollowModal, setShowFollowModal] = useState(false);
   const [modalType, setModalType] = useState('followers'); // 'followers' or 'following'
 
+  const getCurrentUid = () => {
+    if (auth.currentUser?.uid) return auth.currentUser.uid;
+    const localUid = localStorage.getItem('nagroms_uid');
+    if (localUid) return localUid;
+    const token = localStorage.getItem('nagroms_token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload?.user_id) return payload.user_id;
+        if (payload?.uid) return payload.uid;
+        if (payload?.sub) return payload.sub;
+      } catch (e) {}
+    }
+    return null;
+  };
+
   useEffect(() => {
     let unsubs = [];
     
-    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
-      if (user) {
-        // Profile
-        const docRef = doc(db, 'users', user.uid);
-        unsubs.push(onSnapshot(docRef, (docSnap) => {
-          if (docSnap.exists()) {
-            setProfile(docSnap.data());
+    const initListeners = (currentUid) => {
+      if (!currentUid) return;
+
+      // Profile
+      const docRef = doc(db, 'users', currentUid);
+      unsubs.push(onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+          setProfile(docSnap.data());
+        }
+      }, (err) => console.warn('User profile snapshot error:', err)));
+
+      // State trackers for Following
+      let followsList = [];
+      let connList = [];
+      let efList = [];
+
+      const syncAllFollowing = () => {
+        const map = new Map();
+
+        followsList.forEach(f => {
+          if (f.followingId && f.followingId !== currentUid) {
+            map.set(f.followingId, {
+              id: f.id,
+              followingId: f.followingId,
+              followingName: f.followingName || 'User'
+            });
           }
-        }));
+        });
 
-        // Followers
-        const qFollowers = query(collection(db, 'follows'), where('followingId', '==', user.uid));
-        unsubs.push(onSnapshot(qFollowers, (snap) => {
-          const arr = [];
-          snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
-          setFollowers(arr);
-        }));
+        connList.forEach(c => {
+          if (c.requesterId === currentUid && c.targetId && c.status !== 'declined') {
+            if (!map.has(c.targetId)) {
+              map.set(c.targetId, {
+                id: c.id,
+                followingId: c.targetId,
+                followingName: c.targetName || 'User'
+              });
+            }
+          } else if (c.targetId === currentUid && c.requesterId && (c.status === 'accepted' || c.status === 'connected')) {
+            if (!map.has(c.requesterId)) {
+              map.set(c.requesterId, {
+                id: c.id,
+                followingId: c.requesterId,
+                followingName: c.requesterName || 'User'
+              });
+            }
+          }
+        });
 
-        // Following
-        const qFollowing = query(collection(db, 'follows'), where('followerId', '==', user.uid));
-        unsubs.push(onSnapshot(qFollowing, (snap) => {
-          const arr = [];
-          snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
-          setFollowing(arr);
-        }));
+        efList.forEach(ef => {
+          if (ef.expertId && ef.expertId !== currentUid && ef.status !== 'declined') {
+            if (!map.has(ef.expertId)) {
+              map.set(ef.expertId, {
+                id: ef.id,
+                followingId: ef.expertId,
+                followingName: ef.name || 'Expert'
+              });
+            }
+          }
+        });
 
-        // Experts
-        const qExp = query(collection(db, 'users'), where('roles', 'array-contains', 'expert'));
-        unsubs.push(onSnapshot(qExp, (snap) => {
-          const arr = [];
-          snap.forEach(doc => arr.push({ id: doc.id, ...doc.data() }));
-          setExperts(arr);
-        }));
+        setFollowing(Array.from(map.values()));
+      };
 
-        // Community Posts
-        const qPosts = query(collection(db, 'communityPosts'));
-        unsubs.push(onSnapshot(qPosts, (snap) => {
-          const arr = [];
-          snap.forEach(doc => {
-            const p = { id: doc.id, ...doc.data(), comments: [] };
-            arr.push(p);
-            // Fetch comments subcollection
-            unsubs.push(onSnapshot(collection(db, `communityPosts/${doc.id}/comments`), (cSnap) => {
-              const cArr = [];
-              cSnap.forEach(cDoc => cArr.push({ id: cDoc.id, ...cDoc.data() }));
-              setPosts(prev => prev.map(post => post.id === doc.id ? { ...post, comments: cArr } : post));
-            }));
-          });
-          setPosts(arr);
-        }));
+      // State trackers for Followers
+      let followsFollowersList = [];
+      let connFollowersList = [];
+      let efFollowersList = [];
+
+      const syncAllFollowers = () => {
+        const map = new Map();
+
+        followsFollowersList.forEach(f => {
+          if (f.followerId && f.followerId !== currentUid) {
+            map.set(f.followerId, {
+              id: f.id,
+              followerId: f.followerId,
+              followerName: f.followerName || 'User'
+            });
+          }
+        });
+
+        connFollowersList.forEach(c => {
+          if (c.targetId === currentUid && c.requesterId && c.status !== 'declined') {
+            if (!map.has(c.requesterId)) {
+              map.set(c.requesterId, {
+                id: c.id,
+                followerId: c.requesterId,
+                followerName: c.requesterName || 'User'
+              });
+            }
+          }
+        });
+
+        efFollowersList.forEach(ef => {
+          if (ef.expertId === currentUid && ef.memberId) {
+            if (!map.has(ef.memberId)) {
+              map.set(ef.memberId, {
+                id: ef.id,
+                followerId: ef.memberId,
+                followerName: ef.name || 'User'
+              });
+            }
+          }
+        });
+
+        setFollowers(Array.from(map.values()));
+      };
+
+      // Listeners for Following:
+      unsubs.push(onSnapshot(query(collection(db, 'follows'), where('followerId', '==', currentUid)), (snap) => {
+        followsList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        syncAllFollowing();
+      }, (err) => console.warn('Follows snapshot error:', err)));
+
+      unsubs.push(onSnapshot(query(collection(db, 'connections'), where('requesterId', '==', currentUid)), (snap) => {
+        connList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        syncAllFollowing();
+      }, (err) => console.warn('Connections snapshot error:', err)));
+
+      unsubs.push(onSnapshot(query(collection(db, 'expertFarmers'), where('memberId', '==', currentUid)), (snap) => {
+        efList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        syncAllFollowing();
+      }, (err) => console.warn('ExpertFarmers snapshot error:', err)));
+
+      // Listeners for Followers:
+      unsubs.push(onSnapshot(query(collection(db, 'follows'), where('followingId', '==', currentUid)), (snap) => {
+        followsFollowersList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        syncAllFollowers();
+      }, (err) => console.warn('Followers follows snapshot error:', err)));
+
+      unsubs.push(onSnapshot(query(collection(db, 'connections'), where('targetId', '==', currentUid)), (snap) => {
+        connFollowersList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        syncAllFollowers();
+      }, (err) => console.warn('Followers connections snapshot error:', err)));
+
+      unsubs.push(onSnapshot(query(collection(db, 'expertFarmers'), where('expertId', '==', currentUid)), (snap) => {
+        efFollowersList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        syncAllFollowers();
+      }, (err) => console.warn('Followers expertFarmers snapshot error:', err)));
+
+      // Experts
+      unsubs.push(onSnapshot(collection(db, 'users'), (snap) => {
+        const arr = [];
+        snap.forEach(docSnap => {
+          const uData = docSnap.data();
+          const isExpert = uData.role === 'expert' || uData.role === 'Expert' || (Array.isArray(uData.roles) && uData.roles.includes('expert'));
+          if (isExpert && docSnap.id !== currentUid) {
+            arr.push({ id: docSnap.id, ...uData });
+          }
+        });
+        setExperts(arr);
+      }, (err) => console.warn('Users snapshot error:', err)));
+
+      // Community Posts
+      const qPosts = query(collection(db, 'communityPosts'));
+      unsubs.push(onSnapshot(qPosts, (snap) => {
+        const arr = [];
+        snap.forEach(doc => {
+          const p = { id: doc.id, ...doc.data(), comments: [] };
+          arr.push(p);
+          unsubs.push(onSnapshot(collection(db, `communityPosts/${doc.id}/comments`), (cSnap) => {
+            const cArr = [];
+            cSnap.forEach(cDoc => cArr.push({ id: cDoc.id, ...cDoc.data() }));
+            setPosts(prev => prev.map(post => post.id === doc.id ? { ...post, comments: cArr } : post));
+          }, (err) => console.warn('Comments snapshot error:', err)));
+        });
+        setPosts(arr);
+      }, (err) => console.warn('Posts snapshot error:', err)));
+    };
+
+    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+      unsubs.forEach(u => u());
+      unsubs = [];
+      const activeUid = user?.uid || getCurrentUid();
+      if (activeUid) {
+        initListeners(activeUid);
       }
     });
+
+    const fallbackUid = getCurrentUid();
+    if (fallbackUid) {
+      initListeners(fallbackUid);
+    }
 
     return () => {
       unsubscribeAuth();
@@ -89,13 +237,14 @@ export default function CommunitySection() {
 
   const handleCreateUpdate = async (e) => {
     e.preventDefault();
-    if (!auth.currentUser) return;
+    const currentUid = getCurrentUid();
+    if (!currentUid) return;
     try {
-      const token = await auth.currentUser.getIdToken();
+      const token = localStorage.getItem('nagroms_token') || (auth.currentUser ? await auth.currentUser.getIdToken().catch(() => '') : '');
       let imageUrl = '';
-      if (updateImage) {
+      if (updateImage && auth.currentUser) {
         try {
-          const imageRef = ref(storage, `farmerUpdates/${auth.currentUser.uid}/${Date.now()}_${updateImage.name}`);
+          const imageRef = ref(storage, `farmerUpdates/${currentUid}/${Date.now()}_${updateImage.name}`);
           const snap = await uploadBytes(imageRef, updateImage);
           imageUrl = await getDownloadURL(snap.ref);
         } catch (imgError) {
@@ -120,9 +269,10 @@ export default function CommunitySection() {
 
   const handleCreatePost = async (e) => {
     e.preventDefault();
-    if (!auth.currentUser) return;
+    const currentUid = getCurrentUid();
+    if (!currentUid) return;
     try {
-      const token = await auth.currentUser.getIdToken();
+      const token = localStorage.getItem('nagroms_token') || (auth.currentUser ? await auth.currentUser.getIdToken().catch(() => '') : '');
       await fetch('http://localhost:5000/api/farmer/community/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -136,9 +286,10 @@ export default function CommunitySection() {
   };
 
   const handleAddComment = async (postId) => {
-    if (!auth.currentUser || !commentText[postId]) return;
+    const currentUid = getCurrentUid();
+    if (!currentUid || !commentText[postId]) return;
     try {
-      const token = await auth.currentUser.getIdToken();
+      const token = localStorage.getItem('nagroms_token') || (auth.currentUser ? await auth.currentUser.getIdToken().catch(() => '') : '');
       await fetch(`http://localhost:5000/api/farmer/community/posts/${postId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -151,9 +302,10 @@ export default function CommunitySection() {
   };
 
   const handleLikePost = async (postId) => {
-    if (!auth.currentUser) return;
+    const currentUid = getCurrentUid();
+    if (!currentUid) return;
     try {
-      const token = await auth.currentUser.getIdToken();
+      const token = localStorage.getItem('nagroms_token') || (auth.currentUser ? await auth.currentUser.getIdToken().catch(() => '') : '');
       await fetch(`http://localhost:5000/api/farmer/community/posts/${postId}/like`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -164,58 +316,158 @@ export default function CommunitySection() {
   };
 
   const handleFollow = async (targetUserId, targetUserName) => {
-    if (!auth.currentUser) return;
-    try {
-      const followerName = profile?.fullName || profile?.name || profile?.email?.split('@')[0] || auth.currentUser.email?.split('@')[0] || 'Farmer';
-      // 1. Create the follow record for the farmer's "Following" count
-      await addDoc(collection(db, 'follows'), {
-        followerId: auth.currentUser.uid,
-        followingId: targetUserId,
-        followerName: followerName,
-        followingName: targetUserName,
-        createdAt: new Date()
-      });
+    const currentUid = getCurrentUid();
+    if (!currentUid || !targetUserId) return;
+    if (following.some(f => f.followingId === targetUserId)) return;
 
-      // 2. Create the connection record for the Expert Dashboard's "Connection Requests"
-      await addDoc(collection(db, 'connections'), {
-        requesterId: auth.currentUser.uid,
+    const safeTargetName = (targetUserName && typeof targetUserName === 'string' && targetUserName.trim() !== '')
+      ? targetUserName
+      : 'Expert';
+
+    const newFollowObj = {
+      id: `${currentUid}_${targetUserId}`,
+      followingId: targetUserId,
+      followingName: safeTargetName
+    };
+
+    // 1. Optimistic UI update so count & button toggle IMMEDIATELY
+    setFollowing(prev => {
+      if (prev.some(f => f.followingId === targetUserId)) return prev;
+      return [...prev, newFollowObj];
+    });
+
+    try {
+      const userEmail = auth.currentUser?.email || localStorage.getItem('userEmail') || '';
+      const fallbackName = userEmail.includes('@') ? userEmail.split('@')[0] : 'Farmer';
+      
+      const followerName = (profile?.fullName && String(profile.fullName).trim() !== '') ? profile.fullName :
+                           (profile?.name && String(profile.name).trim() !== '') ? profile.name :
+                           (profile?.email && profile.email.includes('@')) ? profile.email.split('@')[0] :
+                           (localStorage.getItem('userName') || fallbackName);
+
+      const followId = `${currentUid}_${targetUserId}`;
+      const connId = `${currentUid}_${targetUserId}`;
+      const expertFarmerId = `${targetUserId}_${currentUid}`;
+
+      // 1. Create/update record in 'follows' collection
+      await setDoc(doc(db, 'follows', followId), {
+        followerId: currentUid,
+        followingId: targetUserId,
+        followerName: String(followerName),
+        followingName: String(safeTargetName),
+        createdAt: new Date().toISOString()
+      }, { merge: true }).catch(e => console.warn('Follows setDoc warn:', e));
+
+      // 2. Create/update record in 'connections' collection
+      await setDoc(doc(db, 'connections', connId), {
+        requesterId: currentUid,
         targetId: targetUserId,
-        status: 'pending',
-        expertAcknowledged: false,
-        createdAt: new Date()
-      });
+        status: 'accepted',
+        expertAcknowledged: true,
+        createdAt: new Date().toISOString()
+      }, { merge: true }).catch(e => console.warn('Connections setDoc warn:', e));
+
+      // 3. Create/update record in 'expertFarmers' collection
+      await setDoc(doc(db, 'expertFarmers', expertFarmerId), {
+        expertId: targetUserId,
+        memberId: currentUid,
+        memberRole: 'farmer',
+        name: String(followerName),
+        status: 'active',
+        connectedAt: new Date().toISOString()
+      }, { merge: true }).catch(e => console.warn('ExpertFarmers setDoc warn:', e));
+
+      // Backend API call fallback
+      const token = localStorage.getItem('nagroms_token') || (auth.currentUser ? await auth.currentUser.getIdToken().catch(() => null) : null);
+      if (token) {
+        fetch('http://localhost:5000/api/network/toggle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ targetId: targetUserId, currentlyConnected: false })
+        }).catch(err => console.warn('Backend toggle follow err:', err));
+      }
+
     } catch (err) {
-      console.error(err);
+      console.error('Error following user:', err);
     }
   };
 
   const handleUnfollow = async (targetUserId) => {
-    if (!auth.currentUser) return;
+    const currentUid = getCurrentUid();
+    if (!currentUid || !targetUserId) return;
+
+    // 1. Optimistic UI update so count & button toggle IMMEDIATELY
+    setFollowing(prev => prev.filter(f => f.followingId !== targetUserId));
+
     try {
-      const existing = following.find(f => f.followingId === targetUserId);
-      if (existing) {
-        await deleteDoc(doc(db, 'follows', existing.id));
+      const followId = `${currentUid}_${targetUserId}`;
+      const connId = `${currentUid}_${targetUserId}`;
+      const expertFarmerId = `${targetUserId}_${currentUid}`;
+
+      await deleteDoc(doc(db, 'follows', followId)).catch(() => {});
+      await deleteDoc(doc(db, 'connections', connId)).catch(() => {});
+      await deleteDoc(doc(db, 'expertFarmers', expertFarmerId)).catch(() => {});
+
+      // Clean up any auto-ID docs in follows collection matching targetUserId
+      const existingFollows = following.filter(f => f.followingId === targetUserId);
+      for (const item of existingFollows) {
+        if (item.id && item.id !== followId) {
+          await deleteDoc(doc(db, 'follows', item.id)).catch(() => {});
+        }
+      }
+
+      // Backend API call fallback
+      const token = localStorage.getItem('nagroms_token') || (auth.currentUser ? await auth.currentUser.getIdToken().catch(() => null) : null);
+      if (token) {
+        fetch('http://localhost:5000/api/network/toggle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ targetId: targetUserId, currentlyConnected: true })
+        }).catch(err => console.warn('Backend toggle unfollow err:', err));
       }
     } catch (err) {
-      console.error(err);
+      console.error('Error unfollowing:', err);
     }
   };
 
   const handleConsult = async (expertId) => {
-    if (!auth.currentUser) return;
+    const currentUid = getCurrentUid();
+    if (!currentUid || !expertId) return;
     try {
-      const followerName = profile?.fullName || profile?.name || profile?.email?.split('@')[0] || auth.currentUser.email?.split('@')[0] || 'Farmer';
+      const userEmail = auth.currentUser?.email || localStorage.getItem('userEmail') || '';
+      const fallbackName = userEmail.includes('@') ? userEmail.split('@')[0] : 'Farmer';
+      
+      const followerName = (profile?.fullName && String(profile.fullName).trim() !== '') ? profile.fullName :
+                           (profile?.name && String(profile.name).trim() !== '') ? profile.name :
+                           (profile?.email && profile.email.includes('@')) ? profile.email.split('@')[0] :
+                           (localStorage.getItem('userName') || fallbackName);
+
+      // Attempt direct Firestore addDoc first
       await addDoc(collection(db, 'consultations'), {
         expertId: expertId,
-        farmerId: auth.currentUser.uid,
-        farmerName: followerName,
+        farmerId: currentUid,
+        farmerName: String(followerName),
         status: 'pending',
         message: 'I need consultation.',
-        createdAt: new Date()
+        createdAt: new Date().toISOString()
       });
       alert(t('farmer.services.requestSent') || 'Consultation request sent!');
     } catch (err) {
-      console.error(err);
+      console.warn('Direct Firestore consultation failed, attempting backend endpoint...', err);
+      try {
+        const token = localStorage.getItem('nagroms_token') || (auth.currentUser ? await auth.currentUser.getIdToken().catch(() => null) : null);
+        const res = await fetch('http://localhost:5000/api/farmer/consultations/request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ expertId, message: 'I need consultation.' })
+        });
+        if (res.ok) {
+          alert(t('farmer.services.requestSent') || 'Consultation request sent!');
+          return;
+        }
+      } catch (backendErr) {
+        console.error('Backend consultation request error:', backendErr);
+      }
       alert('Failed to send consultation request.');
     }
   };
@@ -278,7 +530,7 @@ export default function CommunitySection() {
               {experts.map(expert => (
                 <li key={expert.id} style={{ padding: '12px 0', borderBottom: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <p style={{ fontWeight: 600, color: '#111827', margin: 0 }}>{expert.fullName || expert.name}</p>
+                    <p style={{ fontWeight: 600, color: '#111827', margin: 0 }}>{expert.fullName || expert.name || expert.email || 'Expert'}</p>
                     <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>
                       {expert.roles?.includes('service-provider') ? t('farmer.common.notAvailable') : t('farmer.services.expertConsultation')}
                     </p>
@@ -287,7 +539,7 @@ export default function CommunitySection() {
                     {following.some(f => f.followingId === expert.id) ? (
                       <button onClick={() => handleUnfollow(expert.id)} style={{ padding: '6px 12px', borderRadius: '6px', backgroundColor: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>{t('farmer.community.unfollow')}</button>
                     ) : (
-                      <button onClick={() => handleFollow(expert.id, expert.fullName || expert.name)} style={{ padding: '6px 12px', borderRadius: '6px', backgroundColor: 'white', color: '#111827', border: '1px solid #d1d5db', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>{t('farmer.community.follow')}</button>
+                      <button onClick={() => handleFollow(expert.id, expert.fullName || expert.name || expert.email || 'Expert')} style={{ padding: '6px 12px', borderRadius: '6px', backgroundColor: 'white', color: '#111827', border: '1px solid #d1d5db', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>{t('farmer.community.follow')}</button>
                     )}
                     <button onClick={() => handleConsult(expert.id)} style={{ padding: '6px 12px', borderRadius: '6px', backgroundColor: expert.roles?.includes('service-provider') ? '#e0e7ff' : '#dcfce7', color: expert.roles?.includes('service-provider') ? '#4f46e5' : '#16a34a', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>
                       {expert.roles?.includes('service-provider') ? t('farmer.services.sendRequest') : t('farmer.services.expertConsultation')}

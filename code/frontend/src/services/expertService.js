@@ -127,6 +127,7 @@ export const acceptConnection = async (connection, expertId) => {
 
     const memberId = connection.requesterId;
     const linkId = `${expertId}_${memberId}`;
+    const followId = `${memberId}_${expertId}`;
 
     await setDoc(doc(db, 'expertFarmers', linkId), {
         expertId,
@@ -146,6 +147,14 @@ export const acceptConnection = async (connection, expertId) => {
         expertAcknowledged: true,
         respondedAt: serverTimestamp(),
     });
+
+    await setDoc(doc(db, 'follows', followId), {
+        followerId: memberId,
+        followingId: expertId,
+        followerName: requester.name || 'Farmer',
+        followingName: 'Expert',
+        createdAt: serverTimestamp(),
+    }, { merge: true });
 };
 
 export const declineConnection = async (connectionId) => {

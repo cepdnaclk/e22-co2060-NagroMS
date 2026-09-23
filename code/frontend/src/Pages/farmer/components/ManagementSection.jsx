@@ -7,6 +7,54 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 export default function ManagementSection() {
   const { t } = useLanguage();
 
+  const categoryTranslationMap = {
+    'Seeds': 'farmer.management.seeds',
+    'Fertilizer': 'farmer.management.fertilizer',
+    'Transport': 'farmer.management.transport',
+    'Labor': 'farmer.management.labor',
+    'Pesticide': 'farmer.management.pesticide',
+    'Equipment': 'farmer.management.equipment',
+    'Water/Electricity': 'farmer.management.waterElec',
+    'Packaging': 'farmer.management.packaging',
+    'Other': 'farmer.management.other',
+    'management.fertilizer': 'farmer.management.fertilizer',
+    'management.transport': 'farmer.management.transport',
+    'management.labor': 'farmer.management.labor',
+    'management.pesticide': 'farmer.management.pesticide',
+    'management.equipment': 'farmer.management.equipment',
+    'management.waterElec': 'farmer.management.waterElec',
+    'management.packaging': 'farmer.management.packaging',
+    'management.other': 'farmer.management.other',
+  };
+
+  const sourceTranslationMap = {
+    'Product Sale': 'farmer.management.productSale',
+    'Direct Customer Sale': 'farmer.management.directCustomer',
+    'Wholesale Sale': 'farmer.management.wholesale',
+    'Delivery Income': 'farmer.management.deliveryIncome',
+    'Farming Service': 'farmer.management.farmingService',
+    'Government Support': 'farmer.management.govSupport',
+    'Other': 'farmer.management.other',
+    'management.directCustomer': 'farmer.management.directCustomer',
+    'management.wholesale': 'farmer.management.wholesale',
+    'management.deliveryIncome': 'farmer.management.deliveryIncome',
+    'management.farmingService': 'farmer.management.farmingService',
+    'management.govSupport': 'farmer.management.govSupport',
+    'management.other': 'farmer.management.other',
+  };
+
+  const getCategoryLabel = (cat) => {
+    if (!cat) return '';
+    const key = categoryTranslationMap[cat];
+    return key ? t(key) : cat;
+  };
+
+  const getSourceLabel = (src) => {
+    if (!src) return '';
+    const key = sourceTranslationMap[src];
+    return key ? t(key) : src;
+  };
+
   const [expenses, setExpenses] = useState([]);
   const [incomes, setIncomes] = useState([]);
   
@@ -209,7 +257,7 @@ export default function ManagementSection() {
                     <li key={exp.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #f3f4f6' }}>
                       <div>
                         <p style={{ fontWeight: 500, color: '#374151', margin: 0 }}>{exp.title}</p>
-                        <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>{exp.date} • {exp.category}</p>
+                        <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>{exp.date} • {getCategoryLabel(exp.category)}</p>
                         {exp.description && <p style={{ fontSize: '11px', color: '#9ca3af', margin: '4px 0 0 0' }}>{exp.description}</p>}
                       </div>
                       <span style={{ fontWeight: 600, color: '#dc2626' }}>Rs {exp.amount}</span>
@@ -266,7 +314,7 @@ export default function ManagementSection() {
                     <li key={inc.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #f3f4f6' }}>
                       <div>
                         <p style={{ fontWeight: 500, color: '#374151', margin: 0 }}>{inc.title}</p>
-                        <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>{inc.date} • {inc.source}</p>
+                        <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>{inc.date} • {getSourceLabel(inc.source)}</p>
                         {inc.description && <p style={{ fontSize: '11px', color: '#9ca3af', margin: '4px 0 0 0' }}>{inc.description}</p>}
                       </div>
                       <span style={{ fontWeight: 600, color: '#16a34a' }}>Rs {inc.amount}</span>
@@ -336,15 +384,15 @@ export default function ManagementSection() {
               <div>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>{t('farmer.management.category')}</label>
                 <select value={expenseForm.category} onChange={e => setExpenseForm({...expenseForm, category: e.target.value})} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db', outline: 'none' }}>
-                  <option value="Seeds">{t('farmer.management.category')}</option>
-                  <option value="Fertilizer">{t('management.fertilizer') || 'Fertilizer'}</option>
-                  <option value="Transport">{t('management.transport') || 'Transport'}</option>
-                  <option value="Labor">{t('management.labor') || 'Labor'}</option>
-                  <option value="Pesticide">{t('management.pesticide') || 'Pesticide'}</option>
-                  <option value="Equipment">{t('management.equipment') || 'Equipment'}</option>
-                  <option value="Water/Electricity">{t('management.waterElec') || 'Water/Electricity'}</option>
-                  <option value="Packaging">{t('management.packaging') || 'Packaging'}</option>
-                  <option value="Other">{t('management.other') || 'Other'}</option>
+                  <option value="Seeds">{t('farmer.management.seeds')}</option>
+                  <option value="Fertilizer">{t('farmer.management.fertilizer')}</option>
+                  <option value="Transport">{t('farmer.management.transport')}</option>
+                  <option value="Labor">{t('farmer.management.labor')}</option>
+                  <option value="Pesticide">{t('farmer.management.pesticide')}</option>
+                  <option value="Equipment">{t('farmer.management.equipment')}</option>
+                  <option value="Water/Electricity">{t('farmer.management.waterElec')}</option>
+                  <option value="Packaging">{t('farmer.management.packaging')}</option>
+                  <option value="Other">{t('farmer.management.other')}</option>
                 </select>
               </div>
               <div style={{ display: 'flex', gap: '12px' }}>
@@ -383,13 +431,13 @@ export default function ManagementSection() {
               <div>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>{t('farmer.management.source')}</label>
                 <select value={incomeForm.source} onChange={e => setIncomeForm({...incomeForm, source: e.target.value})} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db', outline: 'none' }}>
-                  <option value="Product Sale">{t('farmer.management.source')}</option>
-                  <option value="Direct Customer Sale">{t('management.directCustomer') || 'Direct Customer Sale'}</option>
-                  <option value="Wholesale Sale">{t('management.wholesale') || 'Wholesale Sale'}</option>
-                  <option value="Delivery Income">{t('management.deliveryIncome') || 'Delivery Income'}</option>
-                  <option value="Farming Service">{t('management.farmingService') || 'Farming Service'}</option>
-                  <option value="Government Support">{t('management.govSupport') || 'Government Support'}</option>
-                  <option value="Other">{t('management.other') || 'Other'}</option>
+                  <option value="Product Sale">{t('farmer.management.productSale')}</option>
+                  <option value="Direct Customer Sale">{t('farmer.management.directCustomer')}</option>
+                  <option value="Wholesale Sale">{t('farmer.management.wholesale')}</option>
+                  <option value="Delivery Income">{t('farmer.management.deliveryIncome')}</option>
+                  <option value="Farming Service">{t('farmer.management.farmingService')}</option>
+                  <option value="Government Support">{t('farmer.management.govSupport')}</option>
+                  <option value="Other">{t('farmer.management.other')}</option>
                 </select>
               </div>
               <div style={{ display: 'flex', gap: '12px' }}>
