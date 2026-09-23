@@ -72,9 +72,8 @@ const DEFAULT_CROP_IMAGE = 'https://images.unsplash.com/photo-1500937386664-56d1
       const fetchWeather = async () => {
         const cityName = profile.villageTown || profile.district || 'Colombo';
         try {
-          const weatherRes = await fetch(`${process.env.REACT_APP_API_URL || `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}`}/weather/current?city=${encodeURIComponent(cityName)}`);
+          const weatherRes = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/weather/current?city=${encodeURIComponent(cityName)}`);
           const weatherData = await weatherRes.json();
-
           if (weatherData.success) {
             setWeather({
               temp: Math.round(weatherData.temperature),
