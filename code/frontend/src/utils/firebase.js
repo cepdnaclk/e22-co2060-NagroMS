@@ -33,6 +33,7 @@ export const storage = getStorage(app);
 
 // Enable offline persistence where supported
 if (typeof window !== 'undefined') {
+  /*
   enableIndexedDbPersistence(db).catch((err) => {
     if (err.code === 'failed-precondition') {
       console.warn('Persistence failed (multiple tabs open)');
@@ -40,6 +41,7 @@ if (typeof window !== 'undefined') {
       console.warn('Persistence not supported by browser');
     }
   });
+  */
 }
 
 const googleProvider = new GoogleAuthProvider();
@@ -82,6 +84,7 @@ export async function registerWithEmail(formData) {
 
   localStorage.setItem('nagroms_token', idToken);
   localStorage.setItem('userRoles', JSON.stringify(data.user.roles));
+  if (data.user.serviceCategories) localStorage.setItem('serviceCategories', JSON.stringify(data.user.serviceCategories));
   localStorage.setItem('userEmail', emailForAuth);
   if (data.user.fullName) localStorage.setItem('userName', data.user.fullName);
   if (data.user.businessName) localStorage.setItem('businessName', data.user.businessName);
@@ -104,6 +107,7 @@ export async function loginWithEmail(email, password) {
 
   localStorage.setItem('nagroms_token', idToken);
   localStorage.setItem('userRoles', JSON.stringify(data.user.roles));
+  if (data.user.serviceCategories) localStorage.setItem('serviceCategories', JSON.stringify(data.user.serviceCategories));
   localStorage.setItem('userEmail', email);
   if (data.user.fullName) localStorage.setItem('userName', data.user.fullName);
   if (data.user.businessName) localStorage.setItem('businessName', data.user.businessName);
@@ -126,6 +130,7 @@ export async function loginWithGoogle() {
 
   localStorage.setItem('nagroms_token', idToken);
   localStorage.setItem('userRoles', JSON.stringify(data.user.roles));
+  if (data.user.serviceCategories) localStorage.setItem('serviceCategories', JSON.stringify(data.user.serviceCategories));
   localStorage.setItem('userEmail', data.user.email);
   return data;
 }
@@ -145,6 +150,7 @@ export async function loginWithFacebook() {
 
   localStorage.setItem('nagroms_token', idToken);
   localStorage.setItem('userRoles', JSON.stringify(data.user.roles));
+  if (data.user.serviceCategories) localStorage.setItem('serviceCategories', JSON.stringify(data.user.serviceCategories));
   localStorage.setItem('userEmail', data.user.email);
   return data;
 }

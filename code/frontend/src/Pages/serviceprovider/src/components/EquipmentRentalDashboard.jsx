@@ -824,27 +824,161 @@ function RentalRequests({ requests, handleRequest }) {
 
 
 // ─── Equipment Categories Tab ──────────────────────────────────────────────────
-function EquipmentCategories() {
+function EquipmentCategories({ equipment }) {
+    const [activeCat, setActiveCat] = useState(null);
+
+    const categories = useMemo(() => {
+        if (!equipment || equipment.length === 0) return [];
+        
+        const map = new Map();
+        equipment.forEach(eq => {
+            if (!map.has(eq.category)) {
+                map.set(eq.category, { name: eq.category, emoji: eq.emoji || '🏷️', count: 0, utilSum: 0, dailyRev: 0, available: 0, rented: 0, maintenance: 0, items: [] });
+            }
+            const cat = map.get(eq.category);
+            cat.count += 1;
+            cat.utilSum += (eq.utilization || 0);
+            cat.dailyRev += (eq.dailyRate || 0);
+            cat.items.push(eq);
+            if (eq.status === 'Available') cat.available += 1;
+            else if (eq.status === 'Rented') cat.rented += 1;
+            else if (eq.status === 'Maintenance' || eq.status === 'Reserved') cat.maintenance += 1;
+        });
+
+        const result = Array.from(map.values()).map(cat => ({
+            ...cat,
+            avgUtil: Math.round(cat.utilSum / cat.count),
+            percentOfFleet: Math.round((cat.count / equipment.length) * 100),
+            color: cat.name === 'Tractors' ? '#10b981' : cat.name === 'Harvesters' ? '#3b82f6' : cat.name === 'Irrigation' ? '#8b5cf6' : cat.name === 'Crop Care' ? '#f59e0b' : '#ec4899',
+            bgGlow: cat.name === 'Tractors' ? 'rgba(16, 185, 129, 0.15)' : cat.name === 'Harvesters' ? 'rgba(59, 130, 246, 0.15)' : cat.name === 'Irrigation' ? 'rgba(139, 92, 246, 0.15)' : cat.name === 'Crop Care' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(236, 72, 153, 0.15)'
+        }));
+
+        return result.sort((a, b) => b.count - a.count);
+    }, [equipment]);
+
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ background: c.surface, borderRadius: 16, border: `1px solid ${c.border}`, padding: '20px', boxShadow: c.shadow }}>
-                <h3 style={{ fontFamily: c.fontD, fontSize: 14, fontWeight: 700, color: c.text, margin: '0 0 4px 0' }}>Equipment Category Directory</h3>
-                <p style={{ margin: 0, fontSize: 12, color: c.textSec }}>Overview of active categories and rental frequencies.</p>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
-                {CATEGORY_DATA.map(cat => (
-                    <div key={cat.name} style={{ background: c.surface, borderRadius: 16, border: `1px solid ${c.border}`, padding: 20, boxShadow: c.shadow }}>
-                        <div style={{ display: 'flex', justify: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                            <span style={{ fontSize: 20 }}>🏷️</span>
-                            <span style={{ fontSize: 13, fontWeight: 700, color: cat.color }}>{cat.value}% split</span>
-                        </div>
-                        <h4 style={{ margin: '0 0 4px 0', fontSize: 14, fontWeight: 700 }}>{cat.name}</h4>
-                        <p style={{ margin: '0 0 10px 0', fontSize: 11, color: c.textTer }}>Avg Utilization: 70%</p>
-                        <div style={{ width: '100%', height: 4, background: c.borderLt, borderRadius: 2 }}>
-                            <div style={{ width: `${cat.value}%`, height: '100%', background: cat.color, borderRadius: 2 }} />
-                        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* Header Banner */}
+            <div style={{ 
+                background: c.surface, 
+                borderRadius: 16, 
+                padding: '24px 32px', 
+                position: 'relative', 
+                overflow: 'hidden', 
+                border: `1px solid ${c.border}`,
+                boxShadow: c.shadow
+            }}>
+                <div style={{ position: 'absolute', top: -20, right: -10, opacity: 0.05, fontSize: 140 }}>📊</div>
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                    <div style={{ display: 'inline-block', padding: '4px 12px', background: c.greenLt, borderRadius: 20, marginBottom: 12, border: `1px solid ${c.greenBd}` }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: c.greenDk, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Intelligence Hub</span>
                     </div>
-                ))}
+                    <h3 style={{ fontFamily: c.fontD, fontSize: 24, fontWeight: 800, color: c.text, margin: '0 0 10px 0', letterSpacing: '-0.02em' }}>Fleet Category Insights</h3>
+                    <p style={{ margin: 0, fontSize: 14, color: c.textSec, maxWidth: 650, lineHeight: 1.6 }}>
+                        Analyze utilization trends, revenue potential, and inventory distribution. Click on any category to view individual assets and their real-time statuses.
+                    </p>
+                </div>
+            </div>
+
+            {/* Category Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 20 }}>
+                {categories.length === 0 && (
+                    <div style={{ padding: 40, textAlign: 'center', background: c.surface, borderRadius: 16, border: `1px solid ${c.border}`, gridColumn: '1 / -1' }}>
+                        <p style={{ color: c.textTer, fontSize: 15, fontWeight: 600 }}>No equipment found in the fleet.</p>
+                    </div>
+                )}
+                {categories.map(cat => {
+                    const insight = cat.avgUtil > 75 
+                        ? { text: 'High Demand! Expand fleet.', color: '#15803d', bg: c.greenLt, border: c.greenBd }
+                        : cat.avgUtil < 40
+                            ? { text: 'Low utilization. Run promos.', color: '#b91c1c', bg: c.redLt, border: c.redBd }
+                            : { text: 'Stable performance.', color: '#1d4ed8', bg: c.blueLt, border: c.blueBd };
+
+                    return (
+                        <div key={cat.name} 
+                            onClick={() => setActiveCat(activeCat === cat.name ? null : cat.name)}
+                            style={{ 
+                                background: c.surface, 
+                                borderRadius: 16, 
+                                border: `1px solid ${activeCat === cat.name ? cat.color : c.border}`, 
+                                padding: 24, 
+                                boxShadow: activeCat === cat.name ? `0 0 0 3px ${cat.bgGlow}` : c.shadow, 
+                                display: 'flex', flexDirection: 'column', gap: 20,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                transform: activeCat === cat.name ? 'translateY(-2px)' : 'none'
+                            }}
+                            onMouseEnter={e => { if(activeCat !== cat.name) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 8px 24px -8px ${cat.bgGlow}`; } }}
+                            onMouseLeave={e => { if(activeCat !== cat.name) { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = c.shadow; } }}
+                        >
+                            {/* Card Header */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                                    <div style={{ width: 52, height: 52, borderRadius: 16, background: cat.bgGlow, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
+                                        {cat.emoji}
+                                    </div>
+                                    <div>
+                                        <h4 style={{ margin: '0 0 4px 0', fontFamily: c.fontD, fontSize: 18, fontWeight: 800, color: c.text }}>{cat.name}</h4>
+                                        <p style={{ margin: 0, fontSize: 13, color: c.textSec, fontWeight: 600 }}>{cat.count} units · {cat.percentOfFleet}% of fleet</p>
+                                    </div>
+                                </div>
+                                <div style={{ textAlign: 'right', background: c.bg, padding: '6px 12px', borderRadius: 12, border: `1px solid ${c.borderLt}` }}>
+                                    <span style={{ display: 'block', fontSize: 18, fontWeight: 800, color: cat.color, fontFamily: c.fontM }}>{cat.avgUtil}%</span>
+                                    <span style={{ fontSize: 10, color: c.textTer, fontWeight: 700, textTransform: 'uppercase' }}>Avg Util</span>
+                                </div>
+                            </div>
+
+                            {/* Revenue & Status Stats */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, padding: '16px 0', borderTop: `1px solid ${c.borderLt}`, borderBottom: `1px solid ${c.borderLt}` }}>
+                                <div>
+                                    <p style={{ margin: '0 0 6px', fontSize: 11, color: c.textTer, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Revenue Potential</p>
+                                    <p style={{ margin: 0, fontSize: 15, fontWeight: 800, color: c.text, fontFamily: c.fontM }}>Rs {cat.dailyRev.toLocaleString()}/d</p>
+                                </div>
+                                <div>
+                                    <p style={{ margin: '0 0 6px', fontSize: 11, color: c.textTer, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Fleet Status</p>
+                                    <div style={{ display: 'flex', gap: 8, fontSize: 13, fontWeight: 700 }}>
+                                        <span style={{ color: c.green }} title="Available">{cat.available} A</span>
+                                        <span style={{ color: c.borderLt }}>|</span>
+                                        <span style={{ color: c.blue }} title="Rented">{cat.rented} R</span>
+                                        <span style={{ color: c.borderLt }}>|</span>
+                                        <span style={{ color: c.amber }} title="Maintenance">{cat.maintenance} M</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* AI Insight Badge */}
+                            <div style={{ background: insight.bg, color: insight.color, padding: '12px 16px', borderRadius: 12, fontSize: 13, fontWeight: 700, display: 'flex', gap: 10, alignItems: 'center', border: `1px solid ${insight.border}` }}>
+                                <AlertTriangle style={{ width: 16, height: 16, flexShrink: 0 }} />
+                                <span>{insight.text}</span>
+                            </div>
+
+                            {/* Drill-down list (visible only when clicked) */}
+                            {activeCat === cat.name && (
+                                <div style={{ marginTop: 8, paddingTop: 16, borderTop: `1px solid ${c.borderLt}`, animation: 'fadeIn 0.3s ease' }}>
+                                    <p style={{ margin: '0 0 12px 0', fontSize: 12, fontWeight: 800, color: c.text, textTransform: 'uppercase' }}>Assets in this category</p>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 200, overflowY: 'auto', paddingRight: 4 }}>
+                                        {cat.items.map(item => (
+                                            <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: c.bg, padding: '10px 14px', borderRadius: 10, border: `1px solid ${c.border}` }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                    <span style={{ fontSize: 16 }}>{item.emoji}</span>
+                                                    <span style={{ fontSize: 13, fontWeight: 600, color: c.text }}>{item.name}</span>
+                                                </div>
+                                                <span style={{ 
+                                                    fontSize: 11, fontWeight: 700, padding: '4px 8px', borderRadius: 6,
+                                                    background: item.status === 'Available' ? c.greenLt : item.status === 'Rented' ? c.blueLt : c.amberLt,
+                                                    color: item.status === 'Available' ? c.greenDk : item.status === 'Rented' ? '#1e40af' : '#92400e',
+                                                    border: `1px solid ${item.status === 'Available' ? c.greenBd : item.status === 'Rented' ? c.blueBd : c.amberBd}`
+                                                }}>
+                                                    {item.status}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );
@@ -1254,7 +1388,7 @@ export default function EquipmentRentalDashboard({ onNavigate = () => { } }) {
                     {section === 'dashboard' && <DashboardHome setSection={setSection} />}
                     {section === 'equipment' && <EquipmentManagement equipment={equipment} setEquipment={setEquipment} />}
                     {section === 'requests' && <RentalRequests requests={requests} handleRequest={handleRequest} />}
-                    {section === 'categories' && <EquipmentCategories />}
+                    {section === 'categories' && <EquipmentCategories equipment={equipment} />}
                     {section === 'maintenance' && <MaintenanceSchedule />}
                     {section === 'history' && <RentalHistory completedHistory={completedHistory} />}
                     {section === 'analytics' && <EquipmentAnalytics />}

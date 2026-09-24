@@ -44,19 +44,66 @@ export default function ServiceProviderDashboard({ onNavigate }) {
         return <ServiceProviderTypeSelection onNavigate={handleSelectType} />;
     }
 
-    // Switch between the dashboard modules based on the selected service provider type
-    switch (serviceType) {
-        case 'storage':
-            return <StorageFacilitiesDashboard onNavigate={handleLogout} />;
-        case 'equipment':
-            return <EquipmentRentalDashboard onNavigate={handleLogout} />;
-        case 'delivery':
-            return <DeliveryExportDashboard onNavigate={handleLogout} />;
-        case 'packaging':
-            return <PackagingProviderDashboard onNavigate={handleLogout} />;
-        case 'financial':
-            return <FinancialProviderDashboard onNavigate={handleLogout} />;
-        default:
-            return <ServiceProviderTypeSelection onNavigate={handleSelectType} />;
-    }
+    // Render the selected dashboard
+    const renderDashboard = () => {
+        switch (serviceType) {
+            case 'storage':
+                return <StorageFacilitiesDashboard onNavigate={handleLogout} />;
+            case 'equipment':
+                return <EquipmentRentalDashboard onNavigate={handleLogout} />;
+            case 'delivery':
+                return <DeliveryExportDashboard onNavigate={handleLogout} />;
+            case 'packaging':
+                return <PackagingProviderDashboard onNavigate={handleLogout} />;
+            case 'financial':
+                return <FinancialProviderDashboard onNavigate={handleLogout} />;
+            default:
+                return <ServiceProviderTypeSelection onNavigate={handleSelectType} />;
+        }
+    };
+
+    return (
+        <>
+            {renderDashboard()}
+            
+            {/* Floating Switch Button */}
+            <button
+                onClick={() => handleSelectType(null)}
+                style={{
+                    position: 'fixed',
+                    bottom: '24px',
+                    right: '24px', // Float on the right to avoid overlapping the sidebar
+                    zIndex: 9999,
+                    backgroundColor: '#1f2937',
+                    color: '#fff',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    borderRadius: '99px',
+                    padding: '12px 20px',
+                    fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif",
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'all 0.2s ease'
+                }}
+                onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = '#374151';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = '#1f2937';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                }}
+                title="Switch to a different service dashboard"
+            >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M8 3L4 7l4 4"/><path d="M4 7h16"/><path d="M16 21l4-4-4-4"/><path d="M20 17H4"/>
+                </svg>
+                Switch Dashboard
+            </button>
+        </>
+    );
 }

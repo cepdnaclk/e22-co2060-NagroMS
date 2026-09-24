@@ -331,7 +331,60 @@ export default function DriverDashboard({ onNavigate }) {
                         </p>
                     </div>
                 </div>
-                <button onClick={() => onNavigate('landing')} style={{ background: 'white', border: '1px solid #e2e8f0', padding: '10px 16px', borderRadius: 24, fontSize: 13, fontWeight: 700, color: '#475569', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>Log Out</button>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    {/* Switch Dashboard Dropdown */}
+                    <div style={{ position: 'relative' }}>
+                        <select
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === 'driver') {
+                                    window.location.href = '/driver-dashboard';
+                                } else {
+                                    localStorage.setItem('serviceProviderType', val);
+                                    window.location.href = '/service-provider-dashboard';
+                                }
+                            }}
+                            value="driver"
+                            style={{
+                                background: '#f8fafc',
+                                border: '1px solid #e2e8f0',
+                                padding: '8px 32px 8px 16px',
+                                borderRadius: '24px',
+                                fontSize: '13px',
+                                fontWeight: 700,
+                                color: '#0f172a',
+                                cursor: 'pointer',
+                                outline: 'none',
+                                appearance: 'none',
+                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
+                            }}
+                        >
+                            <option disabled value="driver">🛵 Gig Driver</option>
+                            {(() => {
+                                try {
+                                    const cats = JSON.parse(localStorage.getItem('serviceCategories') || '[]');
+                                    const map = {
+                                        'equipment': '🚜 Equipment Rental',
+                                        'delivery': '🚚 Delivery & Export',
+                                        'storage': '🏠 Storage Facilities',
+                                        'packaging': '📦 Packaging Services',
+                                        'financial': '💳 Financial Services'
+                                    };
+                                    return cats.map(c => (
+                                        <option key={c} value={c}>{map[c] || c}</option>
+                                    ));
+                                } catch (e) {
+                                    return null;
+                                }
+                            })()}
+                        </select>
+                        <div style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
+                    </div>
+
+                    <button onClick={() => onNavigate('landing')} style={{ background: 'white', border: '1px solid #e2e8f0', padding: '10px 16px', borderRadius: 24, fontSize: 13, fontWeight: 700, color: '#ef4444', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>Log Out</button>
+                </div>
             </header>
 
             {/* Main Content Area */}

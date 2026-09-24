@@ -28,6 +28,7 @@ function buildUserDocument(uid, data) {
     email:        data.email        || '',
     phone:        data.phone        || '',
     roles:        data.roles        || [],
+    serviceCategories: data.serviceCategories || [], // Add this line
     accountType:  data.accountType  || 'individual',  // 'individual' | 'business'
     district:     data.district     || '',
     isActive:     true,

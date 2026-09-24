@@ -233,23 +233,51 @@ export default function ServicesSection() {
               </div>
 
               {(() => {
-                const categoryProviders = providers.filter(p => 
-                  p.serviceProviderType === selectedCategory.id || 
-                  p.serviceType === selectedCategory.id ||
-                  (p.businessName || '').toLowerCase().includes(selectedCategory.id)
-                );
+                const categoryProviders = providers.filter(p => {
+                  const catId = selectedCategory.id.toLowerCase();
+                  
+                  // Check the new serviceCategories array
+                  if (p.serviceCategories && Array.isArray(p.serviceCategories)) {
+                    if (p.serviceCategories.includes(catId)) return true;
+                  }
 
-                if (categoryProviders.length === 0) {
-                  return (
-                    <div style={{ padding: '40px', textAlign: 'center', backgroundColor: '#f9fafb', borderRadius: '12px', border: '1px dashed #d1d5db' }}>
-                      <p style={{ color: '#6b7280', fontSize: '16px', margin: 0 }}>No service providers are currently listed in this category.</p>
-                    </div>
-                  );
-                }
+                  // Fallback for older profiles before the array update
+                  const type = (p.serviceProviderType || p.serviceType || '').toLowerCase();
+                  const bizName = (p.businessName || p.fullName || '').toLowerCase();
+                  
+                  if (type.includes(catId) || bizName.includes(catId)) return true;
+                  
+                  return false;
+                });
 
                 return (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '16px' }}>
-                    {categoryProviders.map(renderProvider)}
+                  <div>
+                    {/* General Request Button */}
+                    <div style={{ backgroundColor: '#fff', border: `1px solid ${selectedCategory.color}40`, borderRadius: '12px', padding: '24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                      <div>
+                        <h4 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: 600, color: '#1f2937' }}>Open / Broadcast Request</h4>
+                        <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>Can't find a specific provider? Post your request and available providers will contact you.</p>
+                      </div>
+                      <button 
+                        onClick={() => handleOpenBooking({ id: 'broadcast', businessName: 'Any Available Provider', serviceProviderType: selectedCategory.id })}
+                        style={{ padding: '10px 24px', borderRadius: '8px', border: 'none', color: 'white', backgroundColor: selectedCategory.color, cursor: 'pointer', fontWeight: 600, fontSize: '15px', boxShadow: `0 4px 6px ${selectedCategory.color}30`, transition: 'transform 0.2s' }}
+                        onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                        onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
+                      >
+                        Post General Request
+                      </button>
+                    </div>
+
+                    {categoryProviders.length === 0 ? (
+                      <div style={{ padding: '40px', textAlign: 'center', backgroundColor: '#f9fafb', borderRadius: '12px', border: '1px dashed #d1d5db' }}>
+                        <p style={{ color: '#6b7280', fontSize: '16px', margin: 0 }}>No direct service providers are currently listed in this category, but you can still post a general request above!</p>
+                      </div>
+                    ) : (
+                      <>
+                        <h4 style={{ fontSize: '16px', fontWeight: 600, color: '#4b5563', marginBottom: '16px' }}>Directly Book a Provider</h4>
+                        {categoryProviders.map(p => renderProvider(p))}
+                      </>
+                    )}
                   </div>
                 );
               })()}
