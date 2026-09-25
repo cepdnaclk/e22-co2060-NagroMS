@@ -88,7 +88,7 @@ export function CustomerDashboard({ onNavigate }) {
 
   const [activeSection, setActiveSection] = useState('browse');
   const { lang, setLang, t } = useLanguage();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
   const [showRequestProductModal, setShowRequestProductModal] = useState(false);
   const [showMessageFarmerModal, setShowMessageFarmerModal] = useState(false);
   const [selectedFarmer, setSelectedFarmer] = useState(null);
@@ -369,30 +369,44 @@ export function CustomerDashboard({ onNavigate }) {
   };
 
   return (
-    <div className="farmer-dashboard-container" style={{ display: 'flex', height: '100vh', backgroundColor: '#f3f4f6', overflow: 'hidden', position: 'relative' }}>
+    <div className="farmer-dashboard-container mobile-dash-wrapper" style={{ display: 'flex', height: '100vh', backgroundColor: '#f3f4f6', overflow: 'hidden', position: 'relative' }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .mobile-dash-wrapper { flex-direction: column !important; }
+          .farmer-sidebar {
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            height: 100vh !important;
+            width: 260px !important;
+            z-index: 200 !important;
+            transition: transform 0.3s ease !important;
+          }
+          .farmer-sidebar.closed { transform: translateX(-100%) !important; }
+          .farmer-sidebar.open { transform: translateX(0) !important; }
+          .farmer-main-content { padding: 12px !important; padding-top: 64px !important; }
+          .hamburger-btn { display: block !important; }
+        }
+        .hamburger-btn { display: none; }
+      `}</style>
       
-      {/* Mobile Sidebar Overlay */}
-      {!isSidebarOpen && (
-        <button
-          onClick={() => setIsSidebarOpen(true)}
-          style={{ position: 'absolute', top: '16px', left: '16px', zIndex: 50, background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '8px', padding: '8px', cursor: 'pointer' }}
-        >
-          <Menu size={24} />
-        </button>
-      )}
+      <button
+        className="hamburger-btn"
+        onClick={() => setIsSidebarOpen(true)}
+        style={{ position: 'absolute', top: '16px', left: '16px', zIndex: 100, background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '8px', padding: '8px', cursor: 'pointer' }}
+      >
+        <Menu size={24} />
+      </button>
 
       {/* Sidebar */}
       <div 
-        className="farmer-sidebar" 
+        className={`farmer-sidebar ${isSidebarOpen ? 'open' : 'closed'}`} 
         style={{ 
           width: '260px', 
           backgroundColor: 'var(--sidebar)', 
           color: 'white', 
           display: 'flex', 
           flexDirection: 'column',
-          transition: 'transform 0.3s ease',
-          transform: isSidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
-          position: isSidebarOpen ? 'relative' : 'absolute',
           height: '100%',
           zIndex: 40
         }}
