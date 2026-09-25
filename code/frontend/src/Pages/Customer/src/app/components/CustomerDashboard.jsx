@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Search, 
   ShoppingCart, 
@@ -56,6 +56,46 @@ import { EnhancedOrdersSection } from './EnhancedOrders';
 import CommunityNetwork from '../../../../../components/Network/CommunityNetwork';
 
 // Delivery fee calculation based on district distance
+const MOCK_COORDINATES = {
+  "Colombo": { lat: 6.9271, lng: 79.8612 },
+  "Gampaha": { lat: 7.0873, lng: 79.9985 },
+  "Kandy": { lat: 7.2906, lng: 80.6337 },
+  "Jaffna": { lat: 9.6615, lng: 80.0255 },
+  "Galle": { lat: 6.0535, lng: 80.2210 },
+  "Dambulla": { lat: 7.8731, lng: 80.6511 },
+  "Anuradhapura": { lat: 8.3114, lng: 80.4037 },
+  "Matara": { lat: 5.9549, lng: 80.5371 },
+  "Kurunegala": { lat: 7.4818, lng: 80.3609 },
+  "Ratnapura": { lat: 6.6939, lng: 80.3992 },
+  "Nuwara Eliya": { lat: 6.9497, lng: 80.7828 },
+  "Trincomalee": { lat: 8.5874, lng: 81.2152 },
+  "Batticaloa": { lat: 7.7170, lng: 81.6998 },
+  "Badulla": { lat: 6.9934, lng: 81.0550 },
+  "Kegalle": { lat: 7.2513, lng: 80.3464 },
+  "Ampara": { lat: 7.2840, lng: 81.6724 },
+  "Puttalam": { lat: 8.0250, lng: 79.8283 },
+  "Matale": { lat: 7.4721, lng: 80.6223 },
+  "Kalutara": { lat: 6.5854, lng: 79.9607 },
+  "Polonnaruwa": { lat: 7.9403, lng: 81.0188 },
+  "Monaragala": { lat: 6.8728, lng: 81.3507 },
+  "Vavuniya": { lat: 8.7542, lng: 80.4982 },
+  "Mannar": { lat: 8.9765, lng: 79.9057 },
+  "Mullaitivu": { lat: 9.2671, lng: 80.8142 },
+  "Kilinochchi": { lat: 9.3803, lng: 80.3770 }
+};
+
+const getDistance = (lat1, lon1, lat2, lon2) => {
+  const toRad = (value) => (value * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
 const DISTRICT_DELIVERY_FEES = {
   'Colombo-Colombo': 0,
   'Colombo-Gampaha': 150,
@@ -81,6 +121,9 @@ export function CustomerDashboard({ onNavigate }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('all');
+  const [sortByDistance, setSortByDistance] = useState(false);
+  const [customerCoords, setCustomerCoords] = useState(null);
+  const [isLocating, setIsLocating] = useState(false);
 
   // -- CART: start empty, loaded from Firestore --
   const [cart, setCart] = useState([]);
@@ -125,7 +168,16 @@ export function CustomerDashboard({ onNavigate }) {
     try {
       unsubProducts = subscribeToProducts((realtimeProducts) => {
         if (realtimeProducts && realtimeProducts.length > 0) {
-          setProducts(realtimeProducts);
+          // Assign pseudo-random district to unknown locations
+          const districts = Object.keys(MOCK_COORDINATES);
+          const populatedProducts = realtimeProducts.map(product => {
+            if (!product.location || product.location.toLowerCase() === 'not available' || product.location.trim() === '') {
+              const hash = String(product.id).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+              return { ...product, location: districts[hash % districts.length] };
+            }
+            return product;
+          });
+          setProducts(populatedProducts);
         }
         setLoading(false);
       });
@@ -208,13 +260,27 @@ export function CustomerDashboard({ onNavigate }) {
 
   const uniqueLocations = ['all', ...new Set(products.map(p => p.location))];
 
-  const filteredProducts = products.filter(product => {
+  let filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          product.farmer.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     const matchesLocation = selectedLocation === 'all' || product.location === selectedLocation;
     return matchesSearch && matchesCategory && matchesLocation;
   });
+
+  if (sortByDistance && customerCoords) {
+    filteredProducts.sort((a, b) => {
+      const getCoords = (prod) => {
+        if (prod.lat && prod.lng) return { lat: prod.lat, lng: prod.lng };
+        return MOCK_COORDINATES[prod.location] || MOCK_COORDINATES[prod.district] || MOCK_COORDINATES['Dambulla'];
+      };
+      const coordsA = getCoords(a);
+      const coordsB = getCoords(b);
+      const distA = getDistance(customerCoords.lat, customerCoords.lng, coordsA.lat, coordsA.lng);
+      const distB = getDistance(customerCoords.lat, customerCoords.lng, coordsB.lat, coordsB.lng);
+      return distA - distB;
+    });
+  }
 
   console.log("CustomerDashboard Render - Products loaded:", products.length, "Filtered:", filteredProducts.length);
 
@@ -318,6 +384,11 @@ export function CustomerDashboard({ onNavigate }) {
           addToCart={addToCart}
           updateQuantity={updateQuantity}
           changeUnit={changeUnit}
+          sortByDistance={sortByDistance}
+          setSortByDistance={setSortByDistance}
+          isLocating={isLocating}
+          setIsLocating={setIsLocating}
+          setCustomerCoords={setCustomerCoords}
           removeFromCart={removeFromCart}
           onMessageFarmer={handleMessageFarmer}
           onRequestProduct={() => setShowRequestProductModal(true)}
@@ -583,7 +654,7 @@ function SidebarButton({ icon, label, active, onClick, badge }) {
 
 
 // --- BROWSE PRODUCTS ---------------------------------------------------------
-function BrowseProducts({ searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, selectedLocation, setSelectedLocation, uniqueLocations, filteredProducts, cart, addToCart, updateQuantity, changeUnit, removeFromCart, onMessageFarmer, onRequestProduct }) {
+function BrowseProducts({ searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, selectedLocation, setSelectedLocation, uniqueLocations, filteredProducts, cart, addToCart, updateQuantity, changeUnit, removeFromCart, onMessageFarmer, onRequestProduct, sortByDistance, setSortByDistance, isLocating, setIsLocating, setCustomerCoords }) {
   const { t } = useLanguage();
   return (
     <div className="space-y-6">
@@ -639,6 +710,45 @@ function BrowseProducts({ searchQuery, setSearchQuery, selectedCategory, setSele
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               </div>
+              {/* Sort by Distance */}
+              <div className="shrink-0">
+                <button
+                  onClick={() => {
+                    if (sortByDistance) {
+                      setSortByDistance(false);
+                      setCustomerCoords(null);
+                    } else {
+                      setIsLocating(true);
+                      if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                          (pos) => {
+                            setCustomerCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                            setSortByDistance(true);
+                            setIsLocating(false);
+                          },
+                          (err) => {
+                            alert("Location access denied. Cannot sort by distance.");
+                            setIsLocating(false);
+                          }
+                        );
+                      } else {
+                        alert("Geolocation not supported by browser.");
+                        setIsLocating(false);
+                      }
+                    }
+                  }}
+                  disabled={isLocating}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                    sortByDistance 
+                      ? 'bg-green-100 border-green-300 text-green-800' 
+                      : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <MapPin className={`w-4 h-4 ${isLocating ? 'animate-pulse' : ''} ${sortByDistance ? 'text-green-600' : 'text-gray-500'}`} />
+                  {isLocating ? 'Locating...' : 'Sort by Nearest'}
+                </button>
+              </div>
+
             </div>
           </div>
         </div>
