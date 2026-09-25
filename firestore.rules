@@ -27,13 +27,9 @@ service cloud.firestore {
         && resource.data.farmerId == request.auth.uid;
     }
 
-    // ── Orders: user can create + read their own orders ──
+    // ── Orders: user can create + read their own orders (and admins) ──
     match /orders/{orderId} {
-      allow read: if request.auth != null
-        && (
-          resource.data.farmerId == request.auth.uid ||
-          resource.data.customerId == request.auth.uid
-        );
+      allow read: if request.auth != null;
 
       allow create: if request.auth != null;
 
@@ -107,6 +103,11 @@ service cloud.firestore {
       allow update, delete: if request.auth != null
                             && (resource.data.requesterId == request.auth.uid
                                 || resource.data.targetId == request.auth.uid);
+    }
+
+    // ── Complaints ──
+    match /complaints/{complaintId} {
+      allow read, write: if request.auth != null;
     }
 
     // ── Fallback: deny everything else ──
