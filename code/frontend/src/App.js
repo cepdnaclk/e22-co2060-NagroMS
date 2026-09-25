@@ -18,7 +18,7 @@ import ConnectionRequests from './Pages/expert/ConnectionRequests.jsx';
 import Settings from './Pages/expert/Settings.jsx';
 import Followers from './Pages/expert/Followers.jsx';
 // Farmer dashboard
-import { FarmerDashboard } from './Pages/farmer/farmerDashboard.jsx';
+import { FarmerDashboard } from './Pages/farmer/FarmerDashboard.jsx';
 
 // Service provider dashboard
 import ServiceProviderDashboard from './Pages/serviceprovider/src/components/ServiceProviderDashboard.jsx';

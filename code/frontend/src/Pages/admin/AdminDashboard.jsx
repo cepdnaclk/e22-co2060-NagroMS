@@ -142,7 +142,7 @@ const DashboardHome = ({ complaints, rates }) => {
     );
 };
 
-const ComplaintsManager = ({ complaints }) => {
+const ComplaintsManager = ({ complaints, orders = [] }) => {
     const [replyText, setReplyText] = useState({});
 
     const handleReply = async (id) => {
@@ -161,7 +161,10 @@ const ComplaintsManager = ({ complaints }) => {
         <div style={{ padding: 24, maxWidth: 1000, margin: '0 auto' }}>
             <h2 style={{ marginTop: 0 }}>User Complaints</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {complaints.length === 0 ? <p>No complaints filed yet.</p> : complaints.map(c => (
+                {complaints.length === 0 ? <p>No complaints filed yet.</p> : complaints.map(c => {
+                    const relatedOrder = orders.find(o => o.id === c.orderId);
+                    
+                    return (
                     <div key={c.id} style={{ background: '#fff', padding: 24, borderRadius: 12, border: `1px solid ${ds.border}` }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
                             <div>
@@ -170,9 +173,32 @@ const ComplaintsManager = ({ complaints }) => {
                                 </span>
                                 <span style={{ fontSize: 14, color: ds.textMuted, marginLeft: 12 }}>Role: {c.role}</span>
                             </div>
-                            <span style={{ fontSize: 12, color: ds.textMuted }}>{c.createdAt?.toDate?.().toLocaleDateString() || 'Recent'}</span>
+                            <span style={{ fontSize: 12, color: ds.textMuted }}>{c.createdAt?.toDate?.()?.toLocaleDateString() || 'Recent'}</span>
                         </div>
-                        <p style={{ margin: '0 0 16px 0', color: ds.text }}>"{c.content}"</p>
+                        
+                        <div style={{ marginBottom: 12, display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+                            {c.orderId && <span style={{ fontSize: 13, color: ds.textMuted }}><strong>Order ID:</strong> {c.orderId}</span>}
+                            {c.customerId && <span style={{ fontSize: 13, color: ds.textMuted }}><strong>Customer ID:</strong> {c.customerId}</span>}
+                        </div>
+
+                        {relatedOrder && (
+                            <div style={{ marginBottom: 16, padding: 12, borderRadius: 8, background: '#f8fafc', border: `1px solid ${ds.border}` }}>
+                                <h4 style={{ margin: '0 0 8px 0', color: ds.primary, fontSize: 14 }}>Order Details</h4>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 8, fontSize: 13, color: ds.text }}>
+                                    <div><strong>Status:</strong> {relatedOrder.status}</div>
+                                    <div><strong>Total:</strong> Rs. {relatedOrder.totalAmount || relatedOrder.total || 0}</div>
+                                    <div><strong>Date:</strong> {relatedOrder.date || (relatedOrder.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown')}</div>
+                                    <div><strong>Payment:</strong> {relatedOrder.paymentMethod}</div>
+                                </div>
+                                {(relatedOrder.products || relatedOrder.items) && (
+                                    <div style={{ marginTop: 8, fontSize: 12, color: ds.textMuted }}>
+                                        <strong>Items:</strong> {(relatedOrder.products || relatedOrder.items).map(i => `${i.name} (x${i.quantity})`).join(', ')}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        <p style={{ margin: '0 0 16px 0', color: ds.text, whiteSpace: 'pre-wrap', background: `${ds.primary}05`, padding: 12, borderRadius: 8 }}>{c.content}</p>
                         
                         {c.reply ? (
                             <div style={{ background: `${ds.success}10`, padding: 16, borderRadius: 8, borderLeft: `4px solid ${ds.success}` }}>
@@ -193,7 +219,8 @@ const ComplaintsManager = ({ complaints }) => {
                             </div>
                         )}
                     </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );
@@ -347,6 +374,7 @@ export default function AdminDashboard({ onNavigate }) {
     const [complaints, setComplaints] = useState(INITIAL_COMPLAINTS);
     const [rates, setRates] = useState(INITIAL_FINANCIAL_RATES);
     const [providers, setProviders] = useState([]);
+    const [orders, setOrders] = useState([]);
 
     const handleSetSection = (s) => {
         setSection(s);
@@ -354,51 +382,68 @@ export default function AdminDashboard({ onNavigate }) {
     };
 
     useEffect(() => {
+        let uC;
+        let uR;
+        let uUsers;
+        let uOrders;
+
         const unsubscribeAuth = auth.onAuthStateChanged(user => {
-            if (!user) onNavigate('login');
+            if (!user) {
+                onNavigate('login');
+            } else {
+                const qC = query(collection(db, 'complaints'));
+                uC = onSnapshot(qC, snap => {
+                    const arr = [];
+                    snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+                    arr.sort((a,b) => {
+                        if(a.status === 'Pending' && b.status !== 'Pending') return -1;
+                        if(b.status === 'Pending' && a.status !== 'Pending') return 1;
+                        return (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0);
+                    });
+                    setComplaints(arr);
+                }, err => console.error("Admin complaints fetch error:", err));
+
+                const qR = query(collection(db, 'financialRates'));
+                uR = onSnapshot(qR, snap => {
+                    const arr = [];
+                    snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+                    setRates(arr);
+                });
+
+                const qUsers = query(collection(db, 'users'));
+                uUsers = onSnapshot(qUsers, snap => {
+                    const arr = [];
+                    snap.forEach(d => {
+                        const data = d.data();
+                        if (data.roles?.includes('service-provider') && data.serviceCategories?.includes('financial')) {
+                            arr.push({ id: d.id, ...data });
+                        }
+                    });
+                    setProviders(arr);
+                });
+
+                const qOrders = query(collection(db, 'orders'));
+                uOrders = onSnapshot(qOrders, snap => {
+                    const arr = [];
+                    snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+                    setOrders(arr);
+                }, err => console.error("Admin orders fetch error:", err));
+            }
         });
 
-        const qC = query(collection(db, 'complaints'));
-        const uC = onSnapshot(qC, snap => {
-            const arr = [];
-            snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
-            // sort by pending first, then date
-            arr.sort((a,b) => {
-                if(a.status === 'Pending' && b.status !== 'Pending') return -1;
-                if(b.status === 'Pending' && a.status !== 'Pending') return 1;
-                return (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0);
-            });
-            setComplaints(arr);
-        });
-
-        const qR = query(collection(db, 'financialRates'));
-        const uR = onSnapshot(qR, snap => {
-            const arr = [];
-            snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
-            setRates(arr);
-        });
-
-        // Fetch users to find financial service providers
-        const qUsers = query(collection(db, 'users'));
-        const uUsers = onSnapshot(qUsers, snap => {
-            const arr = [];
-            snap.forEach(d => {
-                const data = d.data();
-                // Filter users who are service-providers and have 'financial' in their serviceCategories
-                if (data.roles?.includes('service-provider') && data.serviceCategories?.includes('financial')) {
-                    arr.push({ id: d.id, ...data });
-                }
-            });
-            setProviders(arr);
-        });
-
-        return () => { unsubscribeAuth(); uC(); uR(); uUsers(); };
+        return () => { 
+            unsubscribeAuth(); 
+            if (uC) uC(); 
+            if (uR) uR(); 
+            if (uUsers) uUsers(); 
+            if (uOrders) uOrders();
+        };
     }, [onNavigate]);
 
     const renderSection = () => {
         switch (section) {
             case 'dashboard': return <DashboardHome complaints={complaints} rates={rates} />;
-            case 'complaints': return <ComplaintsManager complaints={complaints} />;
+            case 'complaints': return <ComplaintsManager complaints={complaints} orders={orders} />;
             case 'providers': return <FinancialProvidersManager providers={providers} />;
             default: return <DashboardHome complaints={complaints} rates={rates} />;
         }

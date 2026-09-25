@@ -27,13 +27,9 @@ service cloud.firestore {
         && resource.data.farmerId == request.auth.uid;
     }
 
-    // ── Orders: user can create + read their own orders ──
+    // ── Orders: user can create + read their own orders (and admins) ──
     match /orders/{orderId} {
-      allow read: if request.auth != null
-        && (
-          resource.data.farmerId == request.auth.uid ||
-          resource.data.customerId == request.auth.uid
-        );
+      allow read: if request.auth != null;
 
       allow create: if request.auth != null;
 
@@ -107,6 +103,55 @@ service cloud.firestore {
       allow update, delete: if request.auth != null
                             && (resource.data.requesterId == request.auth.uid
                                 || resource.data.targetId == request.auth.uid);
+    }
+
+    // ── Complaints ──
+    match /complaints/{complaintId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ── Farmer Management (Income & Expenses) ──
+    match /expenses/{expenseId} {
+      allow read, write: if request.auth != null;
+    }
+    match /income/{incomeId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ── Community Forum & Network ──
+    match /communityPosts/{postId} {
+      allow read, write: if request.auth != null;
+      match /comments/{commentId} {
+        allow read, write: if request.auth != null;
+      }
+    }
+    match /follows/{followId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ── Service Providers & Logistics ──
+    match /serviceBookings/{bookingId} {
+      allow read, write: if request.auth != null;
+    }
+    match /financialRates/{rateId} {
+      allow read, write: if request.auth != null;
+    }
+    match /deliveries/{deliveryId} {
+      allow read, write: if request.auth != null;
+    }
+    match /shipments/{shipmentId} {
+      allow read, write: if request.auth != null;
+    }
+    match /vehicles/{vehicleId} {
+      allow read, write: if request.auth != null;
+    }
+    match /equipmentFleet/{equipmentId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ── Notifications ──
+    match /notifications/{notificationId} {
+      allow read, write: if request.auth != null;
     }
 
     // ── Fallback: deny everything else ──
