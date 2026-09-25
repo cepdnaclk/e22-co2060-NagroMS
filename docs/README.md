@@ -1,6 +1,6 @@
 ---
 layout: home
-permalink: https://nagroms-novachicas.netlify.app/
+permalink: index.html
 repository-name: e22-co2060-nagroms
 title: NagroMS - Networked agro Management System
 ---
