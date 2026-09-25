@@ -52,6 +52,12 @@ export function FarmerDashboard() {
         return <OverviewSection setActiveTab={setActiveTab} />;
     }
   };
+  const handleNavClick = (tab) => {
+    setActiveTab(tab);
+    if (window.innerWidth <= 768) {
+      setIsSidebarOpen(false);
+    }
+  };
 
   return (
     <div className="farmer-dashboard-container" style={{ display: 'flex', height: '100vh', backgroundColor: '#f3f4f6', overflow: 'hidden', position: 'relative' }}>
@@ -99,43 +105,43 @@ export function FarmerDashboard() {
             icon={<LayoutDashboard size={20} />}
             label={t('farmer.sidebar.overview') || 'Overview'}
             isActive={activeTab === 'overview'}
-            onClick={() => setActiveTab('overview')}
+            onClick={() => handleNavClick('overview')}
           />
           <SidebarItem
             icon={<Wallet size={20} />}
             label={t('farmer.sidebar.management') || 'Management'}
             isActive={activeTab === 'management'}
-            onClick={() => setActiveTab('management')}
+            onClick={() => handleNavClick('management')}
           />
           <SidebarItem
             icon={<FileText size={20} />}
             label={t('farmer.sidebar.requests') || 'Customer Requests'}
             isActive={activeTab === 'requests'}
-            onClick={() => setActiveTab('requests')}
+            onClick={() => handleNavClick('requests')}
           />
           <SidebarItem
             icon={<Truck size={20} />}
             label={t('farmer.sidebar.services') || 'Services'}
             isActive={activeTab === 'services'}
-            onClick={() => setActiveTab('services')}
+            onClick={() => handleNavClick('services')}
           />
           <SidebarItem
             icon={<MessageSquare size={20} />}
             label={t('farmer.sidebar.chatbot') || 'Chatbot'}
             isActive={activeTab === 'chatbot'}
-            onClick={() => setActiveTab('chatbot')}
+            onClick={() => handleNavClick('chatbot')}
           />
           <SidebarItem
             icon={<Users size={20} />}
             label={t('farmer.sidebar.community') || 'Community'}
             isActive={activeTab === 'community'}
-            onClick={() => setActiveTab('community')}
+            onClick={() => handleNavClick('community')}
           />
           <SidebarItem
             icon={<Bell size={20} />}
             label={t('farmer.sidebar.notifications') || 'Notifications'}
             isActive={activeTab === 'notifications'}
-            onClick={() => setActiveTab('notifications')}
+            onClick={() => handleNavClick('notifications')}
           />
         </nav>
 
@@ -144,7 +150,7 @@ export function FarmerDashboard() {
             icon={<Settings size={20} />}
             label={t('farmer.sidebar.settings') || 'Settings'}
             isActive={activeTab === 'settings'}
-            onClick={() => setActiveTab('settings')}
+            onClick={() => handleNavClick('settings')}
           />
         </div>
       </div>

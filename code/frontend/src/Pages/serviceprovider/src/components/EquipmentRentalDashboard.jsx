@@ -1,3 +1,4 @@
+// Trigger rebuild
 import { useState, useMemo, useEffect } from 'react';
 import { db, auth } from '../../../../utils/firebase';
 import { collection, query, where, onSnapshot, doc, updateDoc, addDoc, deleteDoc } from 'firebase/firestore';
@@ -7,7 +8,7 @@ import {
     ChevronLeft, ChevronRight, Bell, Search, Plus,
     Edit2, Trash2, Eye, Check, X, AlertTriangle,
     TrendingUp, Download, Filter, RefreshCw, MapPin,
-    Calendar, Clock, ArrowUpRight, CheckCircle, Send, Paperclip
+    Calendar, Clock, ArrowUpRight, CheckCircle, Send, Paperclip, Menu
 } from 'lucide-react';
 import {
     LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
@@ -40,59 +41,13 @@ const c = {
     purple: '#8b5cf6', purpleLt: '#f5f3ff',
 };
 
-// ─── Mock Data ─────────────────────────────────────────────────────────────────
-const EQUIPMENT = [
-    { id: 'EQ-001', emoji: '🚜', name: 'Mahindra 575 DI Tractor', category: 'Tractors', dailyRate: 5500, weeklyRate: 32000, monthlyRate: 115000, condition: 'Excellent', status: 'Available', location: 'Anuradhapura', lastMaintenance: '2026-06-15', totalRentals: 48, utilization: 78 },
-    { id: 'EQ-002', emoji: '🌾', name: 'Kubota DC-70 Harvester', category: 'Harvesters', dailyRate: 8500, weeklyRate: 55000, monthlyRate: 195000, condition: 'Good', status: 'Rented', location: 'Polonnaruwa', lastMaintenance: '2026-05-20', totalRentals: 31, utilization: 65 },
-    { id: 'EQ-003', emoji: '💧', name: 'Honda WB30 Water Pump', category: 'Irrigation', dailyRate: 1800, weeklyRate: 10500, monthlyRate: 38000, condition: 'Good', status: 'Available', location: 'Kurunegala', lastMaintenance: '2026-06-28', totalRentals: 92, utilization: 89 },
-    { id: 'EQ-004', emoji: '🌿', name: 'Yamaha KF150 Sprayer', category: 'Crop Care', dailyRate: 950, weeklyRate: 5800, monthlyRate: 21000, condition: 'Excellent', status: 'Available', location: 'Kandy', lastMaintenance: '2026-07-01', totalRentals: 67, utilization: 71 },
-    { id: 'EQ-005', emoji: '🚜', name: 'John Deere 5075E Tractor', category: 'Tractors', dailyRate: 7200, weeklyRate: 45000, monthlyRate: 158000, condition: 'Good', status: 'Reserved', location: 'Anuradhapura', lastMaintenance: '2026-06-01', totalRentals: 22, utilization: 54 },
-    { id: 'EQ-006', emoji: '🔧', name: 'Kubota L3800 Cultivator', category: 'Tillage', dailyRate: 3800, weeklyRate: 24000, monthlyRate: 86000, condition: 'Needs Service', status: 'Maintenance', location: 'Badulla', lastMaintenance: '2026-04-10', totalRentals: 39, utilization: 42 },
-    { id: 'EQ-007', emoji: '🚿', name: 'Rain Bird Drip System', category: 'Irrigation', dailyRate: 2200, weeklyRate: 13500, monthlyRate: 48000, condition: 'Excellent', status: 'Available', location: 'Jaffna', lastMaintenance: '2026-06-30', totalRentals: 55, utilization: 81 },
-    { id: 'EQ-008', emoji: '🌾', name: 'Iseki TH5370 Combine', category: 'Harvesters', dailyRate: 11000, weeklyRate: 68000, monthlyRate: 240000, condition: 'Good', status: 'Rented', location: 'Batticaloa', lastMaintenance: '2026-05-15', totalRentals: 18, utilization: 60 },
-];
-
-const RENTAL_REQUESTS = [
-    { id: 'RNT-2851', farmer: 'Sunil Perera', farmerIcon: '👨‍🌾', equipment: 'Mahindra 575 DI Tractor', durationDays: 7, pickupDate: '2026-07-08', returnDate: '2026-07-15', totalCost: 32000, contact: '077 123 4567', status: 'Pending', district: 'Anuradhapura' },
-    { id: 'RNT-2850', farmer: 'Kamala Silva', farmerIcon: '👩‍🌾', equipment: 'Honda WB30 Water Pump', durationDays: 14, pickupDate: '2026-07-06', returnDate: '2026-07-20', totalCost: 21000, contact: '081 222 3344', status: 'Accepted', district: 'Kandy' },
-    { id: 'RNT-2849', farmer: 'Nimal Fernando', farmerIcon: '👨‍🌾', equipment: 'Kubota DC-70 Harvester', durationDays: 5, pickupDate: '2026-07-04', returnDate: '2026-07-09', totalCost: 42500, contact: '091 333 4455', status: 'In Progress', district: 'Galle' },
-    { id: 'RNT-2848', farmer: 'Priya Kumar', farmerIcon: '👩‍🌾', equipment: 'Yamaha KF150 Sprayer', durationDays: 3, pickupDate: '2026-07-01', returnDate: '2026-07-04', totalCost: 2850, contact: '021 444 5566', status: 'Completed', district: 'Jaffna' },
-    { id: 'RNT-2847', farmer: 'Rajan Muthu', farmerIcon: '👨‍🌾', equipment: 'John Deere 5075E Tractor', durationDays: 10, pickupDate: '2026-07-10', returnDate: '2026-07-20', totalCost: 72000, contact: '076 555 6677', status: 'Pending', district: 'Batticaloa' },
-    { id: 'RNT-2846', farmer: 'Amara Jayaweera', farmerIcon: '👩‍🌾', equipment: 'Rain Bird Drip System', durationDays: 30, pickupDate: '2026-06-01', returnDate: '2026-07-01', totalCost: 48000, contact: '070 666 7788', status: 'Completed', district: 'Kurunegala' },
-];
-
-const MAINTENANCE = [
-    { id: 'MNT-001', equipment: 'Kubota L3800 Cultivator', emoji: '🔧', type: 'Engine Overhaul', scheduledDate: '2026-07-10', status: 'Upcoming', cost: 35000, notes: 'Full engine service & oil change required' },
-    { id: 'MNT-002', equipment: 'Kubota DC-70 Harvester', emoji: '🌾', type: 'Blade Sharpening', scheduledDate: '2026-07-08', status: 'Upcoming', cost: 8500, notes: 'Cutting blades worn, needs replacement' },
-    { id: 'MNT-003', equipment: 'John Deere 5075E Tractor', emoji: '🚜', type: 'Filter Replacement', scheduledDate: '2026-07-05', status: 'In Progress', cost: 4200, notes: 'Air & oil filters due for replacement' },
-    { id: 'MNT-004', equipment: 'Mahindra 575 DI Tractor', emoji: '🚜', type: 'Annual Service', scheduledDate: '2026-06-15', status: 'Completed', cost: 22000, notes: 'Full annual service completed successfully' },
-    { id: 'MNT-005', equipment: 'Honda WB30 Water Pump', emoji: '💧', type: 'Seal Replacement', scheduledDate: '2026-06-28', status: 'Completed', cost: 6500, notes: 'Shaft seals replaced, pressure tested' },
-];
-
-const REVENUE_DATA = [
-    { month: 'Jan', revenue: 285, rentals: 18 },
-    { month: 'Feb', revenue: 342, rentals: 22 },
-    { month: 'Mar', revenue: 418, rentals: 28 },
-    { month: 'Apr', revenue: 385, rentals: 25 },
-    { month: 'May', revenue: 495, rentals: 34 },
-    { month: 'Jun', revenue: 562, rentals: 38 },
-    { month: 'Jul', revenue: 485, rentals: 31 },
-];
-
-const CATEGORY_DATA = [
-    { name: 'Tractors', value: 38, color: c.green },
-    { name: 'Harvesters', value: 27, color: c.blue },
-    { name: 'Irrigation', value: 18, color: c.purple },
-    { name: 'Crop Care', value: 11, color: c.amber },
-    { name: 'Tillage', value: 6, color: '#ec4899' },
-];
-
-const ACTIVITIES = [
-    { time: '12 min ago', icon: '📋', text: 'New rental request from Sunil Perera for Mahindra Tractor', type: 'request', color: c.green },
-    { time: '1 hr ago', icon: '✅', text: 'Kubota DC-70 Harvester returned by Nimal Fernando', type: 'returned', color: c.blue },
-    { time: '2 hr ago', icon: '🔧', text: 'Scheduled maintenance completed on Mahindra 575 DI', type: 'maintenance', color: c.amber },
-    { time: '4 hr ago', icon: '➕', text: 'New equipment added: Rain Bird Drip Irrigation System', type: 'added', color: c.purple },
-];
+// ─── Real-Time Data (No Mocks) ─────────────────────────────────────────────────
+const EQUIPMENT = [];
+const RENTAL_REQUESTS = [];
+const MAINTENANCE = [];
+const REVENUE_DATA = [];
+const CATEGORY_DATA = [];
+const ACTIVITIES = [];
 
 // ─── Status Configs ────────────────────────────────────────────────────────────
 const eqStatusCfg = {
@@ -292,13 +247,13 @@ function TopNav({ section }) {
 }
 
 // ─── Dashboard Home ────────────────────────────────────────────────────────────
-function DashboardHome({ setSection }) {
-    const totalEq = EQUIPMENT.length;
-    const available = EQUIPMENT.filter(e => e.status === 'Available').length;
-    const rented = EQUIPMENT.filter(e => e.status === 'Rented').length;
-    const pending = RENTAL_REQUESTS.filter(r => r.status === 'Pending').length;
-    const monthRev = REVENUE_DATA[REVENUE_DATA.length - 1].revenue;
-    const avgUtil = Math.round(EQUIPMENT.reduce((s, e) => s + e.utilization, 0) / totalEq);
+function DashboardHome({ setSection, equipment = [], requests = [] }) {
+    const totalEq = equipment.length;
+    const available = equipment.filter(e => e.status === 'Available').length;
+    const rented = equipment.filter(e => e.status === 'Rented').length;
+    const pending = requests.filter(r => r.status === 'Pending').length;
+    const monthRev = REVENUE_DATA && REVENUE_DATA.length > 0 ? REVENUE_DATA[REVENUE_DATA.length - 1].revenue : 0;
+    const avgUtil = totalEq > 0 ? Math.round(equipment.reduce((s, e) => s + (e.utilization || 0), 0) / totalEq) : 0;
 
     return (
         <div>
@@ -1296,9 +1251,15 @@ function exportToCSV(filename, rows) {
 export default function EquipmentRentalDashboard({ onNavigate = () => { } }) {
     const [collapsed, setCollapsed] = useState(false);
     const [section, setSection] = useState('dashboard');
+    const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-    const [equipment, setEquipment] = useState(EQUIPMENT);
-    const [requests, setRequests] = useState(RENTAL_REQUESTS);
+    const handleSetSection = (s) => {
+        setSection(s);
+        if (window.innerWidth <= 768) setIsMobileOpen(false);
+    };
+
+    const [equipment, setEquipment] = useState([]);
+    const [requests, setRequests] = useState([]);
 
     useEffect(() => {
         const q = query(collection(db, 'serviceBookings'), where('serviceType', 'in', ['equipment', 'Equipment Rental']));
@@ -1331,17 +1292,24 @@ export default function EquipmentRentalDashboard({ onNavigate = () => { } }) {
                     });
                 }
             });
-            if (fetched.length > 0) {
-                setRequests(prev => {
-                    // merge with mock data for visual purposes if you want, but better to just use fetched + mock
-                    const newIds = new Set(fetched.map(f => f.id));
-                    const remainingMocks = prev.filter(p => !newIds.has(p.id) && String(p.id).startsWith('RNT'));
-                    return [...fetched, ...remainingMocks];
-                });
-            }
+            setRequests(fetched);
         });
         return () => unsub();
     }, [equipment]);
+
+    // Realtime listener for Equipment Fleet
+    useEffect(() => {
+        const qEq = query(collection(db, 'equipmentFleet'));
+        const unsubEq = onSnapshot(qEq, (snapshot) => {
+            const fetchedEq = [];
+            snapshot.forEach(docSnap => {
+                fetchedEq.push({ id: docSnap.id, ...docSnap.data() });
+            });
+            
+            setEquipment(fetchedEq);
+        });
+        return () => unsubEq();
+    }, []);
 
     const handleRequest = async (id, newStatus) => {
         try {
@@ -1376,20 +1344,41 @@ export default function EquipmentRentalDashboard({ onNavigate = () => { } }) {
             <style>{`
                 @media (max-width: 768px) {
                     .mobile-dash-wrapper { flex-direction: column !important; }
-                    .mobile-sidebar { width: 100% !important; height: auto !important; position: static !important; }
-                    .mobile-main { padding: 12px !important; }
+                    .mobile-sidebar { 
+                        position: fixed !important; 
+                        left: 0 !important; 
+                        top: 0 !important; 
+                        height: 100vh !important; 
+                        width: 260px !important; 
+                        z-index: 200 !important; 
+                        transition: transform 0.3s ease !important;
+                    }
+                    .mobile-sidebar.closed { transform: translateX(-100%) !important; }
+                    .mobile-sidebar.open { transform: translateX(0) !important; }
+                    
+                    .mobile-main { padding: 12px !important; padding-top: 64px !important; }
                     .mobile-grid-1 { grid-template-columns: 1fr !important; }
                     .mobile-grid-2 { grid-template-columns: 1fr !important; }
                     .mobile-hidden { display: none !important; }
+                    .hamburger-btn { display: block !important; }
                 }
+                .hamburger-btn { display: none; }
             `}</style>
             
-            <div className="mobile-sidebar" style={{ zIndex: 10 }}>
+            <button 
+                className="hamburger-btn"
+                onClick={() => setIsMobileOpen(true)}
+                style={{ position: 'absolute', top: 16, left: 16, zIndex: 100, background: c.green, color: '#fff', border: 'none', borderRadius: 8, padding: 8, cursor: 'pointer' }}
+            >
+                <Menu style={{ width: 24, height: 24 }} />
+            </button>
+
+            <div className={`mobile-sidebar ${isMobileOpen ? 'open' : 'closed'}`} style={{ zIndex: 10 }}>
                 <Sidebar
                     collapsed={collapsed}
                     setCollapsed={setCollapsed}
                     active={section}
-                    setActive={setSection}
+                    setActive={handleSetSection}
                     onNavigate={onNavigate}
                 />
             </div>
@@ -1398,7 +1387,7 @@ export default function EquipmentRentalDashboard({ onNavigate = () => { } }) {
                 <TopNav section={section} />
 
                 <main className="mobile-main" style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
-                    {section === 'dashboard' && <DashboardHome setSection={setSection} />}
+                    {section === 'dashboard' && <DashboardHome setSection={setSection} equipment={equipment} requests={requests} />}
                     {section === 'equipment' && <EquipmentManagement equipment={equipment} setEquipment={setEquipment} />}
                     {section === 'requests' && <RentalRequests requests={requests} handleRequest={handleRequest} />}
                     {section === 'categories' && <EquipmentCategories equipment={equipment} />}
