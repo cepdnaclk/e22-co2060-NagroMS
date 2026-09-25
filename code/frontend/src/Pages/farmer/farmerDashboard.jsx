@@ -11,7 +11,9 @@ import {
   Menu,
   X,
   FileText,
-  GraduationCap
+  GraduationCap,
+  DollarSign,
+  AlertCircle
 } from 'lucide-react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { auth } from '../../utils/firebase';
@@ -23,6 +25,8 @@ import ChatbotSection from './components/ChatbotSection';
 import CommunityNetwork from '../../components/Network/CommunityNetwork';
 import SettingsSection from './components/SettingsSection';
 import NotificationsSection from './components/NotificationsSection';
+import FinancialRatesSection from './components/FinancialRatesSection';
+import ComplaintsSection from './components/ComplaintsSection';
 import './farmerDashboard.css';
 
 export function FarmerDashboard() {
@@ -48,6 +52,10 @@ export function FarmerDashboard() {
         return <NotificationsSection />;
       case 'settings':
         return <SettingsSection />;
+      case 'financial':
+        return <FinancialRatesSection />;
+      case 'complaints':
+        return <ComplaintsSection />;
       default:
         return <OverviewSection setActiveTab={setActiveTab} />;
     }
@@ -156,6 +164,18 @@ export function FarmerDashboard() {
             label={t('farmer.sidebar.notifications') || 'Notifications'}
             isActive={activeTab === 'notifications'}
             onClick={() => handleNavClick('notifications')}
+          />
+          <SidebarItem
+            icon={<DollarSign size={20} />}
+            label={t('farmer.sidebar.financial') || 'Bank Rates'}
+            isActive={activeTab === 'financial'}
+            onClick={() => handleNavClick('financial')}
+          />
+          <SidebarItem
+            icon={<AlertCircle size={20} />}
+            label={t('farmer.sidebar.complaints') || 'Help & Complaints'}
+            isActive={activeTab === 'complaints'}
+            onClick={() => handleNavClick('complaints')}
           />
         </nav>
 

@@ -28,6 +28,9 @@ import CompanyDriverDashboard from './Pages/serviceprovider/src/components/Compa
 // Customer dashboard
 import { CustomerDashboard } from './Pages/Customer/src/app/components/CustomerDashboard.jsx';
 
+// Admin dashboard
+import AdminDashboard from './Pages/admin/AdminDashboard.jsx';
+
 // Placeholder dashboards for other roles
 function PlaceholderDashboard({ role }) {
   return (
@@ -71,6 +74,9 @@ export default function App() {
 
         {/* Farmer Dashboard Route */}
         <Route path="/farmer-dashboard" element={<FarmerDashboard onNavigate={(path) => { if (path === 'landing') window.location.href = '/login'; }} />} />
+
+        {/* Admin Dashboard Route */}
+        <Route path="/admin-dashboard" element={<AdminDashboard onNavigate={(path) => { if (path === 'landing') window.location.href = '/login'; else if (path === 'login') window.location.href = '/login'; }} />} />
 
         {/* Placeholder Routes for other roles */}
         {/* Customer Dashboard Route */}

@@ -137,12 +137,15 @@ export default function CommunityNetwork({ currentUserRole, products = [], curre
 
       {/* Tabs & Search */}
       <div style={{ padding: '20px 32px', borderBottom: '1px solid #f0f0f0', display: 'flex', gap: '24px', alignItems: 'center', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', gap: '12px', flex: 1 }}>
+        <div className="hide-scrollbar" style={{ display: 'flex', gap: '12px', flex: 1, overflowX: 'auto', paddingBottom: '4px' }}>
+          <style>{`.hide-scrollbar::-webkit-scrollbar { display: none; } .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               style={{
+                flexShrink: 0,
+                whiteSpace: 'nowrap',
                 padding: '10px 20px',
                 borderRadius: '24px',
                 border: 'none',
