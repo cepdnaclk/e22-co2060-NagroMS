@@ -11,11 +11,11 @@ NagroMS is a web-based platform designed to connect farmers directly with bulk b
 NagroMS creates a centralized digital marketplace that improves efficiency, accessibility, and transparency in the agricultural supply chain.
 
 ## Team
--  E/22/330, R.Shathursima, e22330@eng.pdn.ac.lk
--  E/22/381, S.Monisha, e22381@eng.pdn.ac.lk
--  E/22/261, N.Sathurjika, e22261@eng.pdn.ac.lk
--  E/22/260, K.Nithilaa, e22260@eng.pdn.ac.lk
- 
+-  E/22/330, R.Shathursima, e22330@eng.pdn.ac.lk
+-  E/22/381, S.Monisha, e22381@eng.pdn.ac.lk
+-  E/22/261, N.Sathurjika, e22261@eng.pdn.ac.lk
+-  E/22/260, K.Nithilaa, e22260@eng.pdn.ac.lk
+ 
 #### Table of Contents
 1. [Introduction](#introduction)
 2. [Solution Architecture](#solution-architecture )
@@ -50,4 +50,3 @@ NagroMS provides a practical digital solution to improve the agricultural supply
 - [Project Page:](https://cepdnaclk.github.io/e22-co2060-NagroMS)
 - [Department of Computer Engineering](http://www.ce.pdn.ac.lk/)
 - [University of Peradeniya:](https://eng.pdn.ac.lk/)
-
