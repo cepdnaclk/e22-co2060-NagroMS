@@ -3,7 +3,7 @@ import { Outlet, Navigate, NavLink, useNavigate, useLocation } from 'react-route
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import {
     LayoutDashboard, Calendar, MessageSquare, BookOpen,
-    Users, Settings, LogOut, GraduationCap, UserPlus, Heart
+    Users, Settings, LogOut, GraduationCap, UserPlus, Heart, Menu
 } from 'lucide-react';
 import { logout } from '../../../utils/firebase.js';
 import { RoleSwitcher } from '../../../components/RoleSwitcher.jsx';
@@ -37,6 +37,13 @@ export default function ExpertLayout() {
     const navigate = useNavigate();
     const location = useLocation();
     const { data: overviewData } = useExpertData('overview');
+    const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+    const handleNavClick = () => {
+        if (window.innerWidth <= 768) {
+            setIsMobileOpen(false);
+        }
+    };
 
     useEffect(() => {
         const auth = getAuth();
@@ -68,8 +75,11 @@ export default function ExpertLayout() {
 
     return (
         <div className="exp-dashboard-container">
+            <button className="exp-hamburger" onClick={() => setIsMobileOpen(!isMobileOpen)}>
+                <Menu size={24} />
+            </button>
             {/* Sidebar — matches farmer dashboard */}
-            <div className="exp-sidebar">
+            <div className={`exp-sidebar ${isMobileOpen ? 'open' : 'closed'}`}>
                 <div className="exp-sidebar-brand">
                     <div className="exp-sidebar-logo">
                         <GraduationCap size={24} />
@@ -83,6 +93,7 @@ export default function ExpertLayout() {
                             key={to}
                             to={to}
                             end={end}
+                            onClick={handleNavClick}
                             className={({ isActive }) =>
                                 `exp-sidebar-item${isActive ? ' exp-sidebar-item-active' : ''}`
                             }
@@ -99,6 +110,7 @@ export default function ExpertLayout() {
                 <div className="exp-sidebar-bottom">
                     <NavLink
                         to="/expert-dashboard/settings"
+                        onClick={handleNavClick}
                         className={({ isActive }) =>
                             `exp-sidebar-item${isActive ? ' exp-sidebar-item-active' : ''}`
                         }

@@ -4,7 +4,7 @@ import {
     ChevronLeft, ChevronRight, Bell, Search, Plus, Eye,
     Check, X, Download, TrendingUp, Clock, CheckCircle,
     ArrowUpRight, AlertTriangle, ShieldCheck, Tag,
-    MessageSquare, Send, Paperclip, Filter, User, Users
+    MessageSquare, Send, Paperclip, Filter, User, Users, Menu
 } from 'lucide-react';
 import {
     LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
@@ -734,6 +734,12 @@ export default function FinancialProviderDashboard({ onNavigate }) {
     const [collapsed, setCollapsed] = useState(false);
     const [section, setSection] = useState('dashboard');
     const [accountType, setAccountType] = useState('business'); // business (Institution) or individual (Lender)
+    const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+    const handleSetSection = (s) => {
+        setSection(s);
+        if (window.innerWidth <= 768) setIsMobileOpen(false);
+    };
 
     const [schemes, setSchemes] = useState(INITIAL_SCHEMES);
     const [apps, setApps] = useState(INITIAL_APPLICATIONS);
@@ -782,9 +788,41 @@ export default function FinancialProviderDashboard({ onNavigate }) {
     };
 
     return (
-        <div style={{ display: 'flex', background: ds.bg, minHeight: '100vh', width: '100%', fontVariantNumeric: 'tabular-nums' }}>
-            <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} active={section} setActive={setSection} onNavigate={onNavigate} />
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        <div className="mobile-dash-wrapper" style={{ display: 'flex', background: ds.bg, minHeight: '100vh', width: '100%', fontVariantNumeric: 'tabular-nums' }}>
+            <style>{`
+                @media (max-width: 768px) {
+                    .mobile-dash-wrapper { flex-direction: column !important; }
+                    .mobile-sidebar { 
+                        position: fixed !important; 
+                        left: 0 !important; 
+                        top: 0 !important; 
+                        height: 100vh !important; 
+                        width: 260px !important; 
+                        z-index: 200 !important; 
+                        transition: transform 0.3s ease !important;
+                    }
+                    .mobile-sidebar.closed { transform: translateX(-100%) !important; }
+                    .mobile-sidebar.open { transform: translateX(0) !important; }
+                    
+                    .mobile-main { padding: 12px !important; padding-top: 64px !important; }
+                    .hamburger-btn { display: block !important; }
+                }
+                .hamburger-btn { display: none; }
+            `}</style>
+            
+            <button 
+                className="hamburger-btn"
+                onClick={() => setIsMobileOpen(true)}
+                style={{ position: 'absolute', top: 16, left: 16, zIndex: 100, background: ds.primary, color: '#fff', border: 'none', borderRadius: 8, padding: 8, cursor: 'pointer' }}
+            >
+                <Menu style={{ width: 24, height: 24 }} />
+            </button>
+
+            <div className={`mobile-sidebar ${isMobileOpen ? 'open' : 'closed'}`} style={{ zIndex: 10 }}>
+                <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} active={section} setActive={handleSetSection} onNavigate={onNavigate} />
+            </div>
+
+            <div className="mobile-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                 <TopNav section={section} accountType={accountType} setAccountType={setAccountType} />
                 <main style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
                     {renderSection()}

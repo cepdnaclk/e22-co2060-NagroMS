@@ -361,6 +361,12 @@ export function CustomerDashboard({ onNavigate }) {
         return null;
     }
   };
+  const handleNavClick = (section) => {
+    setActiveSection(section);
+    if (window.innerWidth <= 768) {
+      setIsSidebarOpen(false);
+    }
+  };
 
   return (
     <div className="farmer-dashboard-container" style={{ display: 'flex', height: '100vh', backgroundColor: '#f3f4f6', overflow: 'hidden', position: 'relative' }}>
@@ -404,12 +410,12 @@ export function CustomerDashboard({ onNavigate }) {
         </div>
 
         <nav style={{ flex: 1, padding: '24px 12px', display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto' }}>
-          <SidebarButton icon={<Home size={20} />} label={t('customer.sidebar.browse') || "Browse Products"} active={activeSection === 'browse'} onClick={() => setActiveSection('browse')} />
-          <SidebarButton icon={<ShoppingCart size={20} />} label={t('customer.sidebar.cart') || "My Cart"} active={activeSection === 'cart'} onClick={() => setActiveSection('cart')} badge={getCartItemsCount()} />
-          <SidebarButton icon={<FileText size={20} />} label={t('customer.sidebar.orders') || "Order History"} active={activeSection === 'orders'} onClick={() => setActiveSection('orders')} />
-          <SidebarButton icon={<FileText size={20} />} label={t('customer.sidebar.requests') || "Product Requests"} active={activeSection === 'requests'} onClick={() => setActiveSection('requests')} />
-          <SidebarButton icon={<UserCircle size={20} />} label={t('customer.sidebar.profile') || "My Profile"} active={activeSection === 'profile'} onClick={() => setActiveSection('profile')} />
-          <SidebarButton icon={<User size={20} />} label={t('customer.sidebar.community') || "Community"} active={activeSection === 'community'} onClick={() => setActiveSection('community')} />
+          <SidebarButton icon={<Home size={20} />} label={t('customer.sidebar.browse') || "Browse Products"} active={activeSection === 'browse'} onClick={() => handleNavClick('browse')} />
+          <SidebarButton icon={<ShoppingCart size={20} />} label={t('customer.sidebar.cart') || "My Cart"} active={activeSection === 'cart'} onClick={() => handleNavClick('cart')} badge={getCartItemsCount()} />
+          <SidebarButton icon={<FileText size={20} />} label={t('customer.sidebar.orders') || "Order History"} active={activeSection === 'orders'} onClick={() => handleNavClick('orders')} />
+          <SidebarButton icon={<FileText size={20} />} label={t('customer.sidebar.requests') || "Product Requests"} active={activeSection === 'requests'} onClick={() => handleNavClick('requests')} />
+          <SidebarButton icon={<UserCircle size={20} />} label={t('customer.sidebar.profile') || "My Profile"} active={activeSection === 'profile'} onClick={() => handleNavClick('profile')} />
+          <SidebarButton icon={<User size={20} />} label={t('customer.sidebar.community') || "Community"} active={activeSection === 'community'} onClick={() => handleNavClick('community')} />
         </nav>
 
         <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -417,7 +423,7 @@ export function CustomerDashboard({ onNavigate }) {
             icon={<Settings size={20} />}
             label={t('customer.sidebar.settings') || "Settings"}
             active={activeSection === 'settings'}
-            onClick={() => setActiveSection('settings')}
+            onClick={() => handleNavClick('settings')}
           />
           <SidebarButton
             icon={<LogOut size={20} />}
