@@ -72,7 +72,8 @@ const Sidebar = ({ active, setActive, onNavigate, pendingComplaints }) => {
             <nav style={{ flex: 1, padding: '12px 8px', display: 'flex', flexDirection: 'column', gap: 4, overflowY: 'auto' }}>
                 <NavItem icon={Home} label="Overview" active={active === 'dashboard'} onClick={() => setActive('dashboard')} />
                 <NavItem icon={MessageSquare} label="Complaints" active={active === 'complaints'} onClick={() => setActive('complaints')} badge={pendingComplaints} />
-                <NavItem icon={DollarSign} label="Financial Dashboard" active={false} onClick={() => {
+                <NavItem icon={DollarSign} label="Financial Providers" active={active === 'providers'} onClick={() => setActive('providers')} />
+                <NavItem icon={Activity} label="Financial Dashboard" active={false} onClick={() => {
                     localStorage.setItem('serviceProviderType', 'financial');
                     window.location.href = '/service-provider-dashboard';
                 }} />
@@ -256,6 +257,41 @@ const FinancialManager = ({ rates }) => {
     );
 };
 
+const FinancialProvidersManager = ({ providers }) => {
+    const handleTerminate = async (id, isActive) => {
+        const action = isActive !== false ? 'terminate' : 'reactivate';
+        if(window.confirm(`Are you sure you want to ${action} this provider?`)) {
+            try { 
+                await updateDoc(doc(db, 'users', id), { isActive: isActive === false }); 
+            } catch(e) { console.error(e); }
+        }
+    };
+
+    return (
+        <div style={{ padding: 24, maxWidth: 1000, margin: '0 auto' }}>
+            <h2 style={{ marginTop: 0 }}>Financial Service Providers</h2>
+            <div style={{ display: 'grid', gap: 16 }}>
+                {providers.length === 0 ? <p>No financial providers found.</p> : providers.map(p => (
+                    <div key={p.id} style={{ background: '#fff', padding: 20, borderRadius: 12, border: `1px solid ${ds.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                            <h3 style={{ margin: '0 0 4px 0', color: ds.primary }}>{p.businessName || p.fullName}</h3>
+                            <p style={{ margin: 0, fontSize: 14, color: ds.textMuted }}>
+                                Email: {p.email} | Contact: {p.contactPersonName || p.phone} | Status: <span style={{color: p.isActive !== false ? ds.success : ds.danger, fontWeight: 'bold'}}>{p.isActive !== false ? 'Active' : 'Terminated'}</span>
+                            </p>
+                        </div>
+                        <button 
+                            onClick={() => handleTerminate(p.id, p.isActive)} 
+                            style={{ padding: '8px 16px', background: p.isActive !== false ? ds.danger : ds.success, color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}
+                        >
+                            {p.isActive !== false ? 'Terminate' : 'Reactivate'}
+                        </button>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 // -----------------------------------------
 // Main Layout
 // -----------------------------------------
@@ -265,6 +301,7 @@ export default function AdminDashboard({ onNavigate }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
     const [complaints, setComplaints] = useState(INITIAL_COMPLAINTS);
     const [rates, setRates] = useState(INITIAL_FINANCIAL_RATES);
+    const [providers, setProviders] = useState([]);
 
     const handleSetSection = (s) => {
         setSection(s);
@@ -296,13 +333,28 @@ export default function AdminDashboard({ onNavigate }) {
             setRates(arr);
         });
 
-        return () => { unsubscribeAuth(); uC(); uR(); };
+        // Fetch users to find financial service providers
+        const qUsers = query(collection(db, 'users'));
+        const uUsers = onSnapshot(qUsers, snap => {
+            const arr = [];
+            snap.forEach(d => {
+                const data = d.data();
+                // Filter users who are service-providers and have 'financial' in their serviceCategories
+                if (data.roles?.includes('service-provider') && data.serviceCategories?.includes('financial')) {
+                    arr.push({ id: d.id, ...data });
+                }
+            });
+            setProviders(arr);
+        });
+
+        return () => { unsubscribeAuth(); uC(); uR(); uUsers(); };
     }, [onNavigate]);
 
     const renderSection = () => {
         switch (section) {
             case 'dashboard': return <DashboardHome complaints={complaints} rates={rates} />;
             case 'complaints': return <ComplaintsManager complaints={complaints} />;
+            case 'providers': return <FinancialProvidersManager providers={providers} />;
             default: return <DashboardHome complaints={complaints} rates={rates} />;
         }
     };
