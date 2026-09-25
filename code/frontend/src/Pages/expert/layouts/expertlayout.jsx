@@ -37,11 +37,11 @@ export default function ExpertLayout() {
     const navigate = useNavigate();
     const location = useLocation();
     const { data: overviewData } = useExpertData('overview');
-    const [isMobileOpen, setIsMobileOpen] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
 
     const handleNavClick = () => {
         if (window.innerWidth <= 768) {
-            setIsMobileOpen(false);
+            setIsSidebarOpen(false);
         }
     };
 
@@ -75,11 +75,11 @@ export default function ExpertLayout() {
 
     return (
         <div className="exp-dashboard-container">
-            <button className="exp-hamburger" onClick={() => setIsMobileOpen(!isMobileOpen)}>
+            <button className="exp-hamburger" onClick={() => setIsSidebarOpen(true)}>
                 <Menu size={24} />
             </button>
             {/* Sidebar — matches farmer dashboard */}
-            <div className={`exp-sidebar ${isMobileOpen ? 'open' : 'closed'}`}>
+            <div className={`exp-sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
                 <div className="exp-sidebar-brand">
                     <div className="exp-sidebar-logo">
                         <GraduationCap size={24} />
