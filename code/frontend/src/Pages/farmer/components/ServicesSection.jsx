@@ -1,8 +1,8 @@
 import { useLanguage } from '../../../i18n/LanguageContext';
 import React, { useState, useEffect } from 'react';
 import { auth, db } from '../../../utils/firebase';
-import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
-import { Calendar, Phone, MapPin, Send, CheckCircle2, X } from 'lucide-react';
+import { collection, query, where, getDocs, addDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
+import { Calendar, Phone, MapPin, Send, CheckCircle2, X, Building } from 'lucide-react';
 
 const CATEGORIES = [
   { id: 'equipment', emoji: '🚜', title: 'Equipment Rental', desc: 'Machinery & tools for farmers', color: '#ea580c', bg: '#fff7ed' },
@@ -14,7 +14,8 @@ const CATEGORIES = [
 
 export default function ServicesSection() {
   const { t } = useLanguage();
-  const [providers, setProviders] = useState([]);
+    const [providers, setProviders] = useState([]);
+  const [rates, setRates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState(null);
 
@@ -60,6 +61,20 @@ export default function ServicesSection() {
       }
     };
     fetchProviders();
+
+    const fetchRates = () => {
+      const q = query(collection(db, 'financialRates'));
+      return onSnapshot(q, snap => {
+        const arr = [];
+        snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+        setRates(arr);
+      });
+    };
+    const unsubRates = fetchRates();
+
+    return () => {
+      if (unsubRates) unsubRates();
+    };
   }, []);
 
   const handleOpenBooking = (p) => {
@@ -256,6 +271,41 @@ export default function ServicesSection() {
 
                 return (
                   <div>
+                    {selectedCategory.id === 'financial' && (
+                      <div style={{ marginBottom: '32px' }}>
+                        <h4 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937', marginBottom: '16px' }}>{t('farmer.financial.title') || 'Banking & Interest Rates'}</h4>
+                        <p style={{ color: '#4b5563', marginBottom: '24px' }}>{t('farmer.financial.subtitle') || 'View the latest financial support schemes and interest rates published by administrators.'}</p>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
+                            {rates.length === 0 ? (
+                                <div style={{ padding: '40px', background: '#fff', borderRadius: '12px', textAlign: 'center', gridColumn: '1 / -1', border: '1px solid #e5e7eb' }}>
+                                    <p style={{ color: '#6b7280', margin: 0 }}>No active financial rates published at the moment.</p>
+                                </div>
+                            ) : rates.map(rate => (
+                                <div key={rate.id} style={{ background: '#fff', borderRadius: '12px', padding: '24px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                            <div style={{ width: '48px', height: '48px', borderRadius: '8px', background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <Building size={24} color="#16a34a" />
+                                            </div>
+                                            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#1f2937' }}>{rate.bankName}</h3>
+                                        </div>
+                                        <div style={{ background: '#dcfce7', color: '#16a34a', padding: '6px 12px', borderRadius: '24px', fontWeight: 'bold', fontSize: '16px' }}>
+                                            {rate.interestRate}
+                                        </div>
+                                    </div>
+                                    <p style={{ margin: 0, color: '#4b5563', fontSize: '14px', lineHeight: '1.5' }}>
+                                        {rate.description}
+                                    </p>
+                                    <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid #f3f4f6', fontSize: '12px', color: '#9ca3af' }}>
+                                        Last updated: {rate.updatedAt?.toDate?.().toLocaleDateString() || 'Recently'}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <h4 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937', marginTop: '40px', marginBottom: '16px' }}>Financial Service Providers</h4>
+                      </div>
+                    )}
+                    
                     {/* General Request Button */}
                     <div style={{ backgroundColor: '#fff', border: `1px solid ${selectedCategory.color}40`, borderRadius: '12px', padding: '24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                       <div>
