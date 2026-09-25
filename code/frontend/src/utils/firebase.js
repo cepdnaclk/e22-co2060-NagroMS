@@ -85,6 +85,7 @@ export async function registerWithEmail(formData) {
   localStorage.setItem('nagroms_token', idToken);
   localStorage.setItem('userRoles', JSON.stringify(data.user.roles));
   if (data.user.serviceCategories) localStorage.setItem('serviceCategories', JSON.stringify(data.user.serviceCategories));
+  if (data.user.accountType) localStorage.setItem('accountType', data.user.accountType);
   localStorage.setItem('userEmail', emailForAuth);
   if (data.user.fullName) localStorage.setItem('userName', data.user.fullName);
   if (data.user.businessName) localStorage.setItem('businessName', data.user.businessName);
@@ -108,6 +109,7 @@ export async function loginWithEmail(email, password) {
   localStorage.setItem('nagroms_token', idToken);
   localStorage.setItem('userRoles', JSON.stringify(data.user.roles));
   if (data.user.serviceCategories) localStorage.setItem('serviceCategories', JSON.stringify(data.user.serviceCategories));
+  if (data.user.accountType) localStorage.setItem('accountType', data.user.accountType);
   localStorage.setItem('userEmail', email);
   if (data.user.fullName) localStorage.setItem('userName', data.user.fullName);
   if (data.user.businessName) localStorage.setItem('businessName', data.user.businessName);

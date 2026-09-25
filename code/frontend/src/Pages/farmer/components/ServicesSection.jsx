@@ -156,11 +156,15 @@ export default function ServicesSection() {
             // GRID OF CATEGORIES
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
               {CATEGORIES.map(category => {
-                const categoryProviders = providers.filter(p => 
-                  p.serviceProviderType === category.id || 
-                  p.serviceType === category.id ||
-                  (p.businessName || '').toLowerCase().includes(category.id)
-                );
+                const categoryProviders = providers.filter(p => {
+                  const catId = category.id.toLowerCase();
+                  if (p.serviceCategories && Array.isArray(p.serviceCategories)) {
+                    if (p.serviceCategories.includes(catId)) return true;
+                  }
+                  const type = (p.serviceProviderType || p.serviceType || '').toLowerCase();
+                  const bizName = (p.businessName || p.fullName || '').toLowerCase();
+                  return type.includes(catId) || bizName.includes(catId);
+                });
 
                 return (
                   <div 

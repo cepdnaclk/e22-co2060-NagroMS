@@ -1,10 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Navigation, CheckCircle, MapPin, DollarSign, Map as MapIcon, Compass, Bell } from 'lucide-react';
-import { db } from '../../../../utils/firebase.js';
-import { collection, onSnapshot, doc, setDoc, updateDoc } from 'firebase/firestore';
+import { db, auth } from '../../../../utils/firebase.js';
+import { collection, onSnapshot, doc, setDoc, updateDoc, getDoc } from 'firebase/firestore';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+
+const SERVICE_META = {
+    equipment: { label: 'Equipment Rental', emoji: '🚜', color: '#ea580c' },
+    delivery:  { label: 'Delivery & Export', emoji: '🚚', color: '#2563eb' },
+    storage:   { label: 'Storage Facilities', emoji: '🏠', color: '#16a34a' },
+    packaging: { label: 'Packaging Services', emoji: '📦', color: '#9333ea' },
+    financial: { label: 'Financial Services', emoji: '💳', color: '#0891b2' },
+};
 
 // Fix leafet default icon paths
 delete L.Icon.Default.prototype._getIconUrl;
@@ -185,8 +193,49 @@ export default function DriverDashboard({ onNavigate }) {
     
     const watchIdRef = useRef(null);
 
+    const [extraServices, setExtraServices] = useState([]);
+    const [switchDropdownOpen, setSwitchDropdownOpen] = useState(false);
+    const switchDropdownRef = useRef(null);
+
     const userEmail = localStorage.getItem('userEmail') || 'driver@nagroms.local';
     const userName = localStorage.getItem('userName') || 'Independent Driver';
+
+    // Fetch extra service categories from Firestore (for switch button)
+    useEffect(() => {
+        async function fetchCategories() {
+            // Try localStorage first
+            let cats = [];
+            try { cats = JSON.parse(localStorage.getItem('serviceCategories') || '[]'); } catch(e) {}
+            // Fallback to Firestore
+            if (cats.length === 0 && auth.currentUser) {
+                try {
+                    const snap = await getDoc(doc(db, 'users', auth.currentUser.uid));
+                    if (snap.exists()) {
+                        cats = snap.data().serviceCategories || [];
+                        if (cats.length > 0) localStorage.setItem('serviceCategories', JSON.stringify(cats));
+                    }
+                } catch(e) {}
+            }
+            setExtraServices(cats);
+        }
+        fetchCategories();
+    }, []);
+
+    // Close switch dropdown on outside click
+    useEffect(() => {
+        const handler = (e) => {
+            if (switchDropdownRef.current && !switchDropdownRef.current.contains(e.target)) {
+                setSwitchDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    const switchToService = (cat) => {
+        localStorage.setItem('serviceProviderType', cat);
+        window.location.href = '/service-provider-dashboard';
+    };
 
     const enrichWithMockGps = (job) => {
         if (!job.mockLat) {

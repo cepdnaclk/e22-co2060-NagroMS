@@ -105,7 +105,7 @@ export function SignUpPage() {
       return;
     }
 
-    if (formData.roles.includes('service-provider') && formData.serviceCategories.length === 0) {
+    if (formData.roles.includes('service-provider') && formData.accountType === 'business' && formData.serviceCategories.length === 0) {
       setFormError('Please select at least one service category.');
       return;
     }
@@ -327,8 +327,8 @@ export function SignUpPage() {
                   </>
                 )}
 
-                {/* Multiple Service Category Selection for Service Providers */}
-                {formData.roles.includes('service-provider') && (
+                {/* Multiple Service Category Selection — Business Service Providers only */}
+                {formData.roles.includes('service-provider') && formData.accountType === 'business' && (
                   <div className="nagro-field" style={{ marginTop: '16px', padding: '16px', background: '#f9fafb', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
                     <label className="nagro-label" style={{ marginBottom: '12px' }}>Which services do you provide? (Select one or more) *</label>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>

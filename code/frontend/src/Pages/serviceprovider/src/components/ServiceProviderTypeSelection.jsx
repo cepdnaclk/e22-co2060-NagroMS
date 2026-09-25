@@ -134,7 +134,13 @@ export function ServiceProviderTypeSelection({ onNavigate }) {
 
                 {/* Grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.75rem', width: '100%', marginBottom: '3rem' }}>
-                    {SERVICE_TYPES.map(st => {
+                    {SERVICE_TYPES.filter(st => {
+                        try {
+                            const cats = JSON.parse(localStorage.getItem('serviceCategories') || '[]');
+                            if (cats.length > 0) return cats.includes(st.id);
+                            return true; // fallback if no cats found
+                        } catch(e) { return true; }
+                    }).map(st => {
                         const isSelected = selected === st.id;
                         const isHovered = hoveredId === st.id;
                         return (
