@@ -258,6 +258,8 @@ const FinancialManager = ({ rates }) => {
 };
 
 const FinancialProvidersManager = ({ providers }) => {
+    const [selectedProvider, setSelectedProvider] = useState(null);
+
     const handleTerminate = async (id, isActive) => {
         const action = isActive !== false ? 'terminate' : 'reactivate';
         if(window.confirm(`Are you sure you want to ${action} this provider?`)) {
@@ -279,15 +281,58 @@ const FinancialProvidersManager = ({ providers }) => {
                                 Email: {p.email} | Contact: {p.contactPersonName || p.phone} | Status: <span style={{color: p.isActive !== false ? ds.success : ds.danger, fontWeight: 'bold'}}>{p.isActive !== false ? 'Active' : 'Terminated'}</span>
                             </p>
                         </div>
-                        <button 
-                            onClick={() => handleTerminate(p.id, p.isActive)} 
-                            style={{ padding: '8px 16px', background: p.isActive !== false ? ds.danger : ds.success, color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}
-                        >
-                            {p.isActive !== false ? 'Terminate' : 'Reactivate'}
-                        </button>
+                        <div style={{ display: 'flex', gap: 12 }}>
+                            <button 
+                                onClick={() => setSelectedProvider(p)} 
+                                style={{ padding: '8px 16px', background: ds.blue, color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}
+                            >
+                                Oversee Activities
+                            </button>
+                            <button 
+                                onClick={() => handleTerminate(p.id, p.isActive)} 
+                                style={{ padding: '8px 16px', background: p.isActive !== false ? ds.danger : ds.success, color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}
+                            >
+                                {p.isActive !== false ? 'Terminate' : 'Reactivate'}
+                            </button>
+                        </div>
                     </div>
                 ))}
             </div>
+
+            {selectedProvider && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+                    <div style={{ background: '#fff', width: '100%', maxWidth: 600, borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '80vh' }}>
+                        <div style={{ padding: '20px 24px', borderBottom: `1px solid ${ds.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h2 style={{ margin: 0, color: ds.primary }}>Activity Log: {selectedProvider.businessName || selectedProvider.fullName}</h2>
+                            <button onClick={() => setSelectedProvider(null)} style={{ background: 'transparent', border: 'none', fontSize: 24, cursor: 'pointer', color: ds.textMuted }}>×</button>
+                        </div>
+                        <div style={{ padding: 24, overflowY: 'auto', flex: 1 }}>
+                            <p style={{ margin: '0 0 16px 0', fontWeight: 'bold', color: ds.textMuted }}>Recent Actions (Simulated)</p>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                                <div style={{ borderLeft: `4px solid ${ds.success}`, paddingLeft: 12 }}>
+                                    <p style={{ margin: '0 0 4px 0', fontWeight: 'bold' }}>Approved Loan Application #APP-3839</p>
+                                    <p style={{ margin: 0, fontSize: 13, color: ds.textMuted }}>Today at 10:45 AM • For farmer Nimal Fernando (Rs 480,000)</p>
+                                </div>
+                                <div style={{ borderLeft: `4px solid ${ds.blue}`, paddingLeft: 12 }}>
+                                    <p style={{ margin: '0 0 4px 0', fontWeight: 'bold' }}>Created New Loan Scheme</p>
+                                    <p style={{ margin: 0, fontSize: 13, color: ds.textMuted }}>Yesterday at 2:15 PM • "Subsidised Agri Loan" at 5.0% interest</p>
+                                </div>
+                                <div style={{ borderLeft: `4px solid ${ds.danger}`, paddingLeft: 12 }}>
+                                    <p style={{ margin: '0 0 4px 0', fontWeight: 'bold' }}>Rejected Loan Application #APP-3836</p>
+                                    <p style={{ margin: 0, fontSize: 13, color: ds.textMuted }}>Yesterday at 11:30 AM • For farmer Amara Jayaweera</p>
+                                </div>
+                                <div style={{ borderLeft: `4px solid ${ds.textMuted}`, paddingLeft: 12 }}>
+                                    <p style={{ margin: '0 0 4px 0', fontWeight: 'bold' }}>Logged in to system</p>
+                                    <p style={{ margin: 0, fontSize: 13, color: ds.textMuted }}>Oct 12 at 8:00 AM</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div style={{ padding: '16px 24px', borderTop: `1px solid ${ds.border}`, background: '#f9fafb' }}>
+                            <button onClick={() => setSelectedProvider(null)} style={{ width: '100%', padding: 12, background: ds.primary, color: '#fff', border: 'none', borderRadius: 8, fontWeight: 'bold', cursor: 'pointer' }}>Close</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

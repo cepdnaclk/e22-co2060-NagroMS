@@ -244,19 +244,17 @@ export function EnhancedOrdersSection({ pastOrders, uid }) {
                     </button>
                   )}
 
-                  {/* Report Issue - only for delivered orders */}
-                  {order.status?.toLowerCase() === 'delivered' && (
-                    <button
-                      onClick={() => {
-                        setSelectedOrder(order);
-                        setShowComplaintModal(true);
-                      }}
-                      className="px-4 py-2 bg-red-50 text-red-700 border border-red-200 rounded-lg hover:bg-red-100 transition-colors font-medium flex items-center gap-2 text-sm"
-                    >
-                      <AlertTriangle className="w-4 h-4" />
-                      Report Issue
-                    </button>
-                  )}
+                  {/* Report Issue - for any order */}
+                  <button
+                    onClick={() => {
+                      setSelectedOrder(order);
+                      setShowComplaintModal(true);
+                    }}
+                    className="px-4 py-2 bg-red-50 text-red-700 border border-red-200 rounded-lg hover:bg-red-100 transition-colors font-medium flex items-center gap-2 text-sm"
+                  >
+                    <AlertTriangle className="w-4 h-4" />
+                    Report Issue
+                  </button>
 
                   {/* Review submitted badge */}
                   {order.status?.toLowerCase() === 'delivered' && reviews[order.id] && (
