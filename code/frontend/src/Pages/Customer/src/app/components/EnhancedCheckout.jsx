@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   MapPin, 
   Check, 
@@ -28,7 +28,6 @@ export function EnhancedCheckoutSection({ uid, cart, profile, getCartTotal, getT
   const [phoneVerified, setPhoneVerified] = useState(false);
 
   const deliveryFee = getTotalDeliveryFee();
-  const totalAmount = getCartTotal() + deliveryFee;
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -46,6 +45,62 @@ export function EnhancedCheckoutSection({ uid, cart, profile, getCartTotal, getT
       setErrors({ ...errors, receipt: '' });
     }
   };
+
+  // Dynamic Delivery Calculation
+  const [dynamicDeliveryFee, setDynamicDeliveryFee] = useState(null);
+  const [isLocating, setIsLocating] = useState(true); // Default true for initial load
+  const [locationError, setLocationError] = useState('');
+
+  const calculateDynamicFee = () => {
+    setIsLocating(true);
+    setLocationError('');
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          
+          // Mocking farmer location (Dambulla)
+          const fLat = 7.8731;
+          const fLng = 80.6511;
+          
+          const toRad = (value) => (value * Math.PI) / 180;
+          const R = 6371;
+          const dLat = toRad(lat - fLat);
+          const dLon = toRad(lng - fLng);
+          const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(toRad(fLat)) * Math.cos(toRad(lat)) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          
+          const straightLineKm = R * c; 
+          const roadKm = straightLineKm * 1.3;
+          
+          const BASE_FARE = 500;
+          const PER_KM_RATE = 150;
+          const fee = BASE_FARE + (roadKm * PER_KM_RATE);
+          
+          setDynamicDeliveryFee(fee);
+          setIsLocating(false);
+        },
+        (err) => {
+          setLocationError("Location access is REQUIRED to calculate the delivery fee. Please allow it in your browser.");
+          setIsLocating(false);
+        }
+      );
+    } else {
+      setLocationError("Geolocation not supported by your browser. Cannot calculate delivery fee.");
+      setIsLocating(false);
+    }
+  };
+
+  // Auto-trigger on mount
+  useEffect(() => {
+    calculateDynamicFee();
+  }, []);
+
+  const finalDeliveryFee = dynamicDeliveryFee !== null ? dynamicDeliveryFee : 0;
+  const totalAmount = getCartTotal() + finalDeliveryFee;
 
   const handlePlaceOrder = () => {
     const newErrors = {};
@@ -135,8 +190,8 @@ export function EnhancedCheckoutSection({ uid, cart, profile, getCartTotal, getT
           paymentMethod,
           paymentReceipt: paymentReceipt?.name || null,
           deliveryNotes,
-          totalAmount: farmerTotal,
-          deliveryFee: 0,
+          totalAmount: farmerTotal + (finalDeliveryFee / Object.keys(ordersByFarmer).length), // Split delivery fee among farmers if multiple
+          deliveryFee: finalDeliveryFee / Object.keys(ordersByFarmer).length,
           orderDate: new Date().toISOString(),
           createdAt: new Date().toISOString(),
           status: 'pending',
@@ -526,28 +581,48 @@ export function EnhancedCheckoutSection({ uid, cart, profile, getCartTotal, getT
               <span>{t('customer.checkout.subtotal') || 'Subtotal'}</span>
               <span>LKR {getCartTotal().toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-muted-foreground mb-4">
+            <div className="flex justify-between text-muted-foreground mb-4 items-center">
               <span>{t('customer.checkout.deliveryFee') || 'Delivery Fee'}</span>
-              <span>LKR {deliveryFee.toFixed(2)}</span>
+              <div className="text-right">
+                <span>LKR {finalDeliveryFee.toFixed(2)}</span>
+              </div>
             </div>
+            
+            {/* Dynamic Delivery Status */}
+            {isLocating && (
+                <div className="mb-4 text-center text-sm font-medium text-green-600 flex items-center justify-center gap-2">
+                  <MapPin className="w-4 h-4 animate-pulse" />
+                  Calculating precise delivery distance...
+                </div>
+            )}
+            
+            {locationError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm flex flex-col items-center justify-center gap-2">
+                  <span className="font-semibold text-center">{locationError}</span>
+                  <button onClick={calculateDynamicFee} className="px-4 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-xs font-bold">
+                    Retry Location Access
+                  </button>
+                </div>
+            )}
+            
             <div className="flex justify-between text-xl font-bold text-foreground">
               <span>{t('customer.checkout.total') || 'Total'}</span>
               <span>LKR {totalAmount.toFixed(2)}</span>
             </div>
           </div>
-          {deliveryFee > 0 && (
-            <p className="text-xs text-muted-foreground">* Based on distance from farmer location</p>
+          {finalDeliveryFee > 0 && (
+            <p className="text-xs text-muted-foreground">* Based on precise location distance from farmer</p>
           )}
         </div>
 
         <div className="pt-4 mt-6 space-y-3">
           <button
             onClick={handlePlaceOrder}
-            disabled={!isAddressComplete || (paymentMethod === 'bank-transfer' && !paymentReceipt)}
+            disabled={dynamicDeliveryFee === null || !isAddressComplete || (paymentMethod === 'bank-transfer' && !paymentReceipt)}
             className="w-full py-4 bg-primary text-white rounded-xl text-lg font-bold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             <Check className="w-6 h-6" />
-            {t('customer.checkout.placeOrder') || 'Place Order'}
+            {dynamicDeliveryFee === null ? (isLocating ? 'Locating to calculate fee...' : 'Location Required') : (t('customer.checkout.placeOrder') || 'Place Order')}
           </button>
           <button
             onClick={() => setActiveSection('cart')}

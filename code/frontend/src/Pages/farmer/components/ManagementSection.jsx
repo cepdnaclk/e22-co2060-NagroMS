@@ -1,4 +1,4 @@
-import { useLanguage } from '../../../i18n/LanguageContext';
+﻿import { useLanguage } from '../../../i18n/LanguageContext';
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { auth, db } from '../../../utils/firebase';

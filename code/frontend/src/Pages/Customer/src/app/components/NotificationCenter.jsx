@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Bell, X, Check, ShoppingCart, ExternalLink, Package } from 'lucide-react';
 
 // Notifications Component for Product Availability

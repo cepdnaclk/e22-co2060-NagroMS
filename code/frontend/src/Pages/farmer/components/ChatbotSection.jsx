@@ -1,4 +1,4 @@
-import { useLanguage } from '../../../i18n/LanguageContext';
+﻿import { useLanguage } from '../../../i18n/LanguageContext';
 import React, { useState, useRef, useEffect } from 'react';
 
 export default function ChatbotSection() {

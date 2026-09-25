@@ -1,4 +1,4 @@
-// Trigger rebuild
+﻿// Trigger rebuild
 import { useState, useMemo, useEffect } from 'react';
 import { db, auth } from '../../../../utils/firebase';
 import { collection, query, where, onSnapshot, doc, updateDoc, addDoc, deleteDoc } from 'firebase/firestore';
