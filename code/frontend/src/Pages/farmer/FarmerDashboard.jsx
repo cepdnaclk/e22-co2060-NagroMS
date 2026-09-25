@@ -27,7 +27,7 @@ import SettingsSection from './components/SettingsSection';
 import NotificationsSection from './components/NotificationsSection';
 import FinancialRatesSection from './components/FinancialRatesSection';
 import ComplaintsSection from './components/ComplaintsSection';
-import './farmerDashboard.css';
+import './FarmerDashboard.css';
 
 export function FarmerDashboard() {
   const { t } = useLanguage();
