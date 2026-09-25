@@ -63,9 +63,7 @@ export function SignUpPage() {
       return;
     }
     setFormError('');
-    const needsAccountType = formData.roles.includes('customer') || formData.roles.includes('service-provider');
-    if (needsAccountType) { setStep(2); }
-    else { setFormData(prev => ({ ...prev, accountType: 'individual' })); setStep(3); }
+    setStep(2);
   };
 
   const handleAccountTypeSelect = (accountType) => {
@@ -135,13 +133,12 @@ export function SignUpPage() {
   const handleBack = () => {
     setFormError('');
     if (step === 3) {
-      const needsAccountType = formData.roles.includes('customer') || formData.roles.includes('service-provider');
-      setStep(needsAccountType ? 2 : 1);
+      setStep(2);
     } else if (step === 2) { setStep(1); }
     else { navigate('/login'); }
   };
 
-  const totalSteps  = formData.roles.includes('customer') || formData.roles.includes('service-provider') ? 3 : 2;
+  const totalSteps  = 3;
   const displayStep = step === 3 ? totalSteps : step;
 
   const getRoleLabel = () => formData.roles.map(r => ({
@@ -241,8 +238,8 @@ export function SignUpPage() {
               </div>
               <div className="nagro-account-type-grid">
                 {[
-                  { id: 'individual', icon: <UserCircle className="w-14 h-14"/>, title: t('signup.step2.individual.title'), desc: t('signup.step2.individual.desc'), features: [t('signup.step2.individual.feature1'), t('signup.step2.individual.feature2'), t('signup.step2.individual.feature3')] },
-                  { id: 'business',   icon: <Building2 className="w-14 h-14"/>,  title: t('signup.step2.business.title'),   desc: t('signup.step2.business.desc'),   features: [t('signup.step2.business.feature1'), t('signup.step2.business.feature2'), t('signup.step2.business.feature3')] },
+                  { id: 'individual', icon: <UserCircle className="w-14 h-14"/>, title: t('signup.step2.individual.title'), desc: t('signup.step2.individual.desc'), features: t('signup.step2.individual.features', { returnObjects: true }) },
+                  { id: 'business',   icon: <Building2 className="w-14 h-14"/>,  title: t('signup.step2.business.title'),   desc: t('signup.step2.business.desc'),   features: t('signup.step2.business.features', { returnObjects: true }) },
                 ].map(type => (
                   <button key={type.id} type="button" onClick={() => handleAccountTypeSelect(type.id)}
                     className="nagro-account-type-card">
