@@ -1386,7 +1386,7 @@ export default function EquipmentRentalDashboard({ onNavigate = () => { } }) {
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                 <TopNav section={section} />
 
-                <main className="mobile-main" style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
+                <main className="mobile-main" style={{ flex: 1, padding: '24px', overflowY: 'auto', overflowX: 'hidden', minWidth: 0 }}>
                     {section === 'dashboard' && <DashboardHome setSection={setSection} equipment={equipment} requests={requests} />}
                     {section === 'equipment' && <EquipmentManagement equipment={equipment} setEquipment={setEquipment} />}
                     {section === 'requests' && <RentalRequests requests={requests} handleRequest={handleRequest} />}

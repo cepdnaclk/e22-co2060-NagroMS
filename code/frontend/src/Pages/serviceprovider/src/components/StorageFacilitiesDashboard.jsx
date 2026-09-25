@@ -774,7 +774,7 @@ export default function StorageFacilitiesDashboard({ onNavigate }) {
 
             <div className="mobile-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                 <TopNav section={section} />
-                <main style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
+                <main className="mobile-main" style={{ flex: 1, padding: '24px', overflowY: 'auto', overflowX: 'hidden', minWidth: 0 }}>
                     {renderSection()}
                 </main>
             </div>
