@@ -150,7 +150,7 @@ export default function ServiceProviderDashboard({ onNavigate }) {
             {renderDashboard()}
 
             {/* --- Gig Driver back-button for individual accounts --- */}
-            {isIndividual && (
+            {isIndividual && !isAdmin && (
                 <button
                     onClick={() => { window.location.href = '/driver-dashboard'; }}
                     style={{ ...btnBase, backgroundColor: '#2563eb', bottom: canSwitch ? '84px' : '28px' }}
