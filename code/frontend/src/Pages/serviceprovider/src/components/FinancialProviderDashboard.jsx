@@ -734,11 +734,11 @@ export default function FinancialProviderDashboard({ onNavigate }) {
     const [collapsed, setCollapsed] = useState(false);
     const [section, setSection] = useState('dashboard');
     const [accountType, setAccountType] = useState('business'); // business (Institution) or individual (Lender)
-    const [isMobileOpen, setIsMobileOpen] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
 
     const handleSetSection = (s) => {
         setSection(s);
-        if (window.innerWidth <= 768) setIsMobileOpen(false);
+        if (window.innerWidth <= 768) setIsSidebarOpen(false);
     };
 
     const [schemes, setSchemes] = useState(INITIAL_SCHEMES);
@@ -812,13 +812,13 @@ export default function FinancialProviderDashboard({ onNavigate }) {
             
             <button 
                 className="hamburger-btn"
-                onClick={() => setIsMobileOpen(true)}
+                onClick={() => setIsSidebarOpen(true)}
                 style={{ position: 'absolute', top: 16, left: 16, zIndex: 100, background: ds.primary, color: '#fff', border: 'none', borderRadius: 8, padding: 8, cursor: 'pointer' }}
             >
                 <Menu style={{ width: 24, height: 24 }} />
             </button>
 
-            <div className={`mobile-sidebar ${isMobileOpen ? 'open' : 'closed'}`} style={{ zIndex: 10 }}>
+            <div className={`mobile-sidebar ${isSidebarOpen ? 'open' : 'closed'}`} style={{ zIndex: 10 }}>
                 <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} active={section} setActive={handleSetSection} onNavigate={onNavigate} />
             </div>
 
