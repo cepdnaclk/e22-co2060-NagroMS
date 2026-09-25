@@ -143,6 +143,34 @@ const customCss = `
     color: #2563eb;
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
   }
+
+  /* Driver Dashboard Mobile Responsive */
+  @media (max-width: 600px) {
+    .mobile-header {
+      padding: 12px 16px !important;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .mobile-header h1 { font-size: 16px !important; }
+    .mobile-header p { font-size: 11px !important; }
+    .mobile-header-avatar { width: 36px !important; height: 36px !important; font-size: 16px !important; }
+    
+    .mobile-switch-select {
+      max-width: 140px;
+      padding: 6px 24px 6px 12px !important;
+      font-size: 12px !important;
+    }
+    .mobile-logout-btn {
+      padding: 8px 12px !important;
+      font-size: 12px !important;
+    }
+    .nav-pill { padding: 6px !important; }
+    .nav-item { padding: 10px 16px !important; }
+    .nav-item span { display: none !important; /* Icons only on small screens */ }
+    
+    .poly-card { padding: 16px !important; }
+    .earnings-card h2 { font-size: 40px !important; }
+  }
 `;
 
 // Custom icons
@@ -368,9 +396,9 @@ export default function DriverDashboard({ onNavigate }) {
             <style>{customCss}</style>
             
             {/* Header */}
-            <header style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(20px)', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 500, position: 'sticky', top: 0, borderBottom: '1px solid rgba(255,255,255,1)' }}>
+            <header className="mobile-header" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(20px)', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 500, position: 'sticky', top: 0, borderBottom: '1px solid rgba(255,255,255,1)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                    <div style={{ width: 44, height: 44, borderRadius: '14px', background: 'linear-gradient(135deg, #2563eb, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 18, boxShadow: '0 8px 16px rgba(37,99,235,0.25)' }}>
+                    <div className="mobile-header-avatar" style={{ width: 44, height: 44, borderRadius: '14px', background: 'linear-gradient(135deg, #2563eb, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 18, boxShadow: '0 8px 16px rgba(37,99,235,0.25)' }}>
                         {userName.charAt(0)}
                     </div>
                     <div>
@@ -384,6 +412,7 @@ export default function DriverDashboard({ onNavigate }) {
                     {/* Switch Dashboard Dropdown */}
                     <div style={{ position: 'relative' }}>
                         <select
+                            className="mobile-switch-select"
                             onChange={(e) => {
                                 const val = e.target.value;
                                 if (val === 'driver') {
@@ -432,7 +461,7 @@ export default function DriverDashboard({ onNavigate }) {
                         </div>
                     </div>
 
-                    <button onClick={() => onNavigate('landing')} style={{ background: 'white', border: '1px solid #e2e8f0', padding: '10px 16px', borderRadius: 24, fontSize: 13, fontWeight: 700, color: '#ef4444', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>Log Out</button>
+                    <button className="mobile-logout-btn" onClick={() => onNavigate('landing')} style={{ background: 'white', border: '1px solid #e2e8f0', padding: '10px 16px', borderRadius: 24, fontSize: 13, fontWeight: 700, color: '#ef4444', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>Log Out</button>
                 </div>
             </header>
 
@@ -568,7 +597,7 @@ export default function DriverDashboard({ onNavigate }) {
                 {tab === 'earnings' && (
                     <div style={{ padding: '32px 24px', paddingBottom: 140 }}>
                         {/* Creative Vibrant Total Earnings Card */}
-                        <div style={{ 
+                        <div className="earnings-card" style={{ 
                             background: 'linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)', 
                             borderRadius: 36, padding: 40, marginBottom: 40, 
                             position: 'relative', overflow: 'hidden',

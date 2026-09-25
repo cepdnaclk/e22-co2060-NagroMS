@@ -469,6 +469,19 @@ function LandingPage({ onNavigate }) {
         .nag-slide  { animation: nagSlideUp 0.8s ease forwards; }
         .nag-btn:hover { transform: translateY(-3px) scale(1.03) !important; box-shadow: 0 0 40px rgba(34,197,94,0.6) !important; }
         .nag-outline:hover { background: rgba(255,255,255,0.12) !important; border-color: rgba(255,255,255,0.4) !important; transform: translateY(-2px) !important; }
+        
+        /* Mobile Responsive Overrides */
+        @media (max-width: 768px) {
+          .mobile-header { padding: 12px 20px !important; }
+          .mobile-nav-links { display: none !important; /* Hide links on mobile to save space, or we could add a hamburger */ }
+          .mobile-hero { padding: 100px 20px 40px !important; text-align: center; }
+          .mobile-hero-title { font-size: 40px !important; line-height: 1.1 !important; }
+          .mobile-hero-desc { max-width: 100% !important; margin: 0 auto 30px auto !important; }
+          .mobile-hero-btns { justify-content: center !important; }
+          .mobile-section { padding: 50px 20px !important; }
+          .mobile-title { font-size: 30px !important; }
+          .mobile-feature-img { display: none !important; /* Hide floating dashboard on very small screens to save space */ }
+        }
       `}</style>
 
       {/* background decorations */}
@@ -478,24 +491,26 @@ function LandingPage({ onNavigate }) {
       <div style={S.orb(200, 200, 320, undefined, undefined, undefined, 'rgba(74,222,128,0.12)', '3s')} />
 
       {/* ── HEADER ── */}
-      <header style={S.header}>
+      <header className="mobile-header" style={S.header}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <div style={S.logoMark}>🌿</div>
           <h1 style={S.logoText}>NagroMS</h1>
         </div>
 
         <nav style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
-          {['features', 'about', 'contact'].map((id) => (
-            <button
-              key={id}
-              onClick={() => scrollTo(id)}
-              onMouseEnter={() => setHovLink(id)}
-              onMouseLeave={() => setHovLink(null)}
-              style={S.navLink(hovLink === id)}
-            >
-              {id.charAt(0).toUpperCase() + id.slice(1)}
-            </button>
-          ))}
+          <div className="mobile-nav-links" style={{ display: 'flex', gap: 28 }}>
+            {['features', 'about', 'contact'].map((id) => (
+              <button
+                key={id}
+                onClick={() => scrollTo(id)}
+                onMouseEnter={() => setHovLink(id)}
+                onMouseLeave={() => setHovLink(null)}
+                style={S.navLink(hovLink === id)}
+              >
+                {id.charAt(0).toUpperCase() + id.slice(1)}
+              </button>
+            ))}
+          </div>
           <button
             className="nag-btn"
             onClick={() => nav('login')}
@@ -508,6 +523,7 @@ function LandingPage({ onNavigate }) {
 
       {/* ── HERO ── */}
       <section
+        className="mobile-hero"
         style={{
           maxWidth: 1280,
           margin: '0 auto',
@@ -540,6 +556,7 @@ function LandingPage({ onNavigate }) {
           </div>
 
           <h2
+            className="mobile-hero-title"
             style={{
               fontSize: 58,
               fontWeight: 900,
@@ -564,6 +581,7 @@ function LandingPage({ onNavigate }) {
           </h2>
 
           <p
+            className="mobile-hero-desc"
             style={{
               fontSize: 18,
               color: '#4b5563',
@@ -577,7 +595,7 @@ function LandingPage({ onNavigate }) {
             advice, and receive weather alerts.
           </p>
 
-          <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
+          <div className="mobile-hero-btns" style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
             <button
               className="nag-btn"
               onClick={() => nav('signup')}
@@ -617,7 +635,7 @@ function LandingPage({ onNavigate }) {
         </div>
 
         {/* right floating dashboard */}
-        <div style={{ flex: 1.1, minWidth: 360, position: 'relative', height: 440, overflow: 'visible' }}>
+        <div className="mobile-feature-img" style={{ flex: 1.1, minWidth: 360, position: 'relative', height: 440, overflow: 'visible' }}>
 
           {/* cover image behind cards */}
           <ImageWithFallback
@@ -645,7 +663,7 @@ function LandingPage({ onNavigate }) {
 
 
       {/* ── FEATURES ── */}
-      <section id="features" style={{ padding: '80px 48px', position: 'relative' }}>
+      <section id="features" className="mobile-section" style={{ padding: '80px 48px', position: 'relative' }}>
         <p style={S.sectionLabel}>Platform Features</p>
         <h2 style={S.sectionTitle}>Everything Farmers Need</h2>
         <div
@@ -664,7 +682,7 @@ function LandingPage({ onNavigate }) {
       </section>
 
       {/* ── GALLERY ── */}
-      <section style={{ padding: '60px 48px' }}>
+      <section className="mobile-section" style={{ padding: '60px 48px' }}>
         <div
           style={{
             display: 'grid',
@@ -681,7 +699,7 @@ function LandingPage({ onNavigate }) {
       </section>
 
       {/* ── ABOUT ── */}
-      <section id="about" style={{ padding: '80px 48px', textAlign: 'center', position: 'relative' }}>
+      <section id="about" className="mobile-section" style={{ padding: '80px 48px', textAlign: 'center', position: 'relative' }}>
         <p style={S.sectionLabel}>Our Mission</p>
         <h2
           style={{
@@ -729,7 +747,7 @@ function LandingPage({ onNavigate }) {
       </section>
 
       {/* ── CONTACT ── */}
-      <section id="contact" style={{ padding: '60px 48px', textAlign: 'center' }}>
+      <section id="contact" className="mobile-section" style={{ padding: '60px 48px', textAlign: 'center' }}>
         <p style={S.sectionLabel}>Get in Touch</p>
         <h2 style={S.sectionTitle}>Contact Us</h2>
         <div

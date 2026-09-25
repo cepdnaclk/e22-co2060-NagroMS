@@ -1372,19 +1372,32 @@ export default function EquipmentRentalDashboard({ onNavigate = () => { } }) {
     }, [requests]);
 
     return (
-        <div style={{ display: 'flex', background: c.bg, minHeight: '100vh', width: '100%', fontVariantNumeric: 'tabular-nums' }}>
-            <Sidebar
-                collapsed={collapsed}
-                setCollapsed={setCollapsed}
-                active={section}
-                setActive={setSection}
-                onNavigate={onNavigate}
-            />
+        <div className="mobile-dash-wrapper" style={{ display: 'flex', background: c.bg, minHeight: '100vh', width: '100%', fontVariantNumeric: 'tabular-nums' }}>
+            <style>{`
+                @media (max-width: 768px) {
+                    .mobile-dash-wrapper { flex-direction: column !important; }
+                    .mobile-sidebar { width: 100% !important; height: auto !important; position: static !important; }
+                    .mobile-main { padding: 12px !important; }
+                    .mobile-grid-1 { grid-template-columns: 1fr !important; }
+                    .mobile-grid-2 { grid-template-columns: 1fr !important; }
+                    .mobile-hidden { display: none !important; }
+                }
+            `}</style>
+            
+            <div className="mobile-sidebar" style={{ zIndex: 10 }}>
+                <Sidebar
+                    collapsed={collapsed}
+                    setCollapsed={setCollapsed}
+                    active={section}
+                    setActive={setSection}
+                    onNavigate={onNavigate}
+                />
+            </div>
 
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                 <TopNav section={section} />
 
-                <main style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
+                <main className="mobile-main" style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
                     {section === 'dashboard' && <DashboardHome setSection={setSection} />}
                     {section === 'equipment' && <EquipmentManagement equipment={equipment} setEquipment={setEquipment} />}
                     {section === 'requests' && <RentalRequests requests={requests} handleRequest={handleRequest} />}
