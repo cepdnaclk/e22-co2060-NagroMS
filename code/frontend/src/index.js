@@ -13,3 +13,18 @@ root.render(
     </BrowserRouter>
   </React.StrictMode>
 );
+
+// ── PWA: Register Service Worker ──────────────────────────────
+// This makes NagroMS installable as a phone app (PWA)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/service-worker.js')
+      .then((registration) => {
+        console.log('[NagroMS PWA] Service Worker registered:', registration.scope);
+      })
+      .catch((error) => {
+        console.error('[NagroMS PWA] Service Worker registration failed:', error);
+      });
+  });
+}
