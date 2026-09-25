@@ -170,7 +170,7 @@ export function FarmerDashboard() {
       </div>
 
       {/* Main Content Area */}
-      <div className="farmer-main-content" style={{ flex: 1, overflowY: 'auto', padding: '32px', paddingTop: !isSidebarOpen ? '64px' : '32px', transition: 'padding 0.3s' }}>
+      <div className="farmer-main-content" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', minWidth: 0, padding: '32px', paddingTop: !isSidebarOpen ? '64px' : '32px', transition: 'padding 0.3s' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           {renderContent()}
         </div>
