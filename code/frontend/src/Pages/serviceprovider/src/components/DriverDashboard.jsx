@@ -1,10 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Navigation, CheckCircle, MapPin, DollarSign, Map as MapIcon, Compass, Bell } from 'lucide-react';
-import { db } from '../../../../utils/firebase.js';
-import { collection, onSnapshot, doc, setDoc, updateDoc } from 'firebase/firestore';
+import { db, auth } from '../../../../utils/firebase.js';
+import { collection, onSnapshot, doc, setDoc, updateDoc, getDoc } from 'firebase/firestore';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+
+const SERVICE_META = {
+    equipment: { label: 'Equipment Rental', emoji: '🚜', color: '#ea580c' },
+    delivery:  { label: 'Delivery & Export', emoji: '🚚', color: '#2563eb' },
+    storage:   { label: 'Storage Facilities', emoji: '🏠', color: '#16a34a' },
+    packaging: { label: 'Packaging Services', emoji: '📦', color: '#9333ea' },
+    financial: { label: 'Financial Services', emoji: '💳', color: '#0891b2' },
+};
 
 // Fix leafet default icon paths
 delete L.Icon.Default.prototype._getIconUrl;
@@ -135,6 +143,34 @@ const customCss = `
     color: #2563eb;
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
   }
+
+  /* Driver Dashboard Mobile Responsive */
+  @media (max-width: 600px) {
+    .mobile-header {
+      padding: 12px 16px !important;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .mobile-header h1 { font-size: 16px !important; }
+    .mobile-header p { font-size: 11px !important; }
+    .mobile-header-avatar { width: 36px !important; height: 36px !important; font-size: 16px !important; }
+    
+    .mobile-switch-select {
+      max-width: 140px;
+      padding: 6px 24px 6px 12px !important;
+      font-size: 12px !important;
+    }
+    .mobile-logout-btn {
+      padding: 8px 12px !important;
+      font-size: 12px !important;
+    }
+    .nav-pill { padding: 6px !important; }
+    .nav-item { padding: 10px 16px !important; }
+    .nav-item span { display: none !important; /* Icons only on small screens */ }
+    
+    .poly-card { padding: 16px !important; }
+    .earnings-card h2 { font-size: 40px !important; }
+  }
 `;
 
 // Custom icons
@@ -185,8 +221,49 @@ export default function DriverDashboard({ onNavigate }) {
     
     const watchIdRef = useRef(null);
 
+    const [extraServices, setExtraServices] = useState([]);
+    const [switchDropdownOpen, setSwitchDropdownOpen] = useState(false);
+    const switchDropdownRef = useRef(null);
+
     const userEmail = localStorage.getItem('userEmail') || 'driver@nagroms.local';
     const userName = localStorage.getItem('userName') || 'Independent Driver';
+
+    // Fetch extra service categories from Firestore (for switch button)
+    useEffect(() => {
+        async function fetchCategories() {
+            // Try localStorage first
+            let cats = [];
+            try { cats = JSON.parse(localStorage.getItem('serviceCategories') || '[]'); } catch(e) {}
+            // Fallback to Firestore
+            if (cats.length === 0 && auth.currentUser) {
+                try {
+                    const snap = await getDoc(doc(db, 'users', auth.currentUser.uid));
+                    if (snap.exists()) {
+                        cats = snap.data().serviceCategories || [];
+                        if (cats.length > 0) localStorage.setItem('serviceCategories', JSON.stringify(cats));
+                    }
+                } catch(e) {}
+            }
+            setExtraServices(cats);
+        }
+        fetchCategories();
+    }, []);
+
+    // Close switch dropdown on outside click
+    useEffect(() => {
+        const handler = (e) => {
+            if (switchDropdownRef.current && !switchDropdownRef.current.contains(e.target)) {
+                setSwitchDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    const switchToService = (cat) => {
+        localStorage.setItem('serviceProviderType', cat);
+        window.location.href = '/service-provider-dashboard';
+    };
 
     const enrichWithMockGps = (job) => {
         if (!job.mockLat) {
@@ -319,9 +396,9 @@ export default function DriverDashboard({ onNavigate }) {
             <style>{customCss}</style>
             
             {/* Header */}
-            <header style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(20px)', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 500, position: 'sticky', top: 0, borderBottom: '1px solid rgba(255,255,255,1)' }}>
+            <header className="mobile-header" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(20px)', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 500, position: 'sticky', top: 0, borderBottom: '1px solid rgba(255,255,255,1)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                    <div style={{ width: 44, height: 44, borderRadius: '14px', background: 'linear-gradient(135deg, #2563eb, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 18, boxShadow: '0 8px 16px rgba(37,99,235,0.25)' }}>
+                    <div className="mobile-header-avatar" style={{ width: 44, height: 44, borderRadius: '14px', background: 'linear-gradient(135deg, #2563eb, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 18, boxShadow: '0 8px 16px rgba(37,99,235,0.25)' }}>
                         {userName.charAt(0)}
                     </div>
                     <div>
@@ -331,7 +408,61 @@ export default function DriverDashboard({ onNavigate }) {
                         </p>
                     </div>
                 </div>
-                <button onClick={() => onNavigate('landing')} style={{ background: 'white', border: '1px solid #e2e8f0', padding: '10px 16px', borderRadius: 24, fontSize: 13, fontWeight: 700, color: '#475569', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>Log Out</button>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    {/* Switch Dashboard Dropdown */}
+                    <div style={{ position: 'relative' }}>
+                        <select
+                            className="mobile-switch-select"
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === 'driver') {
+                                    window.location.href = '/driver-dashboard';
+                                } else {
+                                    localStorage.setItem('serviceProviderType', val);
+                                    window.location.href = '/service-provider-dashboard';
+                                }
+                            }}
+                            value="driver"
+                            style={{
+                                background: '#f8fafc',
+                                border: '1px solid #e2e8f0',
+                                padding: '8px 32px 8px 16px',
+                                borderRadius: '24px',
+                                fontSize: '13px',
+                                fontWeight: 700,
+                                color: '#0f172a',
+                                cursor: 'pointer',
+                                outline: 'none',
+                                appearance: 'none',
+                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
+                            }}
+                        >
+                            <option disabled value="driver">🛵 Gig Driver</option>
+                            {(() => {
+                                try {
+                                    const cats = JSON.parse(localStorage.getItem('serviceCategories') || '[]');
+                                    const map = {
+                                        'equipment': '🚜 Equipment Rental',
+                                        'delivery': '🚚 Delivery & Export',
+                                        'storage': '🏠 Storage Facilities',
+                                        'packaging': '📦 Packaging Services',
+                                        'financial': '💳 Financial Services'
+                                    };
+                                    return cats.map(c => (
+                                        <option key={c} value={c}>{map[c] || c}</option>
+                                    ));
+                                } catch (e) {
+                                    return null;
+                                }
+                            })()}
+                        </select>
+                        <div style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
+                    </div>
+
+                    <button className="mobile-logout-btn" onClick={() => onNavigate('landing')} style={{ background: 'white', border: '1px solid #e2e8f0', padding: '10px 16px', borderRadius: 24, fontSize: 13, fontWeight: 700, color: '#ef4444', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>Log Out</button>
+                </div>
             </header>
 
             {/* Main Content Area */}
@@ -466,7 +597,7 @@ export default function DriverDashboard({ onNavigate }) {
                 {tab === 'earnings' && (
                     <div style={{ padding: '32px 24px', paddingBottom: 140 }}>
                         {/* Creative Vibrant Total Earnings Card */}
-                        <div style={{ 
+                        <div className="earnings-card" style={{ 
                             background: 'linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)', 
                             borderRadius: 36, padding: 40, marginBottom: 40, 
                             position: 'relative', overflow: 'hidden',

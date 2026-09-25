@@ -57,6 +57,7 @@ async function register(req, res) {
       fullName, phone, nic,
       accountType, businessName, businessRegistrationNumber,
       contactPersonName, district, roles, emailForAuth,
+      serviceCategories
     } = req.body;
 
     // Verify the ID token from the client — this proves the Firebase
@@ -85,6 +86,7 @@ async function register(req, res) {
       contactPersonName: contactPersonName || '',
       district: district || '',
       roles: roles || [],
+      serviceCategories: serviceCategories || [],
       provider: 'email',
       emailVerified: decodedToken.email_verified || false,
     });

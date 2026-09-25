@@ -31,7 +31,7 @@ export function SignUpPage() {
     fullName: '', nic: '', district: '', phone: '', email: '',
     password: '', confirmPassword: '',
     businessName: '', businessRegistrationNumber: '', contactPersonName: '',
-    serviceCategory: '',
+    serviceCategories: [],
   });
 
   const handleChange = (e) => {
@@ -45,6 +45,15 @@ export function SignUpPage() {
       roles: prev.roles.includes(role)
         ? prev.roles.filter(r => r !== role)
         : [...prev.roles, role]
+    }));
+  };
+
+  const handleServiceCategoryToggle = (category) => {
+    setFormData(prev => ({
+      ...prev,
+      serviceCategories: prev.serviceCategories.includes(category)
+        ? prev.serviceCategories.filter(c => c !== category)
+        : [...prev.serviceCategories, category]
     }));
   };
 
@@ -93,6 +102,11 @@ export function SignUpPage() {
     // Must have at least one of: email, phone, NIC
     if (!formData.email && !formData.phone && !formData.nic) {
       setFormError(t('signup.errors.needIdentifier'));
+      return;
+    }
+
+    if (formData.roles.includes('service-provider') && formData.accountType === 'business' && formData.serviceCategories.length === 0) {
+      setFormError('Please select at least one service category.');
       return;
     }
 
@@ -310,26 +324,33 @@ export function SignUpPage() {
                       </div>
                     </div>
 
-                    {/* Service Provider Category Dropdown */}
-                    {formData.roles.includes('service-provider') && (
-                      <div className="nagro-field">
-                        <label className="nagro-label">Service Category *</label>
-                        <div className="nagro-input-wrap nagro-select-wrap">
-                          <span className="nagro-input-icon"><Wrench className="w-4 h-4"/></span>
-                          <select name="serviceCategory" value={formData.serviceCategory} onChange={handleChange}
-                            className="nagro-input nagro-select" required>
-                            <option value="">Select Service Category</option>
-                            <option value="financial">Financial</option>
-                            <option value="delivery">Delivery</option>
-                            <option value="packaging">Packaging</option>
-                            <option value="warehouse">Warehouse</option>
-                            <option value="equipment">Equipment Rental</option>
-                          </select>
-                          <span className="nagro-select-arrow"><ArrowRight className="w-4 h-4"/></span>
-                        </div>
-                      </div>
-                    )}
                   </>
+                )}
+
+                {/* Multiple Service Category Selection — Business Service Providers only */}
+                {formData.roles.includes('service-provider') && formData.accountType === 'business' && (
+                  <div className="nagro-field" style={{ marginTop: '16px', padding: '16px', background: '#f9fafb', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
+                    <label className="nagro-label" style={{ marginBottom: '12px' }}>Which services do you provide? (Select one or more) *</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
+                      {[
+                        { id: 'equipment', label: 'Equipment Rental' },
+                        { id: 'delivery', label: 'Delivery & Export' },
+                        { id: 'storage', label: 'Storage Facilities' },
+                        { id: 'packaging', label: 'Packaging Services' },
+                        { id: 'financial', label: 'Financial Services' }
+                      ].map(cat => (
+                        <label key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#374151' }}>
+                          <input 
+                            type="checkbox" 
+                            checked={formData.serviceCategories.includes(cat.id)}
+                            onChange={() => handleServiceCategoryToggle(cat.id)}
+                            style={{ width: '16px', height: '16px', accentColor: '#115e59', cursor: 'pointer' }}
+                          />
+                          {cat.label}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                 )}
 
                 <div className="nagro-form-row">

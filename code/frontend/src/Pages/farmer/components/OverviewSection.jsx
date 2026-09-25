@@ -589,6 +589,30 @@ const DEFAULT_CROP_IMAGE = 'https://images.unsplash.com/photo-1500937386664-56d1
         )}
       </div>
 
+      {/* Quick Services Request Section */}
+      <div style={{ marginTop: '24px', backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937', margin: 0 }}>Request Farm Services</h3>
+          <button onClick={() => setActiveTab('services')} style={{ fontSize: '14px', color: '#115e59', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}>View All Services &rarr;</button>
+        </div>
+        <p style={{ color: '#6b7280', fontSize: '14px', marginTop: 0, marginBottom: '20px' }}>Need help? Quickly request equipment, delivery, financial aid, storage, or packaging services.</p>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
+          {[
+            { id: 'equipment', emoji: '🚜', title: 'Equipment', bg: '#fff7ed', color: '#ea580c' },
+            { id: 'delivery', emoji: '🚚', title: 'Delivery', bg: '#eff6ff', color: '#2563eb' },
+            { id: 'storage', emoji: '🏠', title: 'Storage', bg: '#f0fdf4', color: '#16a34a' },
+            { id: 'packaging', emoji: '📦', title: 'Packaging', bg: '#faf5ff', color: '#9333ea' },
+            { id: 'financial', emoji: '💳', title: 'Financial', bg: '#ecfeff', color: '#0891b2' }
+          ].map(svc => (
+            <div key={svc.id} onClick={() => setActiveTab('services')} style={{ background: svc.bg, padding: '16px', borderRadius: '12px', textAlign: 'center', cursor: 'pointer', border: `1px solid ${svc.color}40`, transition: 'transform 0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+              <div style={{ fontSize: '32px', marginBottom: '8px' }}>{svc.emoji}</div>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: svc.color }}>{svc.title}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Real-time Weather Section */}
       <div style={{ marginTop: '40px', backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
         <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1f2937', marginBottom: '16px' }}>{t('farmer.overview.localWeather') || 'Local Weather (Live)'}</h3>

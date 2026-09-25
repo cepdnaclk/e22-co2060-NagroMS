@@ -86,15 +86,38 @@ export function ServiceProviderTypeSelection({ onNavigate }) {
                 padding: '1rem 2rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.75rem',
+                justifyContent: 'space-between',
                 position: 'sticky',
                 top: 0,
                 zIndex: 50
             }}>
-                <div style={{ background: '#16a34a', borderRadius: '0.5rem', padding: '0.4rem' }}>
-                    <Sprout style={{ width: 22, height: 22, color: '#fff' }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ background: '#16a34a', borderRadius: '0.5rem', padding: '0.4rem' }}>
+                        <Sprout style={{ width: 22, height: 22, color: '#fff' }} />
+                    </div>
+                    <span style={{ fontWeight: 800, color: '#166534', fontSize: '1.2rem', letterSpacing: '-0.02em' }}>NagroMS</span>
                 </div>
-                <span style={{ fontWeight: 800, color: '#166534', fontSize: '1.2rem', letterSpacing: '-0.02em' }}>NagroMS</span>
+                
+                {localStorage.getItem('accountType') === 'individual' && (
+                    <button 
+                        onClick={() => window.location.href = '/driver-dashboard'}
+                        style={{
+                            background: '#eff6ff',
+                            border: '1px solid #bfdbfe',
+                            color: '#1d4ed8',
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                        }}
+                    >
+                        🛵 Back to Gig Driver
+                    </button>
+                )}
             </div>
 
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '3.5rem 1.5rem', maxWidth: '75rem', margin: '0 auto', width: '100%' }}>
@@ -111,7 +134,13 @@ export function ServiceProviderTypeSelection({ onNavigate }) {
 
                 {/* Grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.75rem', width: '100%', marginBottom: '3rem' }}>
-                    {SERVICE_TYPES.map(st => {
+                    {SERVICE_TYPES.filter(st => {
+                        try {
+                            const cats = JSON.parse(localStorage.getItem('serviceCategories') || '[]');
+                            if (cats.length > 0) return cats.includes(st.id);
+                            return true; // fallback if no cats found
+                        } catch(e) { return true; }
+                    }).map(st => {
                         const isSelected = selected === st.id;
                         const isHovered = hoveredId === st.id;
                         return (
