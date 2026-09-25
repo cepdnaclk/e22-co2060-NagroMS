@@ -11,7 +11,7 @@ const { db } = require('../config/firebase');
 const COLLECTION = 'users';
 
 // ── Valid roles in the system ────────────────────────────────
-const VALID_ROLES = ['farmer', 'customer', 'service-provider', 'expert'];
+const VALID_ROLES = ['farmer', 'customer', 'service-provider', 'expert', 'admin'];
 
 // ── Valid account types ──────────────────────────────────────
 const VALID_ACCOUNT_TYPES = ['individual', 'business'];

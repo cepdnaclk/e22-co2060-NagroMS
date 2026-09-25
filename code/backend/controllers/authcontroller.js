@@ -35,6 +35,7 @@ function sanitizeUser(user) {
 function getDashboardRoute(user) {
   const roles = user?.roles || [];
   if (!roles || roles.length === 0) return 'login';
+  if (roles.includes('admin')) return 'admin-dashboard';
   if (roles.includes('expert')) return 'expert-dashboard';
   if (roles.includes('service-provider')) {
     return user?.accountType === 'individual' ? 'driver-dashboard' : 'service-provider-dashboard';
@@ -44,7 +45,7 @@ function getDashboardRoute(user) {
   return 'login';
 }
 
-const VALID_ROLES = ['expert', 'farmer', 'customer', 'service-provider'];
+const VALID_ROLES = ['expert', 'farmer', 'customer', 'service-provider', 'admin'];
 
 // ──────────────────────────────────────────────────────────────
 // register — save user profile to Firestore after client-side

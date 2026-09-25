@@ -142,6 +142,8 @@ export default function ServiceProviderDashboard({ onNavigate }) {
     };
 
     const isIndividual = localStorage.getItem('accountType') === 'individual';
+    const roles = JSON.parse(localStorage.getItem('userRoles') || '[]');
+    const isAdmin = roles.includes('admin');
 
     return (
         <>
@@ -156,6 +158,18 @@ export default function ServiceProviderDashboard({ onNavigate }) {
                     onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#2563eb'; e.currentTarget.style.transform = 'translateY(0)'; }}
                 >
                     🛵 Back to Gig Driver
+                </button>
+            )}
+
+            {/* --- Admin back-button --- */}
+            {isAdmin && (
+                <button
+                    onClick={() => { window.location.href = '/admin-dashboard'; }}
+                    style={{ ...btnBase, backgroundColor: '#dc2626', bottom: '28px', left: '28px', right: 'auto' }}
+                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#b91c1c'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#dc2626'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                >
+                    🛡️ Return to Admin Panel
                 </button>
             )}
 
