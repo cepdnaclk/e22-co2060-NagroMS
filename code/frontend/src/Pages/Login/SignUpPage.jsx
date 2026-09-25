@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Leaf, Mail, Lock, User, ArrowLeft, ArrowRight, CreditCard, Phone, MapPin,
@@ -241,8 +241,8 @@ export function SignUpPage() {
               </div>
               <div className="nagro-account-type-grid">
                 {[
-                  { id: 'individual', icon: <UserCircle className="w-14 h-14"/>, title: t('signup.step2.individual.title'), desc: t('signup.step2.individual.desc'), features: t('signup.step2.individual.features') },
-                  { id: 'business',   icon: <Building2 className="w-14 h-14"/>,  title: t('signup.step2.business.title'),   desc: t('signup.step2.business.desc'),   features: t('signup.step2.business.features') },
+                  { id: 'individual', icon: <UserCircle className="w-14 h-14"/>, title: t('signup.step2.individual.title'), desc: t('signup.step2.individual.desc'), features: [t('signup.step2.individual.feature1'), t('signup.step2.individual.feature2'), t('signup.step2.individual.feature3')] },
+                  { id: 'business',   icon: <Building2 className="w-14 h-14"/>,  title: t('signup.step2.business.title'),   desc: t('signup.step2.business.desc'),   features: [t('signup.step2.business.feature1'), t('signup.step2.business.feature2'), t('signup.step2.business.feature3')] },
                 ].map(type => (
                   <button key={type.id} type="button" onClick={() => handleAccountTypeSelect(type.id)}
                     className="nagro-account-type-card">
