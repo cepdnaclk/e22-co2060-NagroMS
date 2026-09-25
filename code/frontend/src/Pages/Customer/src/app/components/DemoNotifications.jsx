@@ -1,4 +1,4 @@
-import { addNotification } from './NotificationCenter';
+﻿import { addNotification } from './NotificationCenter';
 
 // Demo function to add sample notifications (for testing)
 export function addDemoNotifications() {

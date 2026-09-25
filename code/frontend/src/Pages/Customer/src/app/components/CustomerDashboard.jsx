@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { 
   Search, 
   ShoppingCart, 
@@ -82,7 +82,7 @@ export function CustomerDashboard({ onNavigate }) {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('all');
 
-  // ├ö├╢├ç├ö├╢├ç CART: start empty, loaded from Firestore ├ö├╢├ç├ö├╢├ç
+  // -- CART: start empty, loaded from Firestore --
   const [cart, setCart] = useState([]);
   const [cartLoaded, setCartLoaded] = useState(false);
 
@@ -93,13 +93,13 @@ export function CustomerDashboard({ onNavigate }) {
   const [showMessageFarmerModal, setShowMessageFarmerModal] = useState(false);
   const [selectedFarmer, setSelectedFarmer] = useState(null);
 
-  // ├ö├╢├ç├ö├╢├ç FIREBASE STATE ├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç
+  // -- FIREBASE STATE ----------------------------
   const [uid, setUid] = useState(null);
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState([]);
   const [firestoreOrders, setFirestoreOrders] = useState([]);
 
-  // ├ö├╢├ç├ö├╢├ç PROFILE: default values, overwritten by Firestore ├ö├╢├ç├ö├╢├ç
+  // -- PROFILE: default values, overwritten by Firestore --
   const [profile, setProfile] = useState({
     name: '',
     email: '',
@@ -173,7 +173,7 @@ export function CustomerDashboard({ onNavigate }) {
     };
   }, []);
 
-  // ├ö├╢├ç├ö├╢├ç AUTO-SAVE CART TO FIRESTORE WHEN IT CHANGES ├ö├╢├ç├ö├╢├ç
+  // -- AUTO-SAVE CART TO FIRESTORE WHEN IT CHANGES --
   useEffect(() => {
     if (uid && cartLoaded) {
       saveCart(uid, cart);
@@ -188,7 +188,7 @@ export function CustomerDashboard({ onNavigate }) {
     }
   }, []);
 
-  // ├ö├╢├ç├ö├╢├ç SHOW LOADING SCREEN WHILE FIREBASE LOADS ├ö├╢├ç├ö├╢├ç
+  // -- SHOW LOADING SCREEN WHILE FIREBASE LOADS --
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -294,7 +294,7 @@ export function CustomerDashboard({ onNavigate }) {
     setShowMessageFarmerModal(true);
   };
 
-  // ├ö├╢├ç├ö├╢├ç SAVE PROFILE TO FIRESTORE ├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç
+  // -- SAVE PROFILE TO FIRESTORE -----------------
   const handleSaveProfile = async (updatedProfile) => {
     setProfile(updatedProfile);
     if (uid) {
@@ -325,7 +325,7 @@ export function CustomerDashboard({ onNavigate }) {
       case 'profile':
         return <ProfileSection 
           profile={profile} 
-          setProfile={handleSaveProfile}  // ├ö├Ñ├ë saves to Firestore
+          setProfile={handleSaveProfile}  // -> saves to Firestore
         />;
       case 'cart':
         return <CartSection 
@@ -340,7 +340,7 @@ export function CustomerDashboard({ onNavigate }) {
         />;
       case 'checkout':
         return <EnhancedCheckoutSection 
-          uid={uid}                        // ├ö├Ñ├ë Firebase uid for saving orders
+          uid={uid}                        // -> Firebase uid for saving orders
           cart={cart}
           profile={profile}
           getCartTotal={getCartTotal}
@@ -532,7 +532,7 @@ export function CustomerDashboard({ onNavigate }) {
   );
 }
 
-// ΓöÇΓöÇΓöÇ SIDEBAR BUTTON ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// --- SIDEBAR BUTTON ----------------------------------------------------------
 function SidebarButton({ icon, label, active, onClick, badge }) {
   return (
     <button
@@ -582,7 +582,7 @@ function SidebarButton({ icon, label, active, onClick, badge }) {
 
 
 
-// ├ö├╢├ç├ö├╢├ç├ö├╢├ç BROWSE PRODUCTS ├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç
+// --- BROWSE PRODUCTS ---------------------------------------------------------
 function BrowseProducts({ searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, selectedLocation, setSelectedLocation, uniqueLocations, filteredProducts, cart, addToCart, updateQuantity, changeUnit, removeFromCart, onMessageFarmer, onRequestProduct }) {
   const { t } = useLanguage();
   return (
@@ -683,7 +683,7 @@ function BrowseProducts({ searchQuery, setSearchQuery, selectedCategory, setSele
   );
 }
 
-// ├ö├╢├ç├ö├╢├ç├ö├╢├ç PROFILE SECTION ├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç
+// --- PROFILE SECTION ---------------------------------------------------------
 function ProfileSection({ profile, setProfile }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState(profile);
@@ -770,7 +770,7 @@ function ProfileSection({ profile, setProfile }) {
   );
 }
 
-// ├ö├╢├ç├ö├╢├ç├ö├╢├ç CART SECTION ├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç
+// --- CART SECTION -------------------------------------------------------------
 function CartSection({ cart, updateQuantity, removeFromCart, getCartTotal, getTotalDeliveryFee, setActiveSection, customerDistrict, products }) {
   if (cart.length === 0) {
     return (
@@ -830,7 +830,7 @@ function CartSection({ cart, updateQuantity, removeFromCart, getCartTotal, getTo
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg text-foreground font-medium mb-1">{product.name}</h3>
-                    <p className="text-sm text-muted-foreground mb-2">{product.farmer} ├ö├ç├│ {product.location}</p>
+                    <p className="text-sm text-muted-foreground mb-2">{product.farmer} - {product.location}</p>
                     <p className="text-lg text-primary font-semibold">LKR {itemPrice} / {itemUnit}</p>
                     <p className="text-xs text-muted-foreground mt-1">Delivery: {itemDeliveryFee === 0 ? 'FREE' : `LKR ${itemDeliveryFee}`}</p>
                   </div>
@@ -890,7 +890,7 @@ function CartSection({ cart, updateQuantity, removeFromCart, getCartTotal, getTo
   );
 }
 
-// ├ö├╢├ç├ö├╢├ç├ö├╢├ç REQUEST PRODUCT MODAL ├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç
+// --- REQUEST PRODUCT MODAL ----------------------------------------------------
 function RequestProductModal({ uid, customerName, onClose }) {
   const [productName, setProductName] = useState('');
   const [description, setDescription] = useState('');
@@ -1115,7 +1115,7 @@ function CustomerRequestsSection({ uid }) {
   );
 }
 
-// ├ö├╢├ç├ö├╢├ç├ö├╢├ç MESSAGE FARMER MODAL ├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç
+// --- MESSAGE FARMER MODAL -----------------------------------------------------
 function MessageFarmerModal({ farmer, onClose }) {
   const [message, setMessage] = useState('');
   const [sent, setSent] = useState(false);
@@ -1178,7 +1178,7 @@ function MessageFarmerModal({ farmer, onClose }) {
   );
 }
 
-// ├ö├╢├ç├ö├╢├ç├ö├╢├ç CATEGORY BUTTON ├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç
+// --- CATEGORY BUTTON ----------------------------------------------------------
 function CategoryButton({ label, active, onClick }) {
   return (
     <button
@@ -1194,7 +1194,7 @@ function CategoryButton({ label, active, onClick }) {
   );
 }
 
-// ├ö├╢├ç├ö├╢├ç├ö├╢├ç PRODUCT CARD ├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç├ö├╢├ç
+// --- PRODUCT CARD -------------------------------------------------------------
 function ProductCard({ product, onAddToCart, onMessageFarmer, inCart, cart, onUpdateQuantity, onChangeUnit, onRemoveFromCart }) {
   const cartItem = cart.find(item => item.id === product.id);
   const quantity = cartItem ? cartItem.quantity : 1;

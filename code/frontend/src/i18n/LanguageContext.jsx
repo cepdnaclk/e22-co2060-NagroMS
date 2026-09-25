@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // i18n/LanguageContext.jsx
 // Lightweight language provider — no extra npm packages needed.
 // Wrap the app (or any subtree) in <LanguageProvider> and call
