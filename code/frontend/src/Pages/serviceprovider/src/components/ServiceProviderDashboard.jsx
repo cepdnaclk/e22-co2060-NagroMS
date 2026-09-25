@@ -7,6 +7,7 @@ import StorageFacilitiesDashboard from './StorageFacilitiesDashboard';
 import { ServiceProviderTypeSelection } from './ServiceProviderTypeSelection';
 import { auth, db } from '../../../../utils/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import ComplaintsWidget from '../../../../components/ComplaintsWidget.jsx';
 
 const SERVICE_META = {
     equipment: { label: 'Equipment Rental', emoji: '🚜', color: '#ea580c' },
@@ -148,6 +149,7 @@ export default function ServiceProviderDashboard({ onNavigate }) {
     return (
         <>
             {renderDashboard()}
+            <ComplaintsWidget />
 
             {/* --- Gig Driver back-button for individual accounts --- */}
             {isIndividual && !isAdmin && (

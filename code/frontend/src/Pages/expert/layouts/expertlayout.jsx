@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { logout } from '../../../utils/firebase.js';
 import { RoleSwitcher } from '../../../components/RoleSwitcher.jsx';
+import ComplaintsWidget from '../../../components/ComplaintsWidget.jsx';
 import { useExpertData } from '../hooks/useExpertData';
 import '../expertLayout.css';
 
@@ -135,6 +136,7 @@ export default function ExpertLayout() {
                     <Outlet />
                 </div>
             </div>
+            <ComplaintsWidget />
         </div>
     );
 }
