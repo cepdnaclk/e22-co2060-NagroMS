@@ -20,10 +20,10 @@ title: NagroMS - Networked Agro Management System
 
 ### 👨‍💻 Project Team
 
-  R. Shathursima: [e22330@eng.pdn.ac.lk](mailto:e22330@eng.pdn.ac.lk) | Expert Dashboard, Consultations & Community Features 
-  S. Monisha : [e22381@eng.pdn.ac.lk](mailto:e22381@eng.pdn.ac.lk) | Farmer Dashboard, Produce Inventory & Backend Models 
-  N. Sathurjika : [e22261@eng.pdn.ac.lk](mailto:e22261@eng.pdn.ac.lk) | Multilingual Authentication, OTP System & Landing Experience 
-  K. Nithilaa :  [e22260@eng.pdn.ac.lk](mailto:e22260@eng.pdn.ac.lk) | Customer Marketplace, Order Management & Service Providers 
+- R. Shathursima: [e22330@eng.pdn.ac.lk](mailto:e22330@eng.pdn.ac.lk) | Expert Dashboard, Consultations & Community Features 
+- S. Monisha : [e22381@eng.pdn.ac.lk](mailto:e22381@eng.pdn.ac.lk) | Farmer Dashboard, Produce Inventory & Backend Models 
+- N. Sathurjika : [e22261@eng.pdn.ac.lk](mailto:e22261@eng.pdn.ac.lk) | Multilingual Authentication, OTP System & Landing Experience 
+- K. Nithilaa :  [e22260@eng.pdn.ac.lk](mailto:e22260@eng.pdn.ac.lk) | Customer Marketplace, Order Management & Service Providers 
 
 ### 👨‍🏫 Project Supervisor
 - **K. Jarshigan** ([e21188@eng.pdn.ac.lk](mailto:e21188@eng.pdn.ac.lk)) — Department of Computer Engineering, University of Peradeniya
