@@ -19,12 +19,11 @@ title: NagroMS - Networked Agro Management System
 ## 👥 Team & Supervisors
 
 ### 👨‍💻 Project Team
-| Reg No. | Name | Email | Responsibilities |
-| :--- | :--- | :--- | :--- |
-| **E/22/330** | R. Shathursima | [e22330@eng.pdn.ac.lk](mailto:e22330@eng.pdn.ac.lk) | Expert Dashboard, Consultations & Community Features |
-| **E/22/381** | S. Monisha | [e22381@eng.pdn.ac.lk](mailto:e22381@eng.pdn.ac.lk) | Farmer Dashboard, Produce Inventory & Backend Models |
-| **E/22/261** | N. Sathurjika | [e22261@eng.pdn.ac.lk](mailto:e22261@eng.pdn.ac.lk) | Multilingual Authentication, OTP System & Landing Experience |
-| **E/22/260** | K. Nithilaa | [e22260@eng.pdn.ac.lk](mailto:e22260@eng.pdn.ac.lk) | Customer Marketplace, Order Management & Service Providers |
+
+  R. Shathursima: [e22330@eng.pdn.ac.lk](mailto:e22330@eng.pdn.ac.lk) | Expert Dashboard, Consultations & Community Features 
+  S. Monisha : [e22381@eng.pdn.ac.lk](mailto:e22381@eng.pdn.ac.lk) | Farmer Dashboard, Produce Inventory & Backend Models 
+  N. Sathurjika : [e22261@eng.pdn.ac.lk](mailto:e22261@eng.pdn.ac.lk) | Multilingual Authentication, OTP System & Landing Experience 
+  K. Nithilaa :  [e22260@eng.pdn.ac.lk](mailto:e22260@eng.pdn.ac.lk) | Customer Marketplace, Order Management & Service Providers 
 
 ### 👨‍🏫 Project Supervisor
 - **K. Jarshigan** ([e21188@eng.pdn.ac.lk](mailto:e21188@eng.pdn.ac.lk)) — Department of Computer Engineering, University of Peradeniya
@@ -192,10 +191,10 @@ The system undergoes rigorous testing across all layers:
 NagroMS delivers a transformative digital marketplace for Sri Lankan agriculture, establishing direct market connections, empowering farmers with fair returns, and creating an integrated support network.
 
 ### 🔮 Future Enhancements
-- 💳 **Integrated Digital Payment Gateways:** Seamless card payments and escrow settlements.
-- 💬 **Real-Time In-App Chat:** Instant negotiation and communication between farmers and buyers.
-- 📱 **Mobile Native Application:** Offline-first Android/iOS app with SMS fallback for rural areas.
-- 🤖 **AI Crop Disease Diagnosis:** Computer vision model to detect leaf diseases via mobile photo upload.
+-  **Integrated Digital Payment Gateways:** Seamless card payments and escrow settlements.
+-  **Real-Time In-App Chat:** Instant negotiation and communication between farmers and buyers.
+-  **Mobile Native Application:** Offline-first Android/iOS app with SMS fallback for rural areas.
+-  **AI Crop Disease Diagnosis:** Computer vision model to detect leaf diseases via mobile photo upload.
 
 ---
 
