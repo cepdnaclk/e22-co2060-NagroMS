@@ -1,4 +1,4 @@
-// InputOTP.jsx
+﻿// InputOTP.jsx
 export function InputOTP({ value, onChange, length = 4 }) {
   return (
     <input

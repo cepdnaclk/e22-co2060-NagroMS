@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { 
   Package, 
   Clock, 
@@ -17,7 +17,7 @@ import {
 import { db } from '../../../../../utils/firebase.js';
 import { 
   collection, addDoc, getDocs, query, 
-  where, doc, updateDoc, onSnapshot 
+  where, doc, updateDoc, onSnapshot, serverTimestamp 
 } from 'firebase/firestore';
 import { LiveTrackingModal } from './LiveTrackingModal';
 
@@ -725,15 +725,16 @@ export function ComplaintModal({ order, uid, onClose }) {
       const complaintData = {
         orderId: order.id,
         customerId: uid,
-        issueType,
-        details,
-        status: 'pending',
-        createdAt: new Date().toISOString()
+        role: 'Customer',
+        content: `Issue: ${issueType}\nDetails: ${details}`,
+        status: 'Pending',
+        createdAt: serverTimestamp()
       };
       await addDoc(collection(db, 'complaints'), complaintData);
       setSubmitted(true);
     } catch (error) {
       console.error('Error submitting complaint:', error);
+      alert('Error submitting complaint: ' + error.message);
       // fallback for demo
       setSubmitted(true);
     }

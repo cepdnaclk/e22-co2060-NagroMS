@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { db, auth } from '../../../utils/firebase';
 import { collection, query, where, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { MessageSquare, AlertCircle } from 'lucide-react';
@@ -7,35 +7,55 @@ import { useLanguage } from '../../../i18n/LanguageContext';
 export default function ComplaintsSection() {
     const { t } = useLanguage();
     const [complaints, setComplaints] = useState([]);
+    const [orders, setOrders] = useState([]);
     const [newComplaint, setNewComplaint] = useState('');
+    const [selectedOrderId, setSelectedOrderId] = useState('');
 
     useEffect(() => {
         if (!auth.currentUser) return;
-        const q = query(collection(db, 'complaints'), where('userId', '==', auth.currentUser.uid));
-        const unsub = onSnapshot(q, snap => {
+        
+        // Fetch complaints
+        const qC = query(collection(db, 'complaints'), where('userId', '==', auth.currentUser.uid));
+        const unsubC = onSnapshot(qC, snap => {
             const arr = [];
             snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
             arr.sort((a,b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
             setComplaints(arr);
         });
-        return () => unsub();
+
+        // Fetch orders for this farmer
+        const qO = query(collection(db, 'orders'), where('farmerId', '==', auth.currentUser.uid));
+        const unsubO = onSnapshot(qO, snap => {
+            const arr = [];
+            snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+            setOrders(arr);
+        });
+
+        return () => { unsubC(); unsubO(); };
     }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!newComplaint.trim() || !auth.currentUser) return;
         try {
-            await addDoc(collection(db, 'complaints'), {
+            const complaintData = {
                 userId: auth.currentUser.uid,
                 role: 'farmer',
                 content: newComplaint,
                 status: 'Pending',
                 reply: '',
                 createdAt: serverTimestamp()
-            });
+            };
+            if (selectedOrderId) {
+                complaintData.orderId = selectedOrderId;
+            }
+            
+            await addDoc(collection(db, 'complaints'), complaintData);
             setNewComplaint('');
+            setSelectedOrderId('');
         } catch(err) {
             console.error(err);
+            alert(err.message);
         }
     };
 
@@ -50,6 +70,20 @@ export default function ComplaintsSection() {
             
             <form onSubmit={handleSubmit} style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e5e7eb', marginBottom: '32px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
                 <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', color: '#374151' }}>Submit a New Complaint</h3>
+                
+                <select
+                    value={selectedOrderId}
+                    onChange={(e) => setSelectedOrderId(e.target.value)}
+                    style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #d1d5db', marginBottom: '16px', boxSizing: 'border-box', backgroundColor: '#f9fafb' }}
+                >
+                    <option value="">-- General Complaint (No specific order) --</option>
+                    {orders.map(o => (
+                        <option key={o.id} value={o.id}>
+                            Order {o.id} - Rs.{o.totalAmount || o.total || 0} ({o.status})
+                        </option>
+                    ))}
+                </select>
+
                 <textarea 
                     required
                     rows={4}
@@ -77,6 +111,13 @@ export default function ComplaintsSection() {
                                 {c.createdAt?.toDate?.().toLocaleDateString() || 'Recently'}
                             </span>
                         </div>
+                        
+                        {c.orderId && (
+                            <div style={{ marginBottom: '8px', fontSize: '13px', color: '#6b7280' }}>
+                                <strong>Related Order:</strong> {c.orderId}
+                            </div>
+                        )}
+
                         <p style={{ margin: '0 0 16px 0', color: '#1f2937', fontSize: '15px' }}>{c.content}</p>
                         
                         {c.reply && (

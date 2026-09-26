@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { Navigation, CheckCircle, MapPin, DollarSign, Map as MapIcon, Compass, Bell } from 'lucide-react';
 import { db, auth } from '../../../../utils/firebase.js';
 import { collection, onSnapshot, doc, setDoc, updateDoc, getDoc } from 'firebase/firestore';

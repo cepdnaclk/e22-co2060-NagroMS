@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import {
   LayoutDashboard,
   Wallet,
@@ -25,9 +25,8 @@ import ChatbotSection from './components/ChatbotSection';
 import CommunityNetwork from '../../components/Network/CommunityNetwork';
 import SettingsSection from './components/SettingsSection';
 import NotificationsSection from './components/NotificationsSection';
-import FinancialRatesSection from './components/FinancialRatesSection';
 import ComplaintsSection from './components/ComplaintsSection';
-import './farmerDashboard.css';
+import './FarmerDashboard.css';
 
 export function FarmerDashboard() {
   const { t } = useLanguage();
@@ -52,8 +51,6 @@ export function FarmerDashboard() {
         return <NotificationsSection />;
       case 'settings':
         return <SettingsSection />;
-      case 'financial':
-        return <FinancialRatesSection />;
       case 'complaints':
         return <ComplaintsSection />;
       default:
@@ -165,12 +162,7 @@ export function FarmerDashboard() {
             isActive={activeTab === 'notifications'}
             onClick={() => handleNavClick('notifications')}
           />
-          <SidebarItem
-            icon={<DollarSign size={20} />}
-            label={t('farmer.sidebar.financial') || 'Bank Rates'}
-            isActive={activeTab === 'financial'}
-            onClick={() => handleNavClick('financial')}
-          />
+
           <SidebarItem
             icon={<AlertCircle size={20} />}
             label={t('farmer.sidebar.complaints') || 'Help & Complaints'}

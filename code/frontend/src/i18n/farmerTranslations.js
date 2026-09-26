@@ -19,7 +19,7 @@ const farmerTranslations = {
       },
       sidebar: {
         overview: 'Overview', management: 'Management', requests: 'Customer Requests', services: 'Services', chatbot: 'AI Assistant',
-        community: 'Community', notifications: 'Notifications', settings: 'Settings', logout: 'Logout'
+        community: 'Community', notifications: 'Notifications', settings: 'Settings', complaints: 'Help & Complaints', logout: 'Logout'
       },
       overview: {
         addNewProduct: 'Add New Product',
@@ -175,7 +175,7 @@ const farmerTranslations = {
       },
       sidebar: {
         overview: 'දළ විශ්ලේෂණය', management: 'කළමනාකරණය', requests: 'පාරිභෝගික ඉල්ලීම්', services: 'සේවාවන්', chatbot: 'කෘත්‍රිම බුද්ධි සහායක',
-        community: 'ප්‍රජාව', notifications: 'නිවේදන', settings: 'සැකසුම්', logout: 'ඉවත් වන්න'
+        community: 'ප්‍රජාව', notifications: 'නිවේදන', settings: 'සැකසුම්', complaints: 'උදව් සහ පැමිණිලි', logout: 'ඉවත් වන්න'
       },
       overview: {
         addNewProduct: 'නව නිෂ්පාදනයක් එක් කරන්න',
@@ -323,7 +323,7 @@ const farmerTranslations = {
       },
       sidebar: {
         overview: 'கண்ணோட்டம்', management: 'மேலாண்மை', requests: 'வாடிக்கையாளர் கோரிக்கைகள்', services: 'சேவைகள்', chatbot: 'செயற்கை நுண்ணறிவு உதவியாளர்',
-        community: 'சமூகம்', notifications: 'அறிவிப்புகள்', settings: 'அமைப்புகள்', logout: 'வெளியேறு'
+        community: 'சமூகம்', notifications: 'அறிவிப்புகள்', settings: 'அமைப்புகள்', complaints: 'உதவி மற்றும் புகார்கள்', logout: 'வெளியேறு'
       },
       overview: {
         addNewProduct: 'புதிய தயாரிப்பைச் சேர்க்கவும்',

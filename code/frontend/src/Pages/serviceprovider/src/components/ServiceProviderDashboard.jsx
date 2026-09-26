@@ -7,6 +7,8 @@ import StorageFacilitiesDashboard from './StorageFacilitiesDashboard';
 import { ServiceProviderTypeSelection } from './ServiceProviderTypeSelection';
 import { auth, db } from '../../../../utils/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
+import ComplaintsWidget from '../../../../components/ComplaintsWidget.jsx';
 
 const SERVICE_META = {
     equipment: { label: 'Equipment Rental', emoji: '🚜', color: '#ea580c' },
@@ -24,30 +26,31 @@ export default function ServiceProviderDashboard({ onNavigate }) {
     const dropdownRef = useRef(null);
 
     useEffect(() => {
-        async function load() {
+        async function load(user) {
             // Try localStorage first
             let cats = [];
             try {
                 cats = JSON.parse(localStorage.getItem('serviceCategories') || '[]');
             } catch(e) {}
 
-            // If empty, fetch from Firestore (handles existing accounts)
-            if (cats.length === 0 && auth.currentUser) {
+            // Always fetch latest from Firestore to ensure it's not stale in localStorage
+            if (user) {
                 try {
-                    const snap = await getDoc(doc(db, 'users', auth.currentUser.uid));
+                    const snap = await getDoc(doc(db, 'users', user.uid));
                     if (snap.exists()) {
                         const data = snap.data();
-                        cats = data.serviceCategories || [];
-                        if (cats.length > 0) {
+                        const fetchedCats = data.serviceCategories || [];
+                        if (fetchedCats.length > 0) {
+                            cats = fetchedCats;
                             localStorage.setItem('serviceCategories', JSON.stringify(cats));
                         }
                     }
                 } catch(e) { console.warn('Could not fetch categories from Firestore', e); }
             }
 
-            setServiceCategories(cats);
-
             // Load current service type
+            setServiceCategories(cats);
+            
             let type = localStorage.getItem('serviceProviderType');
             if (type === 'null' || type === 'undefined') type = null;
 
@@ -60,7 +63,12 @@ export default function ServiceProviderDashboard({ onNavigate }) {
             setServiceType(type);
             setIsLoading(false);
         }
-        load();
+
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            load(user);
+        });
+
+        return () => unsubscribe();
     }, []);
 
     // Close dropdown on outside click
@@ -78,6 +86,7 @@ export default function ServiceProviderDashboard({ onNavigate }) {
         localStorage.setItem('serviceProviderType', type);
         setServiceType(type);
         setDropdownOpen(false);
+        window.location.reload();
     };
 
     const handleLogout = () => {
@@ -122,7 +131,7 @@ export default function ServiceProviderDashboard({ onNavigate }) {
     // Base button styles
     const btnBase = {
         position: 'fixed',
-        bottom: '28px',
+        bottom: '96px',
         right: '28px',
         zIndex: 9999,
         fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif",
@@ -148,12 +157,13 @@ export default function ServiceProviderDashboard({ onNavigate }) {
     return (
         <>
             {renderDashboard()}
+            <ComplaintsWidget />
 
             {/* --- Gig Driver back-button for individual accounts --- */}
             {isIndividual && !isAdmin && (
                 <button
                     onClick={() => { window.location.href = '/driver-dashboard'; }}
-                    style={{ ...btnBase, backgroundColor: '#2563eb', bottom: canSwitch ? '84px' : '28px' }}
+                    style={{ ...btnBase, backgroundColor: '#2563eb', bottom: canSwitch ? '156px' : '96px' }}
                     onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#1d4ed8'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
                     onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#2563eb'; e.currentTarget.style.transform = 'translateY(0)'; }}
                 >
@@ -192,7 +202,7 @@ export default function ServiceProviderDashboard({ onNavigate }) {
 
             {/* --- 3+ services: dropdown menu --- */}
             {canSwitch && !isExactlyTwo && (
-                <div ref={dropdownRef} style={{ position: 'fixed', bottom: '28px', right: '28px', zIndex: 9999 }}>
+                <div ref={dropdownRef} style={{ position: 'fixed', bottom: '96px', right: '28px', zIndex: 9999 }}>
                     {/* Dropdown options — render above the button */}
                     {dropdownOpen && (
                         <div style={{

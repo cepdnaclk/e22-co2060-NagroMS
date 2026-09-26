@@ -31,17 +31,21 @@ function sanitizeUser(user) {
   return safe;
 }
 
-// Helper to get dashboard route based on roles
-function getDashboardRoute(roles) {
+// Helper to get dashboard route based on user roles and accountType
+function getDashboardRoute(user) {
+  const roles = user?.roles || [];
   if (!roles || roles.length === 0) return 'login';
+  if (roles.includes('admin')) return 'admin-dashboard';
   if (roles.includes('expert')) return 'expert-dashboard';
-  if (roles.includes('service-provider')) return 'service-provider-dashboard';
+  if (roles.includes('service-provider')) {
+    return user?.accountType === 'individual' ? 'driver-dashboard' : 'service-provider-dashboard';
+  }
   if (roles.includes('customer')) return 'customer-dashboard';
   if (roles.includes('farmer')) return 'farmer-dashboard';
   return 'login';
 }
 
-const VALID_ROLES = ['expert', 'farmer', 'customer', 'service-provider'];
+const VALID_ROLES = ['expert', 'farmer', 'customer', 'service-provider', 'admin'];
 
 // ──────────────────────────────────────────────────────────────
 // register — save user profile to Firestore after client-side
@@ -53,7 +57,8 @@ async function register(req, res) {
       idToken,
       fullName, phone, nic,
       accountType, businessName, businessRegistrationNumber,
-      contactPersonName, district, roles, emailForAuth, serviceCategory,
+      contactPersonName, district, roles, emailForAuth,
+      serviceCategories
     } = req.body;
 
     // Verify the ID token from the client — this proves the Firebase
@@ -82,7 +87,7 @@ async function register(req, res) {
       contactPersonName: contactPersonName || '',
       district: district || '',
       roles: roles || [],
-      serviceCategory: serviceCategory || '',
+      serviceCategories: serviceCategories || [],
       provider: 'email',
       emailVerified: decodedToken.email_verified || false,
     });
@@ -94,7 +99,7 @@ async function register(req, res) {
       success: true,
       message: 'Account created successfully.',
       user: sanitizeUser(userDoc),
-      dashboardRoute: getDashboardRoute(roles || []),
+      dashboardRoute: getDashboardRoute({ roles: roles || [], accountType }),
     });
   } catch (error) {
     console.error('Register error:', error);
@@ -125,7 +130,7 @@ async function loginVerify(req, res) {
       success: true,
       message: 'Login verified.',
       user: sanitizeUser(user),
-      dashboardRoute: getDashboardRoute(user.roles),
+      dashboardRoute: getDashboardRoute(user),
     });
   } catch (error) {
     console.error('Login verify error:', error);
@@ -158,7 +163,7 @@ async function socialLogin(req, res) {
       success: true,
       message: 'Social login successful.',
       user: sanitizeUser(user),
-      dashboardRoute: getDashboardRoute(user.roles),
+      dashboardRoute: getDashboardRoute(user),
     });
   } catch (error) {
     console.error('Social login error:', error);
